@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Movetrics Cloud API</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <!-- Movetrics Vector identity (movetrics-ci tokens/vector.json), the same tokens and fonts as the rest of the site. -->
+  <style>
+    @font-face { font-family: 'IBM Plex Sans'; src: url('/fonts/IBMPlexSans-wdth-wght.woff2') format('woff2'); font-weight: 100 700; font-display: swap; }
+    @font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/IBMPlexMono-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+    :root { --scalar-font: 'IBM Plex Sans', Arial, sans-serif; --scalar-font-code: 'IBM Plex Mono', monospace; --scalar-radius: 6px; --scalar-radius-lg: 6px; --scalar-radius-xl: 6px; }
+    .light-mode {
+      --scalar-background-1: #FFFFFF; --scalar-background-2: #F5F7F8; --scalar-background-3: #EAF0F2; --scalar-background-accent: #E0F0ED;
+      --scalar-color-1: #1A2A4C; --scalar-color-2: #536175; --scalar-color-3: #536175; --scalar-color-accent: #006B67;
+      --scalar-border-color: #D6DEE5; --scalar-button-1: #006B67; --scalar-button-1-color: #FFFFFF; --scalar-button-1-hover: #005451;
+      --scalar-color-green: #17623E; --scalar-color-red: #B42336; --scalar-color-yellow: #7A5000; --scalar-color-blue: #155E9B;
+      --scalar-color-orange: #A24C00; --scalar-color-purple: #7450A5;
+    }
+    .dark-mode {
+      --scalar-background-1: #0E1728; --scalar-background-2: #172438; --scalar-background-3: #213249; --scalar-background-accent: #23433F;
+      --scalar-color-1: #F5F7FA; --scalar-color-2: #BCC9DB; --scalar-color-3: #BCC9DB; --scalar-color-accent: #93D5CE;
+      --scalar-border-color: #34455D; --scalar-button-1: #D8F757; --scalar-button-1-color: #1A2A4C; --scalar-button-1-hover: #E6FF82;
+      --scalar-color-green: #8BD6A3; --scalar-color-red: #FF9EAB; --scalar-color-yellow: #F3C66B; --scalar-color-blue: #96CEFF;
+      --scalar-color-orange: #FFB86B; --scalar-color-purple: #C3A5EF;
+    }
+  </style>
 </head>
 <body>
   <!-- Generated from the Cloud's OpenAPI file (contracts/movetrics-public-api-v1.json, owned by the Cloud), never
@@ -13,6 +34,8 @@
   <script>
     document.getElementById('api-reference').dataset.configuration = JSON.stringify({
       hideClientButton: false,
+      theme: 'none',
+      withDefaultFonts: false,
       // No third-party AI chat, no Scalar telemetry or dev tools: the page should send nothing beyond the reader's own API calls.
       agent: { disabled: true },
       telemetry: false,
