@@ -2,26 +2,26 @@
 <title id="title">Where the Movetrics SDK sits</title>
 <desc id="desc">Plates feed the FDT. Live data reaches the SDK over USB-C or Bluetooth and goes on to your tools; recordings go through Studio or the app to Movetrics Cloud, whose read-only API the SDK reads; voltages from the analog outputs are turned back into newtons by the SDK.</desc>
 <style>
-text{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12.5px}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.bg{fill:#fcfcfb;stroke:#e4e3df}
-.t1{fill:#1b1b1a} .t2{fill:#5a5955} .t3{fill:#7a7974}
-.box{fill:#f3f2ef;stroke:#cfcec8}
-.dash{fill:none;stroke:#9a9993;stroke-dasharray:5 4}
-.acc{fill:#e3f6f0;stroke:#0f7a63} .accT{fill:#0b5e4c}
-.acc2{fill:#e5f0fb;stroke:#2a78d6} .acc2T{fill:#174f91}
-.ln{stroke:#6a6964;fill:none} .head{fill:#6a6964}
-.curve{stroke:#0f7a63;fill:none} .band{fill:#e3f6f0}
-.grid{stroke:#e9e8e4} .axis{stroke:#b5b4ae}
+text{font-family:"IBM Plex Sans",Arial,sans-serif;font-size:12.5px}
+.mono{font-family:"IBM Plex Mono",monospace}
+.bg{fill:#FFFFFF;stroke:#D6DEE5}
+.t1{fill:#1A2A4C} .t2{fill:#536175} .t3{fill:#536175}
+.box{fill:#EAF0F2;stroke:#D6DEE5}
+.dash{fill:none;stroke:#758294;stroke-dasharray:5 4}
+.acc{fill:#E0F0ED;stroke:#006B67} .accT{fill:#004D49}
+.acc2{fill:#EAF3FF;stroke:#155E9B} .acc2T{fill:#155E9B}
+.ln{stroke:#758294;fill:none} .head{fill:#758294}
+.curve{stroke:#A24C00;fill:none} .band{fill:#EAF0F2}
+.grid{stroke:#DBE1E5} .axis{stroke:#66717C}
 @media (prefers-color-scheme: dark){
-.bg{fill:#1a1a19;stroke:#33322f}
-.t1{fill:#f0efec} .t2{fill:#c3c2b7} .t3{fill:#9a998f}
-.box{fill:#252523;stroke:#45443f} .dash{stroke:#7a7972}
-.acc{fill:#0b2f2a;stroke:#3fbf9c} .accT{fill:#9fe8d2}
-.acc2{fill:#13263d;stroke:#3987e5} .acc2T{fill:#a9cdf5}
-.ln{stroke:#a9a89f} .head{fill:#a9a89f}
-.curve{stroke:#3fbf9c} .band{fill:#0f2c27}
-.grid{stroke:#2c2b29} .axis{stroke:#4a4944}
+.bg{fill:#172438;stroke:#34455D}
+.t1{fill:#F5F7FA} .t2{fill:#BCC9DB} .t3{fill:#BCC9DB}
+.box{fill:#213249;stroke:#34455D} .dash{stroke:#758AA6}
+.acc{fill:#23433F;stroke:#93D5CE} .accT{fill:#B5E8DA}
+.acc2{fill:#142A3D;stroke:#96CEFF} .acc2T{fill:#96CEFF}
+.ln{stroke:#758AA6} .head{fill:#758AA6}
+.curve{stroke:#FFB86B} .band{fill:#213249}
+.grid{stroke:#40505A} .axis{stroke:#ABBBC9}
 }
 </style>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">

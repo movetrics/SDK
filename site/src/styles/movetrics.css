@@ -1,3 +1,155 @@
-/* Movetrics accent on Starlight's defaults; everything else stays Starlight so light and dark both work. */
-:root { --sl-color-accent-low: #0b2f2a; --sl-color-accent: #14866d; --sl-color-accent-high: #b8f0e0; }
-:root[data-theme='light'] { --sl-color-accent-low: #d4f5ec; --sl-color-accent: #0f7a63; --sl-color-accent-high: #063b30; }
+/* Movetrics Vector identity on Starlight (movetrics-ci tokens/vector.json and DESIGN.md, revision 1.0.1).
+   Exact token values, both authored modes: light uses petrol actions with white labels, dark uses citron actions with
+   navy labels. Manrope for editorial headings, IBM Plex Sans for everything else, IBM Plex Mono for code. 6 px radius. */
+
+@font-face { font-family: 'Manrope'; src: url('/fonts/Manrope-wght.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('/fonts/IBMPlexSans-wdth-wght.woff2') format('woff2'); font-weight: 100 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/IBMPlexMono-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+
+/* Dark mode (Starlight's default block) */
+:root {
+  --mt-bg: #0E1728; --mt-surface: #172438; --mt-raised: #213249; --mt-text: #F5F7FA; --mt-muted: #BCC9DB;
+  --mt-border: #34455D; --mt-control: #758AA6; --mt-action: #D8F757; --mt-action-hover: #E6FF82; --mt-on-action: #1A2A4C;
+  --mt-link: #93D5CE; --mt-focus: #8BCBFF; --mt-selected: #23433F; --mt-on-selected: #B5E8DA; --mt-highlight: #D8F757;
+
+  --sl-color-white: var(--mt-text);
+  --sl-color-gray-1: var(--mt-text);
+  --sl-color-gray-2: var(--mt-muted);
+  --sl-color-gray-3: var(--mt-muted);
+  --sl-color-gray-4: var(--mt-control);
+  --sl-color-gray-5: var(--mt-border);
+  --sl-color-gray-6: var(--mt-surface);
+  --sl-color-black: var(--mt-bg);
+
+  --sl-color-accent-low: var(--mt-selected);
+  --sl-color-accent: var(--mt-link);
+  --sl-color-accent-high: var(--mt-on-selected);
+  --sl-color-text: var(--mt-text);
+  --sl-color-text-accent: var(--mt-link);
+  --sl-color-text-invert: var(--mt-on-action);
+  --sl-color-bg-accent: var(--mt-action);
+  --sl-color-bg-nav: var(--mt-surface);
+  --sl-color-bg-sidebar: var(--mt-bg);
+  --sl-color-bg-inline-code: var(--mt-raised);
+  --sl-color-hairline: var(--mt-border);
+  --sl-color-hairline-light: var(--mt-border);
+  --sl-color-hairline-shade: var(--mt-border);
+
+  /* Status colours in asides: the identity's own pairs, not Starlight's hues */
+  --sl-color-green-low: #132B20; --sl-color-green: #8BD6A3; --sl-color-green-high: #8BD6A3;
+  --sl-color-orange-low: #332811; --sl-color-orange: #F3C66B; --sl-color-orange-high: #F3C66B;
+  --sl-color-red-low: #3B1B24; --sl-color-red: #FF9EAB; --sl-color-red-high: #FF9EAB;
+  --sl-color-blue-low: #142A3D; --sl-color-blue: #96CEFF; --sl-color-blue-high: #96CEFF;
+  --sl-color-purple-low: #23433F; --sl-color-purple: #93D5CE; --sl-color-purple-high: #B5E8DA;
+
+  --sl-font: 'IBM Plex Sans', Arial, sans-serif;
+  --sl-font-mono: 'IBM Plex Mono', monospace;
+  --mt-display: 'Manrope', Arial, sans-serif;
+  --sl-line-height: 1.5;
+  --sl-content-width: 42.5rem; /* about 680 px: the identity's long-reading width */
+}
+
+:root[data-theme='light'] {
+  --mt-bg: #F5F7F8; --mt-surface: #FFFFFF; --mt-raised: #EAF0F2; --mt-text: #1A2A4C; --mt-muted: #536175;
+  --mt-border: #D6DEE5; --mt-control: #758294; --mt-action: #006B67; --mt-action-hover: #005451; --mt-on-action: #FFFFFF;
+  --mt-link: #005C58; --mt-focus: #005F9E; --mt-selected: #E0F0ED; --mt-on-selected: #004D49; --mt-highlight: #D8F757;
+
+  --sl-color-white: var(--mt-text);
+  --sl-color-gray-1: var(--mt-text);
+  --sl-color-gray-2: var(--mt-muted);
+  --sl-color-gray-3: var(--mt-muted);
+  --sl-color-gray-4: var(--mt-control);
+  --sl-color-gray-5: var(--mt-border);
+  --sl-color-gray-6: var(--mt-raised);
+  --sl-color-gray-7: var(--mt-bg);
+  --sl-color-black: var(--mt-surface);
+
+  --sl-color-accent-low: var(--mt-selected);
+  --sl-color-accent: var(--mt-action);
+  --sl-color-accent-high: var(--mt-on-selected);
+  --sl-color-text: var(--mt-text);
+  --sl-color-text-accent: var(--mt-link);
+  --sl-color-text-invert: var(--mt-on-action);
+  --sl-color-bg-accent: var(--mt-action);
+  --sl-color-bg-nav: var(--mt-surface);
+  --sl-color-bg-sidebar: var(--mt-bg);
+  --sl-color-bg-inline-code: var(--mt-raised);
+  --sl-color-hairline: var(--mt-border);
+  --sl-color-hairline-light: var(--mt-border);
+  --sl-color-hairline-shade: var(--mt-border);
+
+  --sl-color-green-low: #E7F5EB; --sl-color-green: #17623E; --sl-color-green-high: #17623E;
+  --sl-color-orange-low: #FFF3D1; --sl-color-orange: #7A5000; --sl-color-orange-high: #7A5000;
+  --sl-color-red-low: #FDECEF; --sl-color-red: #B42336; --sl-color-red-high: #B42336;
+  --sl-color-blue-low: #EAF3FF; --sl-color-blue: #155E9B; --sl-color-blue-high: #155E9B;
+  --sl-color-purple-low: #E0F0ED; --sl-color-purple: #006B67; --sl-color-purple-high: #004D49;
+}
+
+body { font-synthesis: none; -webkit-font-smoothing: antialiased; }
+
+/* Editorial headings in Manrope 600 (40/48, 28/36, 20/28); everything else, including tables and data, in Plex. */
+.sl-markdown-content :is(h1, h2, h3), h1#_top, .hero h1 {
+  font-family: var(--mt-display); font-weight: 600; color: var(--mt-text);
+}
+h1#_top { font-size: 2.5rem; line-height: 3rem; letter-spacing: -0.025em; }
+.sl-markdown-content h2 { font-size: 1.75rem; line-height: 2.25rem; letter-spacing: -0.02em; }
+.sl-markdown-content h3 { font-size: 1.25rem; line-height: 1.75rem; letter-spacing: -0.01em; }
+.sl-markdown-content :is(h4, h5) { font-weight: 600; }
+.sl-markdown-content :is(td, th) { font-variant-numeric: tabular-nums lining-nums; }
+
+/* Links are distinct from text and underlined in running copy. */
+.sl-markdown-content a:not(.sl-link-button, .card-link) { color: var(--mt-link); text-decoration: underline; text-underline-offset: 3px; }
+.sl-markdown-content a:not(.sl-link-button, .card-link):hover { color: var(--mt-text); }
+
+/* Focus: 2 px outline in the focus colour with a 2 px gap. */
+:focus-visible { outline: 2px solid var(--mt-focus); outline-offset: 2px; }
+
+/* Header: the outlined lockup (never retyped), then "Developers" in Plex. */
+.site-title img { height: 1.75rem; width: auto; }
+.site-title::after {
+  content: 'Developers'; margin-left: 0.75rem; padding-left: 0.75rem; border-left: 1px solid var(--mt-border);
+  font-family: var(--sl-font); font-weight: 500; font-size: 1rem; color: var(--mt-muted); white-space: nowrap;
+}
+header.header { border-bottom: 1px solid var(--mt-border); }
+
+/* Sidebar: the selected page uses the selected / on-selected pair. */
+.sidebar-content a[aria-current='page'], .sidebar-content a[aria-current='page']:hover {
+  background-color: var(--mt-selected); color: var(--mt-on-selected); font-weight: 600;
+}
+.sidebar-content a { border-radius: 6px; }
+
+/* Buttons: 44 px high, 6 px radius, Plex 500; the primary is the full action set. */
+.sl-link-button { border-radius: 6px; min-height: 44px; display: inline-flex; align-items: center; font-weight: 500; font-size: 0.9375rem; }
+.sl-link-button.primary { background: var(--mt-action); border-color: var(--mt-action); color: var(--mt-on-action); }
+.sl-link-button.primary:hover { background: var(--mt-action-hover); border-color: var(--mt-action-hover); color: var(--mt-on-action); }
+.sl-link-button.secondary { background: var(--mt-surface); border: 1px solid var(--mt-control); color: var(--mt-text); }
+.sl-link-button.secondary:hover { background: var(--mt-raised); }
+.sl-link-button.minimal { color: var(--mt-link); }
+
+/* Splash page: a quiet navy hero title, one citron rule as the only accent. */
+.hero { padding-block: 3rem 2rem; }
+.hero h1 { font-size: 4rem; line-height: 4.25rem; letter-spacing: -0.035em; }
+.hero .tagline { color: var(--mt-muted); font-size: 1.25rem; line-height: 1.75rem; max-width: 42.5rem; }
+.hero h1::after { content: ''; display: block; width: 4rem; height: 4px; margin-top: 1.25rem; background: var(--mt-highlight); border-radius: 2px; }
+@media (max-width: 50rem) { .hero h1::after { margin-inline: auto; } }
+@media (max-width: 40rem) {
+  .hero h1 { font-size: 2.5rem; line-height: 2.75rem; letter-spacing: -0.025em; }
+  .site-title::after { display: none; }
+}
+
+/* Cards are flat working surfaces with a subtle border; icons take the text colour, not a rainbow. */
+.card { border: 1px solid var(--mt-border); border-radius: 6px; background: var(--mt-surface); box-shadow: none; }
+.card .icon { color: var(--mt-text); background: var(--mt-raised); border: 0; border-radius: 6px; }
+.card .title { font-family: var(--sl-font); font-weight: 600; font-size: 1.25rem; line-height: 1.75rem; }
+:root .card { --sl-card-border: var(--mt-border); --sl-card-bg: var(--mt-surface); }
+
+/* Asides, tables and code keep the identity's 6 px radius and quiet borders. */
+.starlight-aside { border-radius: 6px; }
+.sl-markdown-content table { border-collapse: collapse; }
+.sl-markdown-content :is(th, td) { border-color: var(--mt-border); }
+.sl-markdown-content code:not(pre code) { border-radius: 4px; padding: 0.1em 0.35em; }
+.expressive-code .frame { --ec-brdRad: 6px; }
+
+/* Diagrams sit on their own panel; give them room and the same radius. */
+.sl-markdown-content img[src^='/diagrams/'] { border-radius: 6px; max-width: 100%; height: auto; }

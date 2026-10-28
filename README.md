@@ -85,4 +85,4 @@ From the repository root:
 
 ## Licence, security, contributing
 
-Apache 2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE). Report a vulnerability privately as described in [SECURITY.md](SECURITY.md). Issues and pull requests are welcome; [CONTRIBUTING.md](CONTRIBUTING.md) explains how changes are checked. The F1-3D plates and the FDT are made by Nur Engineering GmbH; Movetrics makes the software.
+Apache 2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE). Report a vulnerability privately as described in [SECURITY.md](SECURITY.md). Issues and pull requests are welcome; [CONTRIBUTING.md](CONTRIBUTING.md) explains how changes are checked. The F1-3D plates and the FDT are made by Nur Engineering GmbH; Movetrics makes the software. The Movetrics name and logo in `site/` are trademarks and are not covered by the Apache licence; the fonts there carry their own SIL Open Font Licence files.

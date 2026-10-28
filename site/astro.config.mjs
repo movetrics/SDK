@@ -9,6 +9,15 @@ export default defineConfig({
     starlight({
       title: 'Movetrics for developers',
       description: 'Get force plate data into Excel, Python, MATLAB, OpenSim, LSL and your own code.',
+      // Movetrics Vector identity: outlined lockup (light/dark masters from movetrics-ci), brand favicon, self-hosted fonts.
+      logo: { light: './src/assets/lockup-primary.svg', dark: './src/assets/lockup-inverse.svg', alt: 'Movetrics', replacesTitle: true },
+      favicon: '/favicon.svg',
+      head: [
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' } },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
+        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/IBMPlexSans-wdth-wght.woff2', as: 'font', type: 'font/woff2', crossorigin: '' } },
+        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/Manrope-wght.woff2', as: 'font', type: 'font/woff2', crossorigin: '' } },
+      ],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/movetrics/sdk' }],
       customCss: ['./src/styles/movetrics.css'],
       sidebar: [
