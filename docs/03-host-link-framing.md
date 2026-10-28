@@ -102,7 +102,7 @@ Evidence: code. The NACK frame carries the code as two little-endian bytes.
 | 2 | ERR_PLATFORM_NO_RESPONSE | SET_TARE finds no response from the plates |
 | 3 | ERR_INVALID_PARAMETER | A payload or index fails the parser checks; SET_SERIAL_PARAM outside 1 to 6; SET_FILTER refused; DEBUG_ADC_CLOCK_DRIVE or DEBUG_POLL_TIMING out of range; the pad-sample debug command 0x63 without its byte or with a value above 1 |
 | 7 | ERR_UNKNOWN_COMMAND | An opcode with no dispatch case |
-| 8 | ERR_UNEFFECTIVE_COMMAND | A pad-disturbing command during a pad update; START or SET_CALIBRATION during a firmware update; SET_TARE during a firmware update |
+| 8 | ERR_UNEFFECTIVE_COMMAND | A pad-disturbing command during a pad update; START or SET_CALIBRATION during a firmware update; SET_TARE during a firmware update; from 1.2.8.6, SET_TARE while streaming when the newest 20 ms of a pad are not steady or too few readings are held |
 | 9 | ERR_CRC | A request CRC does not match |
 
 ## 3.6 Reply kinds and reply rules

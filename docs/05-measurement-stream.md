@@ -492,3 +492,62 @@ All of these are unverified on a device.
 
 - Firmware comments describe a stamp formed from pad replies as the poll time. Such a stamp is the mean of the timer values at parse time. A plate on the grid is stamped with its frame time instead (Section 5.4).
 - A stale frame's forces are the filter's next output for the held input, not a copy of the previous frame (Section 7.1).
+
+## 13. Event frames (FDT 1.2.8.24, draft)
+
+Evidence: code of the 1.2.8.24 draft and its vectors. Not yet run on hardware.
+
+One change in 1.2.8.24 reaches every host: the six outputs are clipped at the int16 limit instead of wrapping around at the conversion of Section 3.2 (a decision of 28 October 2026). Event frames exist only when a host sets SET_SYNC_MODE 0x28 with bit 0x08 EVENT_FRAMES or 0x20 SATURATION_EVENTS ([04-host-commands.md](04-host-commands.md), section 3.9). A host that never sends 0x28, Movetrics Studio among them, receives exactly the stream of 1.2.8.22.
+
+### 13.1 Why a separate frame
+
+A lab aligns the plates with EMG, cameras and a second FDT through edges on the sync jack. Three problems need three answers: where the recordings start relative to each other (a shared edge), how fast two crystals drift apart (typically 20 to 50 ppm, so 18 ms or 36 samples at 2000 Hz after 10 minutes at 30 ppm; inferred from crystal tolerances, not measured on the FDT), and gaps in the stream. An edge carried in its own frame gives its time to the microsecond instead of to the frame, costs nothing while no edge happens, and leaves the 24-byte measurement frame untouched. Its stamp is in the plate frames' 0.1 ms time base, so alignment survives lost frames: the stamp is the time, not the frame count.
+
+### 13.2 Layout
+
+**Table 13.1 Event frame, 24 bytes**
+
+| Bytes | Field | Type | Content |
+|---|---|---|---|
+| 0-1 | header | `BE EF` | as a stream frame |
+| 2 | address | uint8 | 0xFD: the controller, no plate. A decoder that reads byte 2 as a plate number must skip it; Movetrics Studio logs an unknown platform and ignores the frame |
+| 3 | code | uint8 | 0x0E STREAM_EVENT |
+| 4-7 | stamp | uint32 LE | 0.1 ms tick of this stream at the event (nearest tick) |
+| 8 | type | uint8 | Table 13.2 |
+| 9 | source | uint8 | 0 for SYNC IN 1 and SYNC OUT 1 (the only jack lines the firmware knows); the plate address for saturation |
+| 10-13 | counter | uint32 LE | per type, Table 13.2; a gap in it means event frames were lost |
+| 14-15 | offset | int16 LE | microseconds from the stamp's tick to the edge (within plus or minus 50 us; earlier for the edge that started the stream) |
+| 16-17 | detail | uint16 LE | per type |
+| 18 | mode | uint8 | the mode bits in force |
+| 19 | reserved | uint8 | 0 |
+| 20-21 | crc | uint16 LE | CRC-16/CCITT-FALSE over bytes 2 to 19, as a stream frame |
+| 22-23 | end | `04 04` | |
+
+Edge time in seconds = (stamp x 100 + offset) / 1,000,000, in the same clock as every plate frame's stamp.
+
+**Table 13.2 Event types**
+
+| Type | Name | Counter | Detail | Sent when |
+|---|---|---|---|---|
+| 1 | SYNC_IN_RISE | accepted SYNC IN edges since boot | 0 | EVENT_FRAMES, stream running |
+| 2 | SYNC_IN_FALL | as 1 | 0 | as 1 |
+| 3 | SYNC_OUT_RISE | SYNC OUT edges the FDT drove since boot | 0 | EVENT_FRAMES and MASTER_OUT or PULSE_TRAIN, stream running |
+| 4 | SYNC_OUT_FALL | as 3 | 0 | as 3 |
+| 5 | ARMED | SYNC IN edges so far | arm timeout, minutes | EVENT_FRAMES, START in START_ON_RISE mode; stamp 0 |
+| 6 | TRIGGER_START | the counter of the edge that started the stream | 0 | EVENT_FRAMES, after that edge's type 1 frame; same stamp and offset |
+| 7 | SATURATION | episodes on this plate in this stream | channels out of range now: bits 0-5 fx fy fz mx my mz beyond int16 (the frame carries the clipped limit), bit 6 a pad channel clipped | SATURATION_EVENTS, first frame of an episode |
+| 8 | DROPPED | frames lost in this stream | frames lost since the last report, capped at 65,535 | EVENT_FRAMES, at most every 100 ms, when the transmit ring dropped a frame or the grid skipped frames after a stall (Section 7) |
+| 9 | SATURATION_END | as 7 | every bit seen during the episode | SATURATION_EVENTS, after 20 frames in a row without a bit |
+| 10 | ARM_EXPIRED | SYNC IN edges so far | arm timeout, minutes | EVENT_FRAMES, the arm timed out without an edge; stamp 0 |
+
+### 13.3 Ordering and loss
+
+Plate frames leave about 10 to 15 ms after their stamp (the resampler's latency, Section 4.8); event frames leave within one main-loop pass of the edge. So an event frame usually arrives before the plate frames of the same moment. A host sorts by stamp, never by arrival. Event frames go through the same transmit ring as plate frames and are dropped, not waited for, when it is full; the counters show the gap, and type 8 reports it. Interrupts queue up to 32 events between two main-loop passes; GET_SYNC_MODE reports overflows.
+
+### 13.4 Timing claims and how they are made
+
+All inferred from code, none measured yet. An edge is timed by the cycle counter at the start of its interrupt, so its error is the interrupt latency, a few microseconds while another priority-0 interrupt runs. A pulse edge is late by the timer interrupt's latency, which its offset reports. The trigger start puts tick 0 within one tick (0.1 ms) before the edge. A host that needs better than 0.1 ms uses the offset field, not the stamp alone.
+
+### 13.5 Vectors
+
+`python/tests/fixtures/sync_events.json` holds event frames of every type and two GET_SYNC_MODE replies, written by the firmware's own encoder. The Python, TypeScript and MATLAB clients decode every case in their tests.

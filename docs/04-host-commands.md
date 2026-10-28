@@ -195,6 +195,34 @@ In 1.2.6.5 the detection sweep stopped at the first plate found, START gave a mi
 
 The 1.2.6.6 bench run recorded GET_CURRENT_CONFIG answering in 0.02 s without a reset and in 0.31 s after a host application's reset sequence. In those runs plate 2 answered within 3 s, so the late-plate wait itself did not have to act (measured). The wait has not been seen acting on hardware, and 1.2.8.0 keeps this code and has not been run on hardware (open point 11).
 
+### 3.9 Sync jack (FDT 1.2.8.24, draft)
+
+Evidence: code of the 1.2.8.24 draft. Not yet run on hardware.
+
+FDTs with the analog and sync board have a SYNC IN and a SYNC OUT line. Firmware 1.2.8.24 adds two commands that decide what the FDT does with them. The event frames these modes produce are in [05-measurement-stream.md](05-measurement-stream.md), section 13.
+
+**Mode 0 is the behaviour of 1.2.8.23, byte for byte**: SYNC OUT copies SYNC IN, START streams at once, no frame is added. Movetrics Studio never sends 0x28, so it never leaves mode 0. A host offers sync features only when GET_SYNC_MODE answers. Firmware before 1.2.8.24 and the digital-only FDT, which has no sync jack, answer NACK 7.
+
+| Code and name | Class | Request payload | Reply | Effect | SDK value |
+|---|---|---|---|---|---|
+| 0x28 SET_SYNC_MODE | Configuration (kept over CONTROLLER_RESET, not over power-on) | p0: mode bits (table below). Optional; a missing byte or 0 takes the default: p1 and p2 pulse period in ms, u16 little-endian, 10 to 60,000, default 1,000; p3 pulse width in ms, 1 to 255 and below the period, default 5; p4 SYNC IN debounce in 0.1 ms, default 5 (0.5 ms); p5 arm timeout in minutes, default 30. `pa` and `da` are not checked; send 0 | ACK. NACK 3 for no payload, an unknown bit, MASTER_OUT together with PULSE_TRAIN, or a period or width out of range. NACK 8 while a stream runs or a START waits for its trigger. NACK 7 on firmware without sync modes | Stores the mode in RAM and in backup registers that survive a controller reset, so Studio's tare, which is a CONTROLLER_RESET, does not lose it. A power-on, brown-out, watchdog or reset-pin reset returns to mode 0 (the firmware reads the reset cause, `RCC_CSR`, at boot). Changing the mode resets the debounce and sets SYNC OUT to the new rule at once | implemented (Python `set_sync_mode`, TypeScript `setSyncMode`, MATLAB `setSyncMode`); draft |
+| 0x29 GET_SYNC_MODE | Read-only | None | 26 bytes: `BE EF`, `pa`, 0x29, mode, period u16 LE, width, debounce, arm timeout, state, contract version (1), SYNC IN edges u32 LE, SYNC OUT edges u32 LE, event queue overflows u16 LE, CRC over bytes 2 to 21, `04 04`. State bits: 0x01 armed, 0x02 restored after a reset, 0x04 the last backup write read back equal, 0x08 SYNC IN high, 0x10 SYNC OUT high, 0x20 streaming | None. Also the capability probe | implemented (`get_sync_mode`, `getSyncMode`); draft |
+
+**Mode bits**
+
+| Bit | Name | Effect |
+|---|---|---|
+| 0x01 | START_ON_RISE | START sends its placeholders as always and arms; the next accepted rising SYNC IN edge starts the stream, so tick 0 of the stream lies within one 0.1 ms tick before the edge (inferred from code). While armed the FDT does not sleep, so the pads stay powered: after a sleep they need about 4.6 s, and an edge would not wake the FDT. STOP, the arm timeout or a reset disarms. A second START re-arms |
+| 0x02 | STOP_ON_FALL | An accepted falling SYNC IN edge stops a running stream, as STOP without an ACK. With 0x01 it makes a gate: high records. Each recording needs its own START |
+| 0x04 | MASTER_OUT | SYNC OUT is high while the stream runs and low otherwise, instead of copying SYNC IN. It rises when the stream starts and falls at STOP |
+| 0x08 | EVENT_FRAMES | Every accepted SYNC IN edge and every SYNC OUT edge the FDT drives becomes a 24-byte event frame in the stream ([05](05-measurement-stream.md), section 13). Edges outside a stream are counted (GET_SYNC_MODE) but not sent |
+| 0x10 | PULSE_TRAIN | While streaming, SYNC OUT rises at stream ticks 1, 1 + P, 1 + 2P, ... and falls after the pulse width; low otherwise. An interrupt drives the pin, so each pulse is late by that interrupt's latency, and each pulse's event frame carries the latency as its offset. Not together with 0x04 |
+| 0x20 | SATURATION_EVENTS | An event frame when a plate output reaches the int16 limit or a pad channel clips: one at the start and one at the end of each episode, not one per frame |
+
+Debounce: an edge counts when it changes the last accepted level and comes at least the debounce time after the last accepted edge. A shorter pulse is lost, so use pulses of at least twice the debounce, 1 ms at the default. Mode 0 copies SYNC IN to SYNC OUT without debounce, as before.
+
+Example: trigger start with event frames and a 1 s pulse train, all defaults: `FE ED 00 00 28 19 crc crc 04 04`.
+
 ## 4. Worked frames
 
 Each frame below was computed from the layout in Section 2 and the CRC in [03-host-link-framing.md](03-host-link-framing.md). The KEEP_ALIVE, START and broadcast SET_TARE request frames match the bytes a known-good phone client writes, and the version probe matches the one in chapter 03. The SET_TARE and SET_FILTER frames belong to commands that have no vector.
@@ -293,3 +321,62 @@ All of these are unverified on hardware.
 - GET_SAMPLING_RATE reports 2048 at boot. A host that reads that value as the stream rate is wrong. The stream runs at the filter SPS, which is 500 by default in 1.2.8.0 and 1,000 from 1.2.8.8.
 - On USART3, GET_STATUS reports the new baud rate as soon as SET_SERIAL_PARAM runs, while the port keeps the old rate until the next boot. Over UART4, GET_STATUS reports the default rate, not the stored one. The new rate survives that boot only if a flash write ran after the command.
 - The SDK clients do not send SET_TARE (0x1B), although the 1.2.8.0 firmware accepts it while streaming. A tare re-zeroes the plates.
+
+## 9. Command-code registry
+
+Every code the firmware knows, so that no two features share one. "Released" means present in the released firmware; "draft" means on a firmware branch that has not been released; "stream" means a stream frame's code byte, not a host command; "bench" codes are diagnostics for the firmware team, not for hosts. Free codes are every value not listed. Plate address 0xFD is reserved for frames from the controller itself (event frames); plate addresses 1 and 2 are plates, and 0 is an undetected plate's placeholder.
+
+| Code | Name | Status |
+|---|---|---|
+| 0x01 | START_STREAM | released |
+| 0x02 | START_ACQ | released (not dispatched, NACK 7) |
+| 0x03 | STOP_ACQ | released (not dispatched, NACK 7) |
+| 0x04 | CLEAR_CACHE | released (not dispatched, NACK 7) |
+| 0x05 | STOP_STREAM | released |
+| 0x06 | GET_FRAME | released |
+| 0x07 | SET_SAMPLING_RATE | released |
+| 0x08 | GET_SAMPLING_RATE | released |
+| 0x0E | STREAM_EVENT | stream: code of event frames (plate address 0xFD), 1.2.8.24 draft |
+| 0x11 | SET_CALIBRATION | released |
+| 0x12 | SET_CHANNEL_MASK | released |
+| 0x13 | GET_CHANNEL_MASK | released |
+| 0x14 | INCREASE_VALUE | released |
+| 0x15 | DECREASE_VALUE | released |
+| 0x16 | END_CALIBRATION | released |
+| 0x17 | GET_CALIBRATION | released (not dispatched, NACK 7) |
+| 0x18 | SET_LAYOUT | released |
+| 0x19 | SAVE_CALIBRATION | released |
+| 0x1A | GET_CURRENT_CONFIG | released |
+| 0x1B | SET_TARE | released |
+| 0x1C | SET_FILTER | released |
+| 0x21 | RUN_SELF_TEST | released |
+| 0x22 | GET_STATUS | released |
+| 0x23 | GET_FW_VERSION | released |
+| 0x24 | GET_SERIAL_NUMBER | released |
+| 0x25 | CONTROLLER_RESET | released |
+| 0x26 | KEEP_ALIVE | released |
+| 0x27 | GET_PAD_HEALTH | released |
+| 0x28 | SET_SYNC_MODE | draft, 1.2.8.24 |
+| 0x29 | GET_SYNC_MODE | draft, 1.2.8.24 |
+| 0x31 | SET_SERIAL_PARAM | released |
+| 0x32 | SET_WIFI_SSID | released (not dispatched, NACK 7) |
+| 0x33 | SERVER_AP_ENABLE | released |
+| 0x34 | ANALOG_ENABLE | released |
+| 0x35 | SERVER_BT_ENABLE | released |
+| 0x36 | SERVER_USB_ENABLE | released |
+| 0x37 | PRINTOUT_ENABLE | released |
+| 0x38 | PRINTOUT_DISABLE | released |
+| 0x39 | ANALOG_TEST | released |
+| 0x40 | FIRMWARE_UPDATE | released |
+| 0x50 | PADS_CALIBRATION_START | released (not dispatched, NACK 7) |
+| 0x51 | PADS_CALIBRATION_STOP | released (not dispatched, NACK 7) |
+| 0x52 | PADS_GET_FACTORY_GF | released |
+| 0x53 | PADS_SAVE_FACTORY_GF | released |
+| 0x54 | PADS_GET_CF | released (not dispatched on the host side, NACK 7) |
+| 0x55 | PADS_SAVE_CF | released (not dispatched on the host side, NACK 7) |
+| 0x60 | DEBUG_ADC_CLOCK_DRIVE | bench |
+| 0x61 | DEBUG_POLL_TIMING | bench |
+| 0x62 | DEBUG_PADS_RESTART | bench |
+| 0x63 | debug: raw pad samples | bench |
+| 0x64 | DEBUG_BATTERY | bench, 1.2.8.8 and later |
+| 0x65 | DEBUG_WAKE | bench, 1.2.8.12 and later |

@@ -131,6 +131,8 @@ The battery byte is 255 in this firmware, which means "not measured".
 - The struct comment gives the range 0 to 100 for a measured value. This firmware never produces such a value.
 - A client that reads the battery should take it only from the general record of an 86-byte status reply. It should read 255 as "not measured" and any other value up to 100 as a percentage.
 
+**From firmware 1.2.8.7 and 1.2.8.8 (15 October 2026).** An FDT whose board has a voltage divider on the battery sense input sends a measured value in this byte: 0 to 100, linear from 3.4 V (0) to 4.2 V (100). Every other FDT still sends 255, so the rule above holds. A status request with address 0xFF, as Movetrics Studio sends it, is answered with 88-byte records with the battery byte at offset 83; a request with address 0, as the SDK clients send it, keeps the 86-byte records of Table 3.1.
+
 ## 6. Status length variants
 
 ### 6.1 The three layouts in the sources

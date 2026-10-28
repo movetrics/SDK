@@ -18,7 +18,7 @@ If you write a client in another language, these files are your finish line.
 | **byte-level total** | **53** | **20** | **33** | |
 | `vocabulary.json` | 7 | | | frames in; the samples, gaps and events every client must make of them ([chapter 19](../docs/19-vocabulary-and-units.md)) |
 
-Two more golden files live with the tests: `python/tests/fixtures/sync_events.json` (sync event frames and the GET_SYNC_MODE reply, read by all three clients) and `python/tests/fixtures/k5_c3d_cop.json` (the centre of pressure a C3D reader must find in a file this SDK writes).
+`sync_events.json` holds the sync event frames and GET_SYNC_MODE replies of firmware 1.2.8.24 (draft), written by the firmware's own encoder; the clients' tests read the same file from `python/tests/fixtures/sync_events.json`, and all three pass it. One more golden file lives with the tests: `python/tests/fixtures/k5_c3d_cop.json` (the centre of pressure a C3D reader must find in a file this SDK writes).
 
 ## Two kinds of case
 

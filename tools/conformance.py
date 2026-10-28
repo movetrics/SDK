@@ -23,7 +23,8 @@ import sys
 from pathlib import Path
 
 SDK = Path(__file__).resolve().parent.parent
-SHARED = sorted(p.name for p in (SDK / "vectors").glob("*.json")) + ["sync_events.json", "k5_c3d_cop.json"]
+# dict.fromkeys keeps the order and drops the second sync_events.json once the firmware writes it into vectors/ too.
+SHARED = list(dict.fromkeys(sorted(p.name for p in (SDK / "vectors").glob("*.json")) + ["sync_events.json", "k5_c3d_cop.json"]))
 
 
 def run(command: list[str], cwd: Path, timeout: int = 900) -> tuple[bool, str]:
