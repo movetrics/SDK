@@ -1,0 +1,331 @@
+{
+  "schema": "movetrics-fdt-vectors/1",
+  "file": "status.json",
+  "description": "GET_STATUS (0x22) replies: the 85-byte reply observed on the 2026-09-25 device (anchor), the 85-byte class built from the discovery layout, the 86-byte discovery 1.2.8.0 record and its three-record reply (derived). Each length class is its own case.",
+  "cases": [
+    {
+      "id": "status-anchor-identification-85",
+      "kind": "anchor",
+      "description": "GET_STATUS reply observed on the 2026-09-25 device: 85 bytes, no batterySOC byte, placeholder serial text 123 and address 1.2.3.4",
+      "source": "fdt:evidence/identification-01/identification-01.bin#offset=43,length=85 (also identification-01.json GET_STATUS raw)",
+      "frame_hex": "beef00220000000000313233000000000000000000000000000000000031323300000000000000000000000000000000000000000000000000000001020304010203040102030400000000000000000000bf0a0404",
+      "expect_length_class": "85",
+      "fields": {
+        "platform_address": 0,
+        "commandCode": 34,
+        "errorFlags": 0,
+        "temperature": 0,
+        "serialParams": "123",
+        "wifiSSID": "123",
+        "wifiIP": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "wifiMask": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "wifiGW": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "cacheFrames": 0,
+        "calibrationFactorX": 0,
+        "calibrationFactorY": 0,
+        "calibrationFactorZ": 0
+      },
+      "expect": {
+        "valid": true,
+        "reference_parser": "accept",
+        "reference_kind": "status"
+      }
+    },
+    {
+      "id": "status-derived-85-discovery-record",
+      "kind": "derived",
+      "description": "A discovery-style GET_STATUS record in the 85-byte class (no batterySOC): serial text 1500000,8,n,1 and zero Wi-Fi, cache and temperature fields, as hp.cpp:539-541 now sends",
+      "source": "firmware; firmware; firmware; firmware",
+      "frame_hex": "beef00220000000000313530303030302c382c6e2c31000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000043770404",
+      "expect_length_class": "85",
+      "fields": {
+        "platform_address": 0,
+        "commandCode": 34,
+        "errorFlags": 0,
+        "temperature": 0,
+        "serialParams": "1500000,8,n,1",
+        "wifiSSID": "",
+        "wifiIP": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiMask": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiGW": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cacheFrames": 0,
+        "calibrationFactorX": 0,
+        "calibrationFactorY": 0,
+        "calibrationFactorZ": 0
+      },
+      "expect": {
+        "valid": true,
+        "reference_parser": "accept",
+        "reference_kind": "status"
+      }
+    },
+    {
+      "id": "status-derived-86-general-record",
+      "kind": "derived",
+      "description": "Discovery 1.2.8.0 GET_STATUS record: general record, platform 0, batterySOC 87; bit 0 of errorFlags is set when any pad reports a problem (hp.cpp:566-570)",
+      "source": "firmware; firmware; firmware; firmware; fdt:tests/test_protocol.py:117",
+      "frame_hex": "beef00220000000000313530303030302c382c6e2c3100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005762670404",
+      "expect_length_class": "86",
+      "fields": {
+        "platform_address": 0,
+        "commandCode": 34,
+        "errorFlags": 0,
+        "temperature": 0,
+        "serialParams": "1500000,8,n,1",
+        "wifiSSID": "",
+        "wifiIP": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiMask": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiGW": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cacheFrames": 0,
+        "calibrationFactorX": 0,
+        "calibrationFactorY": 0,
+        "calibrationFactorZ": 0,
+        "batterySOC": 87
+      },
+      "expect": {
+        "valid": true,
+        "reference_parser": "reject",
+        "reference_kind": "unknown"
+      }
+    },
+    {
+      "id": "status-derived-86-platform-1-record",
+      "kind": "derived",
+      "description": "Discovery 1.2.8.0 GET_STATUS record: platform 1 record; errorFlags bit 0 is pad 1 not answering (hp.cpp:553, 557); batterySOC 255 (not measured, hp.h:127)",
+      "source": "firmware; firmware; firmware; firmware; fdt:tests/test_protocol.py:117",
+      "frame_hex": "beef01220100000000313530303030302c382c6e2c310000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000230156048907ffe14d0404",
+      "expect_length_class": "86",
+      "fields": {
+        "platform_address": 1,
+        "commandCode": 34,
+        "errorFlags": 1,
+        "temperature": 0,
+        "serialParams": "1500000,8,n,1",
+        "wifiSSID": "",
+        "wifiIP": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiMask": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiGW": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cacheFrames": 0,
+        "calibrationFactorX": 291,
+        "calibrationFactorY": 1110,
+        "calibrationFactorZ": 1929,
+        "batterySOC": 255
+      },
+      "expect": {
+        "valid": true,
+        "reference_parser": "reject",
+        "reference_kind": "unknown"
+      }
+    },
+    {
+      "id": "status-derived-86-platform-2-record",
+      "kind": "derived",
+      "description": "Discovery 1.2.8.0 GET_STATUS record: platform 2 record; errorFlags bit 4 is pad 1 tare failed (hp.cpp:558); batterySOC 100",
+      "source": "firmware; firmware; firmware; firmware; fdt:tests/test_protocol.py:117",
+      "frame_hex": "beef02221000000000313530303030302c382c6e2c31000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020102020264ee430404",
+      "expect_length_class": "86",
+      "fields": {
+        "platform_address": 2,
+        "commandCode": 34,
+        "errorFlags": 16,
+        "temperature": 0,
+        "serialParams": "1500000,8,n,1",
+        "wifiSSID": "",
+        "wifiIP": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiMask": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "wifiGW": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cacheFrames": 0,
+        "calibrationFactorX": 512,
+        "calibrationFactorY": 513,
+        "calibrationFactorZ": 514,
+        "batterySOC": 100
+      },
+      "expect": {
+        "valid": true,
+        "reference_parser": "reject",
+        "reference_kind": "unknown"
+      }
+    },
+    {
+      "id": "status-derived-86x3-reply",
+      "kind": "derived",
+      "description": "GET_STATUS reply with the general record and two platform records, 258 bytes (hp_send_status sends one record per detected platform)",
+      "source": "firmware; firmware",
+      "frame_hex": "beef00220000000000313530303030302c382c6e2c3100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005762670404beef01220100000000313530303030302c382c6e2c310000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000230156048907ffe14d0404beef02221000000000313530303030302c382c6e2c31000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020102020264ee430404",
+      "expect_length_class": "86x3",
+      "records": [
+        {
+          "platform_address": 0,
+          "commandCode": 34,
+          "errorFlags": 0,
+          "temperature": 0,
+          "serialParams": "1500000,8,n,1",
+          "wifiSSID": "",
+          "wifiIP": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiMask": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiGW": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "cacheFrames": 0,
+          "calibrationFactorX": 0,
+          "calibrationFactorY": 0,
+          "calibrationFactorZ": 0,
+          "batterySOC": 87
+        },
+        {
+          "platform_address": 1,
+          "commandCode": 34,
+          "errorFlags": 1,
+          "temperature": 0,
+          "serialParams": "1500000,8,n,1",
+          "wifiSSID": "",
+          "wifiIP": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiMask": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiGW": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "cacheFrames": 0,
+          "calibrationFactorX": 291,
+          "calibrationFactorY": 1110,
+          "calibrationFactorZ": 1929,
+          "batterySOC": 255
+        },
+        {
+          "platform_address": 2,
+          "commandCode": 34,
+          "errorFlags": 16,
+          "temperature": 0,
+          "serialParams": "1500000,8,n,1",
+          "wifiSSID": "",
+          "wifiIP": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiMask": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "wifiGW": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "cacheFrames": 0,
+          "calibrationFactorX": 512,
+          "calibrationFactorY": 513,
+          "calibrationFactorZ": 514,
+          "batterySOC": 100
+        }
+      ],
+      "expect": {
+        "reference_parser": "reject"
+      }
+    }
+  ]
+}

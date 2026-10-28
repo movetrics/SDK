@@ -1,0 +1,55 @@
+---
+title: Movetrics for developers
+description: Get force plate data into the tool you already use, in minutes.
+template: splash
+hero:
+  tagline: Force plate data in Excel, Python, MATLAB, OpenSim, LabRecorder or your own code, with the same names, units and time base everywhere.
+  actions:
+    - text: The SDK in two minutes
+      link: start/two-minutes/
+      icon: right-arrow
+    - text: Build it with an AI assistant
+      link: start/build-with-ai/
+      variant: secondary
+    - text: Python in 5 minutes
+      link: start/python/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Which path is mine?
+
+<CardGrid>
+  <Card title="I want my results in a spreadsheet" icon="document">
+    Recordings, results and raw samples from Movetrics Cloud in Excel, refreshed with one click. [Excel in 5 minutes](start/excel/)
+  </Card>
+  <Card title="I analyse in Python or MATLAB" icon="laptop">
+    Stream live at up to 2,000 samples per second per plate, or read Studio and Cloud files. [Python](start/python/) · [MATLAB](start/matlab/)
+  </Card>
+  <Card title="I record EMG, EEG or video too" icon="random">
+    Lab Streaming Layer for LabRecorder, sync pulses for sample-level alignment. [Record with EMG and cameras](start/emg-and-cameras/)
+  </Card>
+  <Card title="I run OpenSim or Pose2Sim" icon="puzzle">
+    C3D and OpenSim external loads with the centre of pressure where it belongs. [OpenSim and Pose2Sim](start/opensim/)
+  </Card>
+  <Card title="I want to ask an AI about my athletes" icon="comment">
+    Connect Claude or ChatGPT to your workspace, read only. [Ask Claude or ChatGPT](start/ai-assistants/)
+  </Card>
+  <Card title="I build software" icon="seti:config">
+    The byte-level protocol, test vectors and a simulator that speaks it. [Reference](reference/00-overview/)
+  </Card>
+  <Card title="I want an AI assistant to build it" icon="rocket">
+    Paste one prompt into Claude Code, Cursor, ChatGPT or Copilot; the repository tells it everything else. [Build with an AI assistant](start/build-with-ai/)
+  </Card>
+</CardGrid>
+
+## One vocabulary
+
+Wherever the data comes from, it has the same shape: `t` in seconds from the FDT's own clock, `fx fy fz` in newtons, `mx my mz` in newton-metres, `cop_x cop_y` in metres from the plate centre, a list of `events` (sync edges, notes) and a list of `gaps` that is never hidden. [Names, units and axes](concepts/units-and-axes/).
+
+## Why you can trust it
+
+The Python, TypeScript and MATLAB clients pass the same shared test data, each the parts it uses. The centre of pressure agrees with Studio's own figures within 0.28 mm rms on real recordings, and C3D files land within 0.3 mm in the reader OpenSim uses (measured). The clients cannot send firmware, calibration or reset commands. Every page says what was measured, what was simulated and what has not been run yet; this version has not yet run against a real FDT. [Why you can trust it](concepts/tested/).
+
+Free and open under Apache 2.0, at [github.com/movetrics/sdk](https://github.com/movetrics/sdk).

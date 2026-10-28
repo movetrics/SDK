@@ -1,0 +1,3 @@
+/* Movetrics accent on Starlight's defaults; everything else stays Starlight so light and dark both work. */
+:root { --sl-color-accent-low: #0b2f2a; --sl-color-accent: #14866d; --sl-color-accent-high: #b8f0e0; }
+:root[data-theme='light'] { --sl-color-accent-low: #d4f5ec; --sl-color-accent: #0f7a63; --sl-color-accent-high: #063b30; }

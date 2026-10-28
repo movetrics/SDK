@@ -1,0 +1,46 @@
+{
+  "name": "movetrics-fdt-sdk",
+  "version": "0.3.0",
+  "description": "TypeScript reference client for the Movetrics FDT host link: Web Serial, Web Bluetooth (via the ESP32-S3 bridge) and Node.",
+  "license": "Apache-2.0",
+  "homepage": "https://developers.movetrics.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/movetrics/sdk.git",
+    "directory": "ts"
+  },
+  "keywords": [
+    "force plate",
+    "biomechanics",
+    "FDT",
+    "Movetrics",
+    "Web Serial",
+    "Web Bluetooth"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('fs');for(const f of fs.readdirSync('dist')){if(!f.endsWith('.d.ts'))continue;const p='dist/'+f;fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace(/\\.ts(?=')/g,'.js'));}\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}

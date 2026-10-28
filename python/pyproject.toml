@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "movetrics-fdt"
+version = "0.3.0"
+description = "Python client for the Movetrics FDT controller (USB serial, BLE), Movetrics Studio export files and the Movetrics Cloud read API."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "Movetrics" }]
+keywords = ["force plate", "biomechanics", "FDT", "Movetrics", "C3D", "OpenSim", "LSL"]
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Homepage = "https://developers.movetrics.com"
+Source = "https://github.com/movetrics/sdk"
+Changelog = "https://github.com/movetrics/sdk/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+serial = ["pyserial>=3.5"]
+ble = ["bleak>=0.21,<1"]
+c3d = ["ezc3d>=1.5", "numpy"]
+lsl = ["pylsl>=1.16"]
+
+[tool.setuptools.packages.find]
+include = ["movetrics_fdt*"]
+
+[tool.setuptools.package-data]
+movetrics_fdt = ["py.typed"]
+
+[project.scripts]
+movetrics-fdt = "movetrics_fdt.__main__:main"

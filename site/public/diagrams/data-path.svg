@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 446" width="820" height="446" role="img" aria-labelledby="title desc">
+<title id="title">Where the Movetrics SDK sits</title>
+<desc id="desc">Plates feed the FDT. Live data reaches the SDK over USB-C or Bluetooth and goes on to your tools; recordings go through Studio or the app to Movetrics Cloud, whose read-only API the SDK reads; voltages from the analog outputs are turned back into newtons by the SDK.</desc>
+<style>
+text{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12.5px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.bg{fill:#fcfcfb;stroke:#e4e3df}
+.t1{fill:#1b1b1a} .t2{fill:#5a5955} .t3{fill:#7a7974}
+.box{fill:#f3f2ef;stroke:#cfcec8}
+.dash{fill:none;stroke:#9a9993;stroke-dasharray:5 4}
+.acc{fill:#e3f6f0;stroke:#0f7a63} .accT{fill:#0b5e4c}
+.acc2{fill:#e5f0fb;stroke:#2a78d6} .acc2T{fill:#174f91}
+.ln{stroke:#6a6964;fill:none} .head{fill:#6a6964}
+.curve{stroke:#0f7a63;fill:none} .band{fill:#e3f6f0}
+.grid{stroke:#e9e8e4} .axis{stroke:#b5b4ae}
+@media (prefers-color-scheme: dark){
+.bg{fill:#1a1a19;stroke:#33322f}
+.t1{fill:#f0efec} .t2{fill:#c3c2b7} .t3{fill:#9a998f}
+.box{fill:#252523;stroke:#45443f} .dash{stroke:#7a7972}
+.acc{fill:#0b2f2a;stroke:#3fbf9c} .accT{fill:#9fe8d2}
+.acc2{fill:#13263d;stroke:#3987e5} .acc2T{fill:#a9cdf5}
+.ln{stroke:#a9a89f} .head{fill:#a9a89f}
+.curve{stroke:#3fbf9c} .band{fill:#0f2c27}
+.grid{stroke:#2c2b29} .axis{stroke:#4a4944}
+}
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path class="head" d="M0 0L10 5L0 10z"/></marker></defs>
+<rect class="bg" x="0.5" y="0.5" width="819" height="445" rx="12"/>
+<text class="t1" x="16" y="30" text-anchor="start" font-size="15" font-weight="600"><tspan x="16" dy="0">Where the SDK sits</tspan></text>
+<rect class="box" x="16" y="184" width="120" height="80" rx="8" stroke-width="1.5"/>
+<text class="t1" x="76.0" y="204.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="76.0" dy="0">F1-3D plates</tspan></text>
+<text class="t2" x="76.0" y="222.0" text-anchor="middle"><tspan x="76.0" dy="0">one or two</tspan><tspan x="76.0" dy="16">force and moment</tspan><tspan x="76.0" dy="16">up to 2,000/s each</tspan></text>
+<rect class="box" x="170" y="56" width="120" height="336" rx="8" stroke-width="1.5"/>
+<text class="t1" x="230.0" y="180.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="230.0" dy="0">FDT</tspan></text>
+<text class="t2" x="230.0" y="198.0" text-anchor="middle"><tspan x="230.0" dy="0">Force Data</tspan><tspan x="230.0" dy="16">Terminal</tspan><tspan x="230.0" dy="16"></tspan><tspan x="230.0" dy="16">stamps every</tspan><tspan x="230.0" dy="16">sample with</tspan><tspan x="230.0" dy="16">its own clock</tspan></text>
+<path class="ln" d="M136 224L168 224" stroke-width="1.5" marker-end="url(#a)"/>
+<rect class="acc" x="420" y="56" width="170" height="100" rx="8" stroke-width="1.5"/>
+<text class="accT" x="505.0" y="86.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="505.0" dy="0">Movetrics SDK</tspan></text>
+<text class="accT" x="505.0" y="104.0" text-anchor="middle"><tspan x="505.0" dy="0">Python, TypeScript,</tspan><tspan x="505.0" dy="16">MATLAB; a real FDT</tspan><tspan x="505.0" dy="16">or the simulator</tspan></text>
+<rect class="box" x="616" y="56" width="188" height="100" rx="8" stroke-width="1.5"/>
+<text class="t1" x="710.0" y="78.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="710.0" dy="0">Your tools</tspan></text>
+<text class="t2" x="710.0" y="96.0" text-anchor="middle"><tspan x="710.0" dy="0">your app or dashboard</tspan><tspan x="710.0" dy="16">CSV, C3D, OpenSim .mot</tspan><tspan x="710.0" dy="16">LabRecorder with EMG,</tspan><tspan x="710.0" dy="16">EEG and cameras</tspan></text>
+<path class="ln" d="M290 106L418 106" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="t3" x="355" y="84" text-anchor="middle" font-size="11.5"><tspan x="355" dy="0">USB-C or Bluetooth</tspan><tspan x="355" dy="14">every sample, live</tspan></text>
+<path class="ln" d="M590 106L614 106" stroke-width="1.5" marker-end="url(#a)"/>
+<rect class="box" x="420" y="180" width="170" height="56" rx="8" stroke-width="1.5"/>
+<text class="t1" x="505.0" y="204.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="505.0" dy="0">Studio or the app</tspan></text>
+<text class="t2" x="505.0" y="222.0" text-anchor="middle"><tspan x="505.0" dy="0">records and uploads</tspan></text>
+<rect class="box" x="616" y="180" width="188" height="56" rx="8" stroke-width="1.5"/>
+<text class="t1" x="710.0" y="204.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="710.0" dy="0">Movetrics Cloud</tspan></text>
+<text class="t2" x="710.0" y="222.0" text-anchor="middle"><tspan x="710.0" dy="0">results from the engine</tspan></text>
+<rect class="acc" x="616" y="256" width="188" height="56" rx="8" stroke-width="1.5"/>
+<text class="accT" x="710.0" y="280.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="710.0" dy="0">Read-only Cloud API</tspan></text>
+<text class="accT" x="710.0" y="298.0" text-anchor="middle"><tspan x="710.0" dy="0">Excel, Python, MATLAB, AI</tspan></text>
+<path class="ln" d="M290 208L418 208" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="t3" x="355" y="200" text-anchor="middle" font-size="11.5"><tspan x="355" dy="0">recordings</tspan></text>
+<path class="ln" d="M590 208L614 208" stroke-width="1.5" marker-end="url(#a)"/>
+<path class="ln" d="M710 236L710 254" stroke-width="1.5" marker-end="url(#a)"/>
+<rect class="box" x="420" y="336" width="170" height="56" rx="8" stroke-width="1.5"/>
+<text class="t1" x="505.0" y="360.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="505.0" dy="0">Your DAQ or EMG</tspan></text>
+<text class="t2" x="505.0" y="378.0" text-anchor="middle"><tspan x="505.0" dy="0">records the voltages</tspan></text>
+<rect class="acc" x="616" y="336" width="188" height="56" rx="8" stroke-width="1.5"/>
+<text class="accT" x="710.0" y="360.0" text-anchor="middle" font-size="14" font-weight="600"><tspan x="710.0" dy="0">movetrics_fdt.analog</tspan></text>
+<text class="accT" x="710.0" y="378.0" text-anchor="middle"><tspan x="710.0" dy="0">volts back to N and N·m</tspan></text>
+<path class="ln" d="M290 364L418 364" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="t3" x="355" y="342" text-anchor="middle" font-size="11.5"><tspan x="355" dy="0">±10 V analog outputs</tspan><tspan x="355" dy="14">(analog FDT)</tspan></text>
+<path class="ln" d="M590 364L614 364" stroke-width="1.5" marker-end="url(#a)"/>
+<rect class="acc" x="16" y="414" width="14" height="14" rx="3" stroke-width="1.5"/>
+<text class="t2" x="36" y="425" text-anchor="start"><tspan x="36" dy="0">part of the SDK</tspan></text>
+<rect class="box" x="150" y="414" width="14" height="14" rx="3" stroke-width="1.5"/>
+<text class="t2" x="170" y="425" text-anchor="start"><tspan x="170" dy="0">Movetrics product or your own system</tspan></text>
+</svg>

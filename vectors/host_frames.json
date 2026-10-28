@@ -1,0 +1,333 @@
+{
+  "schema": "movetrics-fdt-vectors/1",
+  "file": "host_frames.json",
+  "description": "Host-to-device frames FE ED address destination command [payload] CRC(LE) 04 04: the six identification requests and the START and STOP requests of the 2026-09-25 capture (anchors), encodes, and decodes covering the RX delimiter, the CRC, short frames, the header and resync.",
+  "cases": [
+    {
+      "id": "host-anchor-identification-get-sampling-rate",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-sampling-rate)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=1",
+      "frame_hex": "feed000008944d0404",
+      "expect": {
+        "valid": true,
+        "command": "08",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-identification-get-channel-mask",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-channel-mask)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=4",
+      "frame_hex": "feed000013ceee0404",
+      "expect": {
+        "valid": true,
+        "command": "13",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-identification-get-current-config",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-current-config)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=7",
+      "frame_hex": "feed00001ae77f0404",
+      "expect": {
+        "valid": true,
+        "command": "1a",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-identification-get-status",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-status)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=10",
+      "frame_hex": "feed000022bcc80404",
+      "expect": {
+        "valid": true,
+        "command": "22",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-identification-get-fw-version",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-fw-version)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=15",
+      "frame_hex": "feed0000239dd80404",
+      "expect": {
+        "valid": true,
+        "command": "23",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-identification-get-serial-number",
+      "kind": "anchor",
+      "description": "Host request sent in the 2026-09-25 identification capture (get-serial-number)",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=18",
+      "frame_hex": "feed0000247aa80404",
+      "expect": {
+        "valid": true,
+        "command": "24",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-capture-start-stream",
+      "kind": "anchor",
+      "description": "Host request in the 2026-09-25 capture: START_STREAM to FF/FF",
+      "source": "fdt:evidence/initial-20260925/fdt-capture.json#start_request_hex",
+      "frame_hex": "feedffff0121100404",
+      "expect": {
+        "valid": true,
+        "command": "01",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-capture-stop-stream",
+      "kind": "anchor",
+      "description": "Host request in the 2026-09-25 capture: STOP_STREAM to FF/00",
+      "source": "fdt:evidence/initial-20260925/fdt-capture.json#stop_request_hex",
+      "frame_hex": "feedff00055a530404",
+      "expect": {
+        "valid": true,
+        "command": "05",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-anchor-bench-get-status-request",
+      "kind": "anchor",
+      "description": "GET_STATUS request sent over USART3 to Discovery 1.1-UART4-b3 in the Android bench run of 7 October 2026",
+      "source": "android:docs/evidence/bluetooth-transport-20261007/get_status_hardware.log#line=1",
+      "frame_hex": "feed000022bcc80404",
+      "expect": {
+        "valid": true,
+        "command": "22",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "host-encode-fw-version-probe",
+      "kind": "derived",
+      "description": "GET_FW_VERSION (0x23) to 00/00 with no payload: the version probe",
+      "source": "firmware; firmware; tools/ota_client.py:79",
+      "command": "23",
+      "address_hex": "00",
+      "destination_hex": "00",
+      "payload_hex": "",
+      "expect_frame_hex": "feed0000239dd80404"
+    },
+    {
+      "id": "host-encode-keep-alive-empty-payload",
+      "kind": "derived",
+      "description": "KEEP_ALIVE (0x26) with an empty payload: the framing is valid, but the firmware needs a 2-byte payload and answers NACK 3",
+      "source": "firmware; firmware",
+      "command": "26",
+      "address_hex": "00",
+      "destination_hex": "00",
+      "payload_hex": "",
+      "expect_frame_hex": "feed00002638880404"
+    },
+    {
+      "id": "host-encode-keep-alive-600-s",
+      "kind": "derived",
+      "description": "KEEP_ALIVE (0x26) with the interval 600 s as a uint16 little-endian payload (58 02)",
+      "source": "firmware; firmware",
+      "command": "26",
+      "address_hex": "00",
+      "destination_hex": "00",
+      "payload_hex": "5802",
+      "expect_frame_hex": "feed00002658023e820404"
+    },
+    {
+      "id": "host-encode-start-stream",
+      "kind": "derived",
+      "description": "START_STREAM (0x01) to FF/FF with no payload",
+      "source": "firmware; fdt:tests/test_protocol.py:29",
+      "command": "01",
+      "address_hex": "ff",
+      "destination_hex": "ff",
+      "payload_hex": "",
+      "expect_frame_hex": "feedffff0121100404"
+    },
+    {
+      "id": "host-encode-stop-stream",
+      "kind": "derived",
+      "description": "STOP_STREAM (0x05) to FF/00 with no payload; the CRC 0x535A is sent as 5a 53",
+      "source": "firmware; firmware:44; fdt:tests/test_protocol.py:30",
+      "command": "05",
+      "address_hex": "ff",
+      "destination_hex": "00",
+      "payload_hex": "",
+      "expect_frame_hex": "feedff00055a530404"
+    },
+    {
+      "id": "host-encode-get-current-config",
+      "kind": "derived",
+      "description": "GET_CURRENT_CONFIG (0x1A) to 00/00 with no payload",
+      "source": "firmware; fdt:tests/test_protocol.py:31",
+      "command": "1a",
+      "address_hex": "00",
+      "destination_hex": "00",
+      "payload_hex": "",
+      "expect_frame_hex": "feed00001ae77f0404"
+    },
+    {
+      "id": "host-encode-get-status-ff-ff-refused",
+      "kind": "derived",
+      "description": "GET_STATUS (0x22) to FF/FF: the CRC bytes are 20 04, so the RX delimiter closes the message at the CRC high byte, and the FDT encoder refuses the request",
+      "source": "firmware; firmware; fdt:src/movetrics_fdt/protocol.py:74; fdt:tests/test_protocol.py:45",
+      "command": "22",
+      "address_hex": "ff",
+      "destination_hex": "ff",
+      "payload_hex": "",
+      "expect_frame_hex": null,
+      "expect_error": "early_04_04_delimiter",
+      "would_be_frame_hex": "feedffff2220040404"
+    },
+    {
+      "id": "host-encode-get-status-00-00",
+      "kind": "derived",
+      "description": "GET_STATUS (0x22) to 00/00 with no payload: the request the Android bench sent over USART3",
+      "source": "firmware; android:fdt-core/src/main/java/com/movetrics/fdt/core/FdtTransport.kt:32; android:docs/evidence/bluetooth-transport-20261007/get_status_hardware.log:1",
+      "command": "22",
+      "address_hex": "00",
+      "destination_hex": "00",
+      "payload_hex": "",
+      "expect_frame_hex": "feed000022bcc80404"
+    },
+    {
+      "id": "host-decode-fw-version-probe",
+      "kind": "derived",
+      "description": "GET_FW_VERSION probe with a valid CRC and EOT: dispatched; the reply is the version record",
+      "source": "firmware; firmware; firmware",
+      "frame_hex": "feed0000239dd80404",
+      "rx_messages_hex": [
+        "feed0000239dd80404"
+      ],
+      "expect": {
+        "valid": true,
+        "command": "23",
+        "payload_hex": "",
+        "device_reply": {
+          "reply": "command_reply"
+        },
+        "dispatched": true
+      }
+    },
+    {
+      "id": "host-decode-keep-alive-empty-nack",
+      "kind": "derived",
+      "description": "KEEP_ALIVE (0x26) with an empty payload: CRC and EOT are valid, the size check fails, the firmware answers NACK 3 and does not dispatch",
+      "source": "firmware; firmware; firmware; firmware",
+      "frame_hex": "feed00002638880404",
+      "rx_messages_hex": [
+        "feed00002638880404"
+      ],
+      "expect": {
+        "valid": true,
+        "command": "26",
+        "payload_hex": "",
+        "device_reply": {
+          "nack_code": 3
+        },
+        "dispatched": false
+      }
+    },
+    {
+      "id": "host-decode-fw-version-bad-crc",
+      "kind": "derived",
+      "description": "GET_FW_VERSION probe with one CRC bit changed (high byte d8 to d9): the firmware answers NACK 9 (ERR_CRC)",
+      "source": "firmware; firmware; firmware; firmware",
+      "frame_hex": "feed0000239dd90404",
+      "rx_messages_hex": [
+        "feed0000239dd90404"
+      ],
+      "expect": {
+        "valid": false,
+        "device_reply": {
+          "nack_code": 9
+        },
+        "dispatched": false
+      }
+    },
+    {
+      "id": "host-decode-truncated-frame",
+      "kind": "derived",
+      "description": "The probe without its CRC bytes (7 bytes): under the 9-byte minimum, so the firmware drops it without a reply",
+      "source": "firmware; firmware; firmware",
+      "frame_hex": "feed0000230404",
+      "rx_messages_hex": [
+        "feed0000230404"
+      ],
+      "expect": {
+        "valid": false,
+        "device_reply": {
+          "reply": "none",
+          "reason": "shorter_than_9_bytes"
+        },
+        "dispatched": false
+      }
+    },
+    {
+      "id": "host-decode-bad-header-silent",
+      "kind": "derived",
+      "description": "The probe with the header bytes reversed (ED FE): the firmware drops it without a reply",
+      "source": "firmware; firmware; firmware",
+      "frame_hex": "edfe0000239dd80404",
+      "rx_messages_hex": [
+        "edfe0000239dd80404"
+      ],
+      "expect": {
+        "valid": false,
+        "device_reply": {
+          "reply": "none",
+          "reason": "bad_header"
+        },
+        "dispatched": false
+      }
+    },
+    {
+      "id": "host-decode-resync-after-garbage",
+      "kind": "derived",
+      "description": "Two garbage bytes before the probe: the parser resynchronises at the first FE ED and dispatches the probe",
+      "source": "firmware; firmware; firmware",
+      "frame_hex": "aa55feed0000239dd80404",
+      "rx_messages_hex": [
+        "aa55feed0000239dd80404"
+      ],
+      "expect": {
+        "valid": true,
+        "command": "23",
+        "payload_hex": "",
+        "device_reply": {
+          "reply": "command_reply"
+        },
+        "dispatched": true
+      }
+    },
+    {
+      "id": "host-decode-crc-byte-04-split",
+      "kind": "derived",
+      "description": "GET_STATUS to FF/FF: the CRC high byte is 04, so the RX delimiter closes the message after 8 bytes and the 9th byte stays pending: no whole frame is delivered",
+      "source": "firmware; firmware",
+      "frame_hex": "feedffff2220040404",
+      "rx_messages_hex": [
+        "feedffff22200404"
+      ],
+      "expect": {
+        "valid": false,
+        "device_reply": {
+          "reply": "none",
+          "reason": "shorter_than_9_bytes"
+        },
+        "dispatched": false
+      }
+    }
+  ]
+}

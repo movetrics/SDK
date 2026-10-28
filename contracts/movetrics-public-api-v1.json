@@ -1,0 +1,2001 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Movetrics Cloud API",
+    "description": "Your own recordings and results, read with an access token from Account on the web.\n\nSend the token as `Authorization: Bearer mvt_…`. Excel's Get Data > From Web has no bearer field: choose Basic, any\nuser name, and the token as the password. A token reads one workspace with its owner's current role and the\nworkspace's export rule. Without names, athletes appear by a stable code and titles and file names are left out.\n\nSamples come out exactly as stored, unfiltered. Every result names its metric, method and method version and the\nengine version, so your own calculation can be compared line by line. The contract is additive within v1: fields\nmay be added, never renamed or removed.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://beta.movetrics.com",
+      "description": "Movetrics Cloud beta"
+    }
+  ],
+  "paths": {
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "Who this token reads as",
+        "description": "Who this token reads as, and what it may see.",
+        "operationId": "me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me",
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Me Api V1 Me Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/athletes": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "Athletes in the workspace",
+        "operationId": "athletes_api_v1_athletes_get",
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Athletes Api V1 Athletes Get",
+                  "$ref": "#/components/schemas/Athletes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recordings": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "Recordings, newest first, with the engine's results",
+        "description": "Recordings newest first, each with the engine's results; follow next_cursor for more.",
+        "operationId": "recordings_api_v1_recordings_get",
+        "parameters": [
+          {
+            "name": "athlete_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Athlete Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Recordings Api V1 Recordings Get",
+                  "$ref": "#/components/schemas/Recordings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recordings/{recording_id}": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "One recording",
+        "operationId": "recording_api_v1_recordings__recording_id__get",
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Recording Api V1 Recordings  Recording Id  Get",
+                  "$ref": "#/components/schemas/RecordingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recording in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recordings/{recording_id}/samples": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "Stored samples, a page at a time",
+        "description": "Stored samples, unfiltered, in sample order. Pages of at most 100,000 samples; next_start continues.",
+        "operationId": "samples_api_v1_recordings__recording_id__samples_get",
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recording Id"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Start"
+            }
+          },
+          {
+            "name": "stop",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stop"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamplesPage"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recording in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The samples are not ready yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recordings/{recording_id}/samples.parquet": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "The stored signal file, byte for byte",
+        "description": "The stored signal file itself, byte for byte (columns channel_000000…, names in the file's metadata).",
+        "operationId": "samples_parquet_api_v1_recordings__recording_id__samples_parquet_get",
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/vnd.apache.parquet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such recording in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/results": {
+      "get": {
+        "tags": [
+          "Public API v1"
+        ],
+        "summary": "One row per result, for Excel or a script",
+        "description": "One row per result: the table for Excel or a script. limit counts recordings, not rows.",
+        "operationId": "results_api_v1_results_get",
+        "parameters": [
+          {
+            "name": "athlete_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Athlete Id"
+            }
+          },
+          {
+            "name": "metric_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Metric Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Results"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace's export rule does not let this role read data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 600 requests in a minute; wait for Retry-After seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Analysis": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "engine_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Version",
+            "description": "Version of the Movetrics engine that produced the results."
+          },
+          "digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest",
+            "description": "Digest of the stored analysis; it changes when the analysis changes."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "engine_version",
+          "digest"
+        ],
+        "title": "Analysis"
+      },
+      "Athlete": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "The athlete's id in this workspace."
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code",
+            "description": "Stable code such as A-7KQ2M4XD; the same athlete keeps it, and it differs in every workspace."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Only when the token was created with names on."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "code"
+        ],
+        "title": "Athlete"
+      },
+      "AthleteListed": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "The athlete's id in this workspace."
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code",
+            "description": "Stable code such as A-7KQ2M4XD; the same athlete keeps it, and it differs in every workspace."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Only when the token was created with names on."
+          },
+          "archived": {
+            "type": "boolean",
+            "title": "Archived"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "archived"
+        ],
+        "title": "AthleteListed"
+      },
+      "Athletes": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AthleteListed"
+            },
+            "type": "array",
+            "title": "Data"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "Athletes"
+      },
+      "Channel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity",
+            "description": "force, moment, centre_of_pressure, ..."
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "component": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component",
+            "description": "x, y or z where it applies."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "quantity",
+          "unit",
+          "component"
+        ],
+        "title": "Channel"
+      },
+      "Error": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "Error"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code to branch on, such as NOT_FOUND, RATE_LIMITED or SAMPLES_NOT_READY."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "A sentence for a person."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Me": {
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
+          },
+          "user": {
+            "$ref": "#/components/schemas/MeUser"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/MeWorkspace"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "access": {
+            "$ref": "#/components/schemas/MeAccess"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "api_version",
+          "user",
+          "workspace",
+          "role",
+          "access"
+        ],
+        "title": "Me"
+      },
+      "MeAccess": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "token",
+              "session"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "The token's name, as its owner typed it."
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes",
+            "description": "[\"read\"], or [\"read\", \"change\"] when the person also allowed changes that can be undone."
+          },
+          "names": {
+            "type": "boolean",
+            "title": "Names",
+            "description": "Whether athlete names, recording titles and file names are included."
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "scopes",
+          "names",
+          "expires_at"
+        ],
+        "title": "MeAccess"
+      },
+      "MeUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "MeUser"
+      },
+      "MeWorkspace": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "MeWorkspace"
+      },
+      "Recording": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "title": "Recorded At",
+            "description": "When it was recorded (ISO 8601, UTC), or when it was uploaded if the file has no time."
+          },
+          "athlete": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Athlete"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "movement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movement",
+            "description": "The movement in plain words, as the app shows it."
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol",
+            "description": "Protocol id, such as jump.cmj, when a test was recognised."
+          },
+          "origin": {
+            "type": "string",
+            "const": "movetrics_engine",
+            "title": "Origin"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Analysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "key_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Result",
+            "description": "The one number the app leads with for this test."
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Only when the token was created with names on."
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename",
+            "description": "Only when the token was created with names on."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "recorded_at",
+          "athlete",
+          "project_id",
+          "status",
+          "movement",
+          "protocol",
+          "origin",
+          "analysis",
+          "key_result",
+          "results"
+        ],
+        "title": "Recording"
+      },
+      "RecordingDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "title": "Recorded At",
+            "description": "When it was recorded (ISO 8601, UTC), or when it was uploaded if the file has no time."
+          },
+          "athlete": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Athlete"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "movement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movement",
+            "description": "The movement in plain words, as the app shows it."
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol",
+            "description": "Protocol id, such as jump.cmj, when a test was recognised."
+          },
+          "origin": {
+            "type": "string",
+            "const": "movetrics_engine",
+            "title": "Origin"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Analysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "key_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Result",
+            "description": "The one number the app leads with for this test."
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Only when the token was created with names on."
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename",
+            "description": "Only when the token was created with names on."
+          },
+          "samples": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplesSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null while the samples are not ready."
+          },
+          "device_command_log": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Command Log",
+            "description": "What the browser wrote to the FDT during a Cloud capture; null for other recordings."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "recorded_at",
+          "athlete",
+          "project_id",
+          "status",
+          "movement",
+          "protocol",
+          "origin",
+          "analysis",
+          "key_result",
+          "results",
+          "samples",
+          "device_command_log"
+        ],
+        "title": "RecordingDetail"
+      },
+      "Recordings": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Recording"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as cursor= for the next page; null on the last page."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "Recordings"
+      },
+      "Result": {
+        "properties": {
+          "metric_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Id",
+            "description": "Registry id of the metric, such as jump_height_flight_time."
+          },
+          "metric_instance_id": {
+            "type": "string",
+            "title": "Metric Instance Id"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "dimensions": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Dimensions",
+            "description": "What the value is about, such as the side or the attempt."
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method",
+            "description": "Id of the method that computed the value."
+          },
+          "method_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method Version"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "metric_id",
+          "metric_instance_id",
+          "label",
+          "value",
+          "unit",
+          "dimensions",
+          "method",
+          "method_version"
+        ],
+        "title": "Result"
+      },
+      "ResultRow": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "title": "Recording Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "title": "Recorded At"
+          },
+          "athlete_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Athlete Code"
+          },
+          "athlete_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Athlete Name",
+            "description": "Only when the token was created with names on."
+          },
+          "movement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movement"
+          },
+          "metric_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Id"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "method_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method Version"
+          },
+          "engine_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Version"
+          },
+          "origin": {
+            "type": "string",
+            "const": "movetrics_engine",
+            "title": "Origin"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "recording_id",
+          "recorded_at",
+          "athlete_code",
+          "movement",
+          "metric_id",
+          "label",
+          "value",
+          "unit",
+          "method",
+          "method_version",
+          "engine_version",
+          "origin"
+        ],
+        "title": "ResultRow"
+      },
+      "Results": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResultRow"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "Results"
+      },
+      "SamplesPage": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "title": "Recording Id"
+          },
+          "canonical_digest": {
+            "type": "string",
+            "title": "Canonical Digest"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "stop": {
+            "type": "integer",
+            "title": "Stop"
+          },
+          "next_start": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Start",
+            "description": "Pass as start= for the next page; null at the end."
+          },
+          "time_s": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time S",
+            "description": "Seconds from the first sample, one per sample."
+          },
+          "channels": {
+            "additionalProperties": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Channels",
+            "description": "Values by channel id, unfiltered, in the channel's unit."
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "recording_id",
+          "canonical_digest",
+          "sample_count",
+          "start",
+          "stop",
+          "next_start",
+          "time_s",
+          "channels"
+        ],
+        "title": "SamplesPage"
+      },
+      "SamplesSummary": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            },
+            "type": "array",
+            "title": "Channels"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest",
+            "description": "Digest of the stored samples; equal digests mean equal data."
+          },
+          "formats": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv",
+                "parquet"
+              ]
+            },
+            "type": "array",
+            "title": "Formats"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "channels",
+          "digest",
+          "formats"
+        ],
+        "title": "SamplesSummary"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "An access token (mvt_…) from Account on the web."
+      },
+      "excel": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Any user name, the token as the password."
+      }
+    }
+  },
+  "security": [
+    {
+      "token": []
+    },
+    {
+      "excel": []
+    }
+  ]
+}

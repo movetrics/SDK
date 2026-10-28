@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movetrics Cloud API</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <!-- Generated from the Cloud's OpenAPI file (contracts/movetrics-public-api-v1.json, owned by the Cloud), never
+       written by hand. The token in "Try it" stays in the reader's browser. -->
+  <script id="api-reference" data-url="./movetrics-public-api-v1.json"></script>
+  <script>
+    document.getElementById('api-reference').dataset.configuration = JSON.stringify({
+      hideClientButton: false,
+      // No third-party AI chat, no Scalar telemetry or dev tools: the page should send nothing beyond the reader's own API calls.
+      agent: { disabled: true },
+      telemetry: false,
+      showDeveloperTools: 'never',
+      // Scalar's own sales buttons (generate an SDK or MCP server on scalar.com) would read as ours; the SDKs are in sdk/.
+      customCss: '.explore-scalar-pill, .generate-sdk-button, .selected-client-row .scalar-button { display: none !important; }',
+      defaultHttpClient: { targetKey: 'python', clientKey: 'requests' },
+      metaData: { title: 'Movetrics Cloud API' },
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.74.0"></script>
+</body>
+</html>

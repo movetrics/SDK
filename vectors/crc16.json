@@ -1,0 +1,59 @@
+{
+  "schema": "movetrics-fdt-vectors/1",
+  "file": "crc16.json",
+  "description": "CRC-16/CCITT-FALSE used by the host, pad and bootloader frames: the published check value, the empty input, single bytes, and the low-byte-first storage rule with frame examples.",
+  "cases": [
+    {
+      "id": "crc16-check-value",
+      "kind": "anchor",
+      "description": "Published check value: CRC-16/CCITT-FALSE of ASCII 123456789 is 0x29B1 (the FDT test asserts the same value)",
+      "source": "fdt:tests/test_protocol.py:27; published check value",
+      "input_hex": "313233343536373839",
+      "crc_hex": "29b1"
+    },
+    {
+      "id": "crc16-empty-input",
+      "kind": "derived",
+      "description": "Empty input returns the initial value 0xFFFF",
+      "source": "firmware; fdt:tests/test_protocol.py:28",
+      "input_hex": "",
+      "crc_hex": "ffff"
+    },
+    {
+      "id": "crc16-single-byte-00",
+      "kind": "derived",
+      "description": "One byte 00: the initial value is XORed into the high byte, then eight shifts with polynomial 0x1021",
+      "source": "firmware; firmware",
+      "input_hex": "00",
+      "crc_hex": "e1f0"
+    },
+    {
+      "id": "crc16-single-byte-ff",
+      "kind": "derived",
+      "description": "One byte ff, same routine as the 00 case",
+      "source": "firmware; firmware",
+      "input_hex": "ff",
+      "crc_hex": "ff00"
+    },
+    {
+      "id": "crc16-stored-low-byte-first",
+      "kind": "derived",
+      "description": "Stored low byte first: the GET_STATUS body 00 00 22 has CRC 0xC8BC and goes on the wire as bcc8",
+      "source": "firmware; firmware; firmware",
+      "input_hex": "000022",
+      "crc_hex": "c8bc",
+      "stored_hex": "bcc8",
+      "frame_hex": "feed000022bcc80404"
+    },
+    {
+      "id": "crc16-identification-probe-bytes",
+      "kind": "anchor",
+      "description": "The version probe as captured in the 2026-09-25 identification TX records: body 00 00 23, CRC 0xD89D stored as 9dd8",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=15",
+      "input_hex": "000023",
+      "crc_hex": "d89d",
+      "stored_hex": "9dd8",
+      "frame_hex": "feed0000239dd80404"
+    }
+  ]
+}

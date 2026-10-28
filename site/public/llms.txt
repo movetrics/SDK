@@ -1,0 +1,36 @@
+# Movetrics SDK
+
+> Open SDK (Apache 2.0) for Movetrics F1-3D force plates and the FDT controller: live streaming over USB and Bluetooth at up to 2,000 samples per second per plate, Movetrics Studio CSV/C3D readers, CSV/C3D/OpenSim writers, Lab Streaming Layer, sync, a protocol simulator, and a read-only Movetrics Cloud API client. Clients in Python, TypeScript and MATLAB share one set of byte-level test vectors. Units: t s (FDT clock), fx fy fz N, mx my mz N·m, cop_x cop_y m (NaN below 50 N); gaps are reported, never filled.
+
+Read AGENTS.md first: it maps user goals to SDK parts and lists the invariants and safety rules. Build against the simulator (`movetrics-fdt simulate --tcp 7800 --signal cmj`) before hardware. The clients send eight commands only; do not write raw bytes to the FDT.
+
+## Start
+- [AGENTS.md](https://github.com/movetrics/sdk/blob/main/AGENTS.md): full context for coding agents
+- [Start prompt](https://github.com/movetrics/sdk/blob/main/START_PROMPT.md): the prompt a person pastes into an assistant
+- [The SDK in two minutes](https://developers.movetrics.com/start/two-minutes/): plain-language overview
+- [Why you can trust it](https://developers.movetrics.com/concepts/tested/): what was measured, simulated, not yet run
+
+## Paths
+- [Python in 5 minutes](https://developers.movetrics.com/start/python/)
+- [MATLAB in 5 minutes](https://developers.movetrics.com/start/matlab/)
+- [Excel in 5 minutes](https://developers.movetrics.com/start/excel/)
+- [Record with EMG and cameras](https://developers.movetrics.com/start/emg-and-cameras/)
+- [OpenSim and Pose2Sim](https://developers.movetrics.com/start/opensim/)
+- [Build without an FDT (simulator)](https://developers.movetrics.com/start/simulator/)
+
+## Reference
+- [Names, units and axes](https://github.com/movetrics/sdk/blob/main/docs/19-vocabulary-and-units.md)
+- [Host link framing](https://github.com/movetrics/sdk/blob/main/docs/03-host-link-framing.md)
+- [Host commands](https://github.com/movetrics/sdk/blob/main/docs/04-host-commands.md)
+- [Measurement stream](https://github.com/movetrics/sdk/blob/main/docs/05-measurement-stream.md)
+- [Studio export formats](https://github.com/movetrics/sdk/blob/main/docs/18-export-formats.md)
+- [Writing files](https://github.com/movetrics/sdk/blob/main/docs/21-writing-files.md)
+- [LSL and sync](https://github.com/movetrics/sdk/blob/main/docs/22-lsl-and-sync.md)
+- [Analog outputs](https://github.com/movetrics/sdk/blob/main/docs/23-analog-outputs.md)
+- [Test vectors](https://github.com/movetrics/sdk/blob/main/vectors/README.md)
+- [Cloud API (OpenAPI)](https://github.com/movetrics/sdk/blob/main/contracts/movetrics-public-api-v1.json)
+- [Firmware capabilities](https://github.com/movetrics/sdk/blob/main/contracts/firmware-capabilities.v1.json)
+
+## Optional
+- [Conformance matrix](https://github.com/movetrics/sdk/blob/main/CONFORMANCE.md)
+- [Changelog](https://github.com/movetrics/sdk/blob/main/CHANGELOG.md)

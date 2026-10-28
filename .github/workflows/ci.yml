@@ -1,0 +1,40 @@
+# SDK test suites: Python, TypeScript and MATLAB (GNU Octave) against the shared vectors.
+name: SDK tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Python client tests
+        run: cd python && python3 -m unittest discover -s tests -t . -v
+
+  typescript:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: TypeScript client tests, typecheck and build
+        run: cd ts && npm ci && npm test && npm run typecheck && npm run build
+
+  octave:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GNU Octave
+        run: sudo apt-get update && sudo apt-get install -y octave
+      - name: MATLAB toolbox tests in Octave
+        run: cd matlab && octave --no-gui --no-window-system --eval "run('tests/run_tests.m')"

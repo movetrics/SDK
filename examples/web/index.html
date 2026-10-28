@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FDT host link: web example</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --fg: #1d2330;
+      --muted: #5b6474;
+      --panel: #ffffff;
+      --line: #d9dde5;
+      --accent: #1d5fd1;
+      --accent-fg: #ffffff;
+      --danger: #b3261e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14171c;
+        --fg: #e6e9ef;
+        --muted: #9aa3b2;
+        --panel: #1d2128;
+        --line: #343a46;
+        --accent: #6aa2ff;
+        --accent-fg: #0b1220;
+        --danger: #ff8a80;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #14171c;
+      --fg: #e6e9ef;
+      --muted: #9aa3b2;
+      --panel: #1d2128;
+      --line: #343a46;
+      --accent: #6aa2ff;
+      --accent-fg: #0b1220;
+      --danger: #ff8a80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    h2 { font-size: 1.1rem; margin: 0 0 8px; }
+    h3 { font-size: 1rem; margin: 12px 0 6px; }
+    p { margin: 6px 0; }
+    .muted { color: var(--muted); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      font: inherit;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: var(--accent-fg);
+      cursor: pointer;
+    }
+    button.secondary { background: transparent; color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    #message { min-height: 1.5em; font-weight: 600; }
+    #message.error { color: var(--danger); }
+    .records { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-weight: 600; }
+    .counters { display: flex; gap: 24px; flex-wrap: wrap; }
+    .counters strong { font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>FDT host link: web example</h1>
+    <p class="muted">
+      Connects to a Discovery controller over USB (Web Serial) or Bluetooth (Web Bluetooth, through the
+      Movetrics-BLE bridge). Both browser transports are unverified for this SDK; see the README in this folder.
+    </p>
+
+    <section class="panel">
+      <div class="actions">
+        <button id="connect-usb" type="button">Connect USB</button>
+        <button id="connect-ble" type="button">Connect Bluetooth</button>
+        <button id="stop" type="button" class="secondary" disabled>Stop</button>
+        <button id="disconnect" type="button" class="secondary" disabled>Disconnect</button>
+      </div>
+      <p id="message" role="status" aria-live="polite"></p>
+      <p id="version" class="muted"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Status</h2>
+      <div id="status" class="records"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Stream</h2>
+      <div class="counters">
+        <span>Frames received: <strong id="count">0</strong></span>
+        <span>Dropped by the client: <strong id="dropped">0</strong></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Platform</th><th>timeStamp</th>
+              <th>forceX</th><th>forceY</th><th>forceZ</th>
+              <th>momentX</th><th>momentY</th><th>momentZ</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="muted">The table shows the last 20 frames. Values are raw wire integers; their units are not verified.</p>
+    </section>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+{
+  "schema": "movetrics.vocabulary/1",
+  "version": "1.0.0-draft",
+  "status": "draft: published 28 Oct 2026; becomes 1.0.0 when the Movetrics apps and Cloud read it",
+  "doc": "docs/19-vocabulary-and-units.md",
+  "time": {
+    "t": {
+      "unit": "s",
+      "type": "float64",
+      "definition": "FDT stamp / 10000, from the stream's own clock. Live: seconds since START (the stamp restarts at 0 on every START). Files: seconds since the first row. Never the host's receive time and never the row number."
+    },
+    "stamp": {
+      "unit": "tick",
+      "type": "uint64",
+      "definition": "The FDT stamp in 0.1 ms ticks, unwrapped past 2^32 (the wire field is uint32 and wraps after about 4.97 days).",
+      "ticks_per_second": 10000
+    },
+    "t_host": {
+      "unit": "s",
+      "type": "float64",
+      "optional": true,
+      "definition": "Host clock when the frame was read (monotonic). Only for diagnostics and for mapping t onto another clock (LSL); never used as the sample time."
+    }
+  },
+  "channels": [
+    {
+      "name": "fx",
+      "unit": "N",
+      "quantity": "force",
+      "component": "x",
+      "frame": "plate"
+    },
+    {
+      "name": "fy",
+      "unit": "N",
+      "quantity": "force",
+      "component": "y",
+      "frame": "plate"
+    },
+    {
+      "name": "fz",
+      "unit": "N",
+      "quantity": "force",
+      "component": "z",
+      "frame": "plate",
+      "note": "vertical, positive when the plate is loaded"
+    },
+    {
+      "name": "mx",
+      "unit": "N*m",
+      "quantity": "moment",
+      "component": "x",
+      "frame": "plate",
+      "reference": "moment_reference"
+    },
+    {
+      "name": "my",
+      "unit": "N*m",
+      "quantity": "moment",
+      "component": "y",
+      "frame": "plate",
+      "reference": "moment_reference"
+    },
+    {
+      "name": "mz",
+      "unit": "N*m",
+      "quantity": "moment",
+      "component": "z",
+      "frame": "plate",
+      "reference": "moment_reference"
+    },
+    {
+      "name": "cop_x",
+      "unit": "m",
+      "quantity": "center_of_pressure",
+      "component": "x",
+      "frame": "plate",
+      "nullable": true,
+      "note": "null (NaN in arrays) where fz < cop_min_fz_n"
+    },
+    {
+      "name": "cop_y",
+      "unit": "m",
+      "quantity": "center_of_pressure",
+      "component": "y",
+      "frame": "plate",
+      "nullable": true,
+      "note": "null (NaN in arrays) where fz < cop_min_fz_n"
+    }
+  ],
+  "raw": {
+    "name": "raw",
+    "definition": "The six int16 integers of the 24-byte stream frame in wire order and wire signs: forceX, forceY, forceZ, momentX, momentY, momentZ. Whole newtons and newton-metres (owner, 14 Oct 2026). Kept so nothing is lost when a sign or scale decision changes.",
+    "order": [
+      "forceX",
+      "forceY",
+      "forceZ",
+      "momentX",
+      "momentY",
+      "momentZ"
+    ],
+    "scale": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "unit": [
+      "N",
+      "N",
+      "N",
+      "N*m",
+      "N*m",
+      "N*m"
+    ]
+  },
+  "stream_to_plate_frame": {
+    "definition": "plate-frame value = sign * raw value. This is Movetrics Studio's QuadrantTransform 4,3,2,1 (Studio config.ini), so a live sample and the same sample in a Studio export carry the same numbers.",
+    "sign": {
+      "fx": 1,
+      "fy": -1,
+      "fz": 1,
+      "mx": -1,
+      "my": 1,
+      "mz": 1
+    },
+    "status": "code (Studio configuration); bench check pending: one known off-centre load recorded as stream and as Studio export (docs/18 section 7 item 1)"
+  },
+  "frames": {
+    "plate": {
+      "origin": "centre of the plate's top surface",
+      "axes": "x along the 35 cm side, y along the 60 cm side, z vertical; signs as Movetrics Studio's -channels.csv",
+      "status": "x, y direction relative to the cable connector not yet stated by the maker (docs/18 section 7 item 4)"
+    },
+    "pair": {
+      "origin": "midpoint between the two plates' top-surface centres",
+      "axes": "same as plate",
+      "plate_centres_m": {
+        "1": [
+          -0.175,
+          0.0,
+          0.0
+        ],
+        "2": [
+          0.175,
+          0.0,
+          0.0
+        ]
+      },
+      "use": "combined (comb_) columns; Studio's comb_COP frame",
+      "status": "inferred: fitted on the 14 Oct 2026 Studio export, residual 0.37 mm"
+    },
+    "lab": {
+      "origin": "set by a layout file (docs/19 section 5); default = Movetrics Studio's C3D: outer corner of plate 1",
+      "axes": "right-handed, z up; the layout gives each plate's rotation and offset",
+      "use": "C3D and OpenSim exports; next to cameras and other devices"
+    }
+  },
+  "plate": {
+    "name": "plate",
+    "type": "int",
+    "definition": "1 or 2: the FDT's plate address. Wide tables prefix columns with p1_, p2_; the sum of both plates uses comb_ (Studio's word). With two FDTs merged, plates 3 and 4 are the second FDT's 1 and 2.",
+    "size_m": [
+      0.35,
+      0.6
+    ],
+    "moment_reference": {
+      "depth_below_top_m": 0.03,
+      "status": "measured on the 14 Oct 2026 Studio export: CoP formula reproduces Studio's CoP to 0.28 mm rms; Studio's C3D ORIGIN says z = -30 mm"
+    },
+    "cop_formula": {
+      "x": "(-my - d*fx) / fz",
+      "y": "(-mx + d*fy) / fz",
+      "d_m": 0.03
+    },
+    "cop_min_fz_n": 50.0
+  },
+  "events": {
+    "definition": "Things that happen at an instant, in the same time base t. One list per recording, ordered by t.",
+    "fields": {
+      "t": "s: stamp/10000 + offset_us/1e6",
+      "stamp": "tick",
+      "type": "int (below)",
+      "name": "string (below)",
+      "source": "int: sync input or output (0), or the plate for saturation",
+      "count": "uint32: edge counter",
+      "detail": "uint16: arm timeout (min) for 5 and 10, channel mask for 7 and 9 (bits 0-5 fx..mz wrapped, bit 6 a pad channel clipped), frames for 8",
+      "offset_us": "int16: the edge lies this many µs after the start of tick stamp"
+    },
+    "types": {
+      "1": "sync_in_rise",
+      "2": "sync_in_fall",
+      "3": "sync_out_rise",
+      "4": "sync_out_fall",
+      "5": "stream_armed",
+      "6": "stream_started_by_trigger",
+      "7": "saturation",
+      "8": "frames_dropped",
+      "9": "saturation_end",
+      "10": "arm_expired"
+    },
+    "host_types": {
+      "100": "gap",
+      "101": "note"
+    },
+    "status": "types 1-10 from FDT 1.2.8.24 (event frame at plate address 0xFD, code 0x0E; docs/05 section 13 and vectors/sync_events.json); firmware not yet released or benched"
+  },
+  "gaps": {
+    "definition": "A step between two consecutive samples of one plate longer than 1.5 nominal periods. Reported, never filled or hidden. Writers that need a uniform clock (C3D, OpenSim) say what they did (refuse, split, or resample with a flag column).",
+    "fields": {
+      "plate": "int",
+      "start_t": "s: t of the last sample before the hole",
+      "end_t": "s: t of the first sample after it",
+      "missing": "int: whole periods missing"
+    }
+  },
+  "metadata": {
+    "required": [
+      "rate_hz",
+      "firmware",
+      "source"
+    ],
+    "fields": {
+      "rate_hz": "nominal frames per second per plate",
+      "lowpass_hz": "FDT digital low-pass cutoff, 0 = off, null = unknown",
+      "firmware": "GET_FW_VERSION stm32FW string, for example 1.2.8.20",
+      "source": "live | studio_csv | studio_c3d | cloud | simulator",
+      "fdt_serial": "optional"
+    }
+  },
+  "wide_table": {
+    "definition": "One row per sample instant, for CSV and spreadsheets.",
+    "columns": [
+      "t",
+      "p1_fx",
+      "p1_fy",
+      "p1_fz",
+      "p1_mx",
+      "p1_my",
+      "p1_mz",
+      "p1_cop_x",
+      "p1_cop_y",
+      "p2_fx",
+      "...",
+      "comb_fz",
+      "comb_cop_x",
+      "comb_cop_y"
+    ],
+    "header_units": "a second header line or a column suffix is never used; units are fixed by this vocabulary and repeated in the file's metadata"
+  }
+}

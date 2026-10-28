@@ -1,0 +1,172 @@
+{
+ "schema": "movetrics.analog-outputs/1",
+ "version": "1.0.0-draft",
+ "source": "Nur Engineering GmbH, 'Movetrics FDT analog outputs: scale per channel', 27 Oct 2026, FDT firmware 1.2.8.22 (project files: hardware/Nur-Engineering_FDT_analog_outputs_2026-10-27.pdf)",
+ "applies_to": "FDTs with the analog interface board, firmware 1.2.8.22 and later in the firmware team's firmware line. Before 1.2.8.21 the moment outputs of a double plate were 100 times too large and values past full scale wrapped around.",
+ "range_v": [
+  -10,
+  10
+ ],
+ "zero": "0 V = zeroed plate; the FDT zeroes at power-up, reset and the software's Zero command; no separate analog zero",
+ "value_from_volts": "value = volts * units_per_volt (wire signs: fy and mx are the reverse of Studio's and of the vocabulary's plate frame)",
+ "signs": "Fz positive for a load pressing on the plate; other force and moment channels carry the FDT wire sign. CoP sign and origin are not stated by the maker.",
+ "resolution": "the stream carries whole N, N·m and cm, so each output moves in steps of its mv_per_unit; CoP therefore in 1 cm steps",
+ "cop_zero_below_fz_n": 30,
+ "clip": "values past full scale stay at the end of the range",
+ "update": "only while streaming; at most 500 updates/s per plate (every frame at 500/s, every second frame at 1000/s); hold the last value after STOP, 0 V at power-up",
+ "filters": "the FDT's digital low-pass (50 Hz default) plus a first-order output low-pass at about 220 Hz (schematic, not measured)",
+ "electrical": {
+  "dac_bits": 16,
+  "lsb_mv": 0.305,
+  "series_resistor_ohm": 50,
+  "load_min_ohm_for_0_5_percent": 10000,
+  "gain_tolerance_worst_case_percent": 1.8
+ },
+ "evidence": "maker's document; one unit metered on 27 Oct 2026: Fz and Mx within 1 % of the digital values (164 N, 24.6 N·m), zero near 0 mV with a per-unit +58 mV firmware offset",
+ "outputs": [
+  {
+   "output": "A1",
+   "plate": 1,
+   "signal": "fz",
+   "unit": "N",
+   "full_scale": 8000,
+   "mv_per_unit": 1.25,
+   "units_per_volt": 800
+  },
+  {
+   "output": "A2",
+   "plate": 1,
+   "signal": "fx",
+   "unit": "N",
+   "full_scale": 2000,
+   "mv_per_unit": 5.0,
+   "units_per_volt": 200
+  },
+  {
+   "output": "A3",
+   "plate": 1,
+   "signal": "fy",
+   "unit": "N",
+   "full_scale": 2000,
+   "mv_per_unit": 5.0,
+   "units_per_volt": 200
+  },
+  {
+   "output": "A4",
+   "plate": 1,
+   "signal": "mz",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A5",
+   "plate": 1,
+   "signal": "mx",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A6",
+   "plate": 1,
+   "signal": "my",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A7",
+   "plate": 1,
+   "signal": "cop_x",
+   "unit": "cm",
+   "full_scale": 15,
+   "mv_per_unit": 666.7,
+   "units_per_volt": 1.5
+  },
+  {
+   "output": "A8",
+   "plate": 1,
+   "signal": "cop_y",
+   "unit": "cm",
+   "full_scale": 30,
+   "mv_per_unit": 333.3,
+   "units_per_volt": 3
+  },
+  {
+   "output": "A9",
+   "plate": 2,
+   "signal": "fz",
+   "unit": "N",
+   "full_scale": 8000,
+   "mv_per_unit": 1.25,
+   "units_per_volt": 800
+  },
+  {
+   "output": "A10",
+   "plate": 2,
+   "signal": "fx",
+   "unit": "N",
+   "full_scale": 2000,
+   "mv_per_unit": 5.0,
+   "units_per_volt": 200
+  },
+  {
+   "output": "A11",
+   "plate": 2,
+   "signal": "fy",
+   "unit": "N",
+   "full_scale": 2000,
+   "mv_per_unit": 5.0,
+   "units_per_volt": 200
+  },
+  {
+   "output": "A12",
+   "plate": 2,
+   "signal": "mz",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A13",
+   "plate": 2,
+   "signal": "mx",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A14",
+   "plate": 2,
+   "signal": "my",
+   "unit": "N·m",
+   "full_scale": 720,
+   "mv_per_unit": 13.89,
+   "units_per_volt": 72
+  },
+  {
+   "output": "A15",
+   "plate": 2,
+   "signal": "cop_x",
+   "unit": "cm",
+   "full_scale": 15,
+   "mv_per_unit": 666.7,
+   "units_per_volt": 1.5
+  },
+  {
+   "output": "A16",
+   "plate": 2,
+   "signal": "cop_y",
+   "unit": "cm",
+   "full_scale": 30,
+   "mv_per_unit": 333.3,
+   "units_per_volt": 3
+  }
+ ]
+}

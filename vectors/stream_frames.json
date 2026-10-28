@@ -1,0 +1,190 @@
+{
+  "schema": "movetrics-fdt-vectors/1",
+  "file": "stream_frames.json",
+  "description": "24-byte stream frames (T_Frame, firmware): real frames from the FDT repo fixture and the Android fixture (anchors), decoded fields, a built sample and negative cases. All 19,057 fixture frames decode to the Android oracle samples (checked by the generator, not a case).",
+  "cases": [
+    {
+      "id": "stream-anchor-fdt-index-0",
+      "kind": "anchor",
+      "description": "Stream frame 0 of the FDT repo fixture (the 2026-09-25 capture, CMD_START_STREAM samples)",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=0,offset=0,length=24",
+      "frame_hex": "beef010100000000f9ff06000700000000000000189e0404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-anchor-fdt-index-1",
+      "kind": "anchor",
+      "description": "Stream frame 1 of the FDT repo fixture (the 2026-09-25 capture, CMD_START_STREAM samples)",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=1,offset=24,length=24",
+      "frame_hex": "beef020100000000f9ff12000f00feffffff000063760404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-anchor-fdt-index-19056",
+      "kind": "anchor",
+      "description": "Stream frame 19056 of the FDT repo fixture (the 2026-09-25 capture, CMD_START_STREAM samples)",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=19056,offset=457344,length=24",
+      "frame_hex": "beef0101850d0300deff00000500ffff00000200b7d30404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-anchor-android-index-1000",
+      "kind": "anchor",
+      "description": "Stream frame 1000 of the 19,057-sample Android oracle fixture (same bytes as the FDT fixture)",
+      "source": "android:fdt-core/src/test/resources/oracle/windows_fixture.bin#index=1000,offset=24000,length=24",
+      "frame_hex": "beef0101f1280000e3fffcffca021e00060002007b820404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-anchor-android-index-9529",
+      "kind": "anchor",
+      "description": "Stream frame 9529 of the 19,057-sample Android oracle fixture (same bytes as the FDT fixture)",
+      "source": "android:fdt-core/src/test/resources/oracle/windows_fixture.bin#index=9529,offset=228696,length=24",
+      "frame_hex": "beef0201c38601000d00deff02000000ffff000018990404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-anchor-android-index-12345",
+      "kind": "anchor",
+      "description": "Stream frame 12345 of the 19,057-sample Android oracle fixture (same bytes as the FDT fixture)",
+      "source": "android:fdt-core/src/test/resources/oracle/windows_fixture.bin#index=12345,offset=296280,length=24",
+      "frame_hex": "beef020143fa01000d00dfffffffffffffff0000c40b0404",
+      "expect": {
+        "valid": true,
+        "command": "01"
+      }
+    },
+    {
+      "id": "stream-derived-decode-fdt-index-0",
+      "kind": "derived",
+      "description": "Fields of stream frame 0 of the FDT repo fixture, decoded with the T_Frame layout",
+      "source": "firmware; fdt:tests/fixtures/fdt-capture.bin#index=0",
+      "frame_hex": "beef010100000000f9ff06000700000000000000189e0404",
+      "expect": {
+        "valid": true,
+        "fields": {
+          "platform_address": 1,
+          "commandCode": 1,
+          "timeStamp": 0,
+          "forceX": -7,
+          "forceY": 6,
+          "forceZ": 7,
+          "momentX": 0,
+          "momentY": 0,
+          "momentZ": 0
+        }
+      }
+    },
+    {
+      "id": "stream-derived-decode-fdt-index-1",
+      "kind": "derived",
+      "description": "Fields of stream frame 1 of the FDT repo fixture, decoded with the T_Frame layout",
+      "source": "firmware; fdt:tests/fixtures/fdt-capture.bin#index=1",
+      "frame_hex": "beef020100000000f9ff12000f00feffffff000063760404",
+      "expect": {
+        "valid": true,
+        "fields": {
+          "platform_address": 2,
+          "commandCode": 1,
+          "timeStamp": 0,
+          "forceX": -7,
+          "forceY": 18,
+          "forceZ": 15,
+          "momentX": -2,
+          "momentY": -1,
+          "momentZ": 0
+        }
+      }
+    },
+    {
+      "id": "stream-derived-decode-fdt-index-19056",
+      "kind": "derived",
+      "description": "Fields of stream frame 19056 of the FDT repo fixture, decoded with the T_Frame layout",
+      "source": "firmware; fdt:tests/fixtures/fdt-capture.bin#index=19056",
+      "frame_hex": "beef0101850d0300deff00000500ffff00000200b7d30404",
+      "expect": {
+        "valid": true,
+        "fields": {
+          "platform_address": 1,
+          "commandCode": 1,
+          "timeStamp": 200069,
+          "forceX": -34,
+          "forceY": 0,
+          "forceZ": 5,
+          "momentX": -1,
+          "momentY": 0,
+          "momentZ": 2
+        }
+      }
+    },
+    {
+      "id": "stream-derived-encode-platform-2-sample",
+      "kind": "derived",
+      "description": "A sample built from the T_Frame layout: platform 2, timeStamp 123456 (bytes 40 e2 01 00), signed values, and momentZ at the int16 limit",
+      "source": "firmware; firmware",
+      "expect_frame_hex": "beef020140e20100ffff0200fdff0400fbffff7f69dc0404",
+      "expect": {
+        "valid": true,
+        "fields": {
+          "platform_address": 2,
+          "commandCode": 1,
+          "timeStamp": 123456,
+          "forceX": -1,
+          "forceY": 2,
+          "forceZ": -3,
+          "momentX": 4,
+          "momentY": -5,
+          "momentZ": 32767
+        }
+      }
+    },
+    {
+      "id": "stream-derived-bad-crc",
+      "kind": "derived",
+      "description": "FDT index 0 with the low CRC byte changed by one bit",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=0,offset=0,length=24, mutated; firmware; firmware",
+      "frame_hex": "beef010100000000f9ff06000700000000000000199e0404",
+      "expect": {
+        "valid": false,
+        "reason": "crc_mismatch"
+      }
+    },
+    {
+      "id": "stream-derived-wrong-header",
+      "kind": "derived",
+      "description": "FDT index 0 with the header bytes reversed (EF BE instead of BE EF)",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=0,offset=0,length=24, mutated; firmware; firmware",
+      "frame_hex": "efbe010100000000f9ff06000700000000000000189e0404",
+      "expect": {
+        "valid": false,
+        "reason": "bad_header"
+      }
+    },
+    {
+      "id": "stream-derived-flipped-payload-bit",
+      "kind": "derived",
+      "description": "FDT index 0 with bit 0 of the low forceX byte flipped: the CRC no longer matches",
+      "source": "fdt:tests/fixtures/fdt-capture.bin#index=0,offset=0,length=24, mutated; firmware; firmware",
+      "frame_hex": "beef010100000000f8ff06000700000000000000189e0404",
+      "expect": {
+        "valid": false,
+        "reason": "crc_mismatch"
+      }
+    }
+  ]
+}

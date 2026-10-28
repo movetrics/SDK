@@ -1,0 +1,578 @@
+{
+ "schema": "movetrics-fdt-vocabulary-vectors/1",
+ "contract": "movetrics.vocabulary/1 1.0.0-draft",
+ "generator": "tools/gen_vocabulary_vectors.py",
+ "rules": "Feed each case's frames, in order, to a new converter with rate_hz (null: learn the period). Its output must equal expected, in order: integers exactly, floats within 1e-9, null CoP as NaN.",
+ "cases": [
+  {
+   "id": "placeholders_signs_cop",
+   "rate_hz": 2000,
+   "frames": [
+    "beef01010000000000000000000000000000000078a50404",
+    "beef0201000000000000000000000000000000000aa50404",
+    "beef0101640000000c0019002c031f00d4ff03006add0404",
+    "beef020164000000f9ffedff8f02f4ff1c00feffbf380404"
+   ],
+   "says": "Stamp-0 placeholders after START are dropped; fy and mx flip sign; CoP from the 30 mm reference.",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 100,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 2,
+     "fx": -7.0,
+     "fy": 19.0,
+     "fz": 655.0,
+     "mx": 12.0,
+     "my": 28.0,
+     "mz": -2.0,
+     "cop_x": -0.04242748091603053,
+     "cop_y": -0.017450381679389313,
+     "stamp": 100,
+     "raw": [
+      -7,
+      -19,
+      655,
+      -12,
+      28,
+      -2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cop_threshold",
+   "rate_hz": 2000,
+   "frames": [
+    "beef0101640000000300020031000a00f6ff000039c40404",
+    "beef0101690000000300020032000a00f6ff00003f350404"
+   ],
+   "says": "Below 50 N the CoP is empty (null here, NaN in clients); at exactly 50 N it is computed.",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 1,
+     "fx": 3.0,
+     "fy": -2.0,
+     "fz": 49.0,
+     "mx": -10.0,
+     "my": -10.0,
+     "mz": 0.0,
+     "cop_x": null,
+     "cop_y": null,
+     "stamp": 100,
+     "raw": [
+      3,
+      2,
+      49,
+      10,
+      -10,
+      0
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.0105,
+     "plate": 1,
+     "fx": 3.0,
+     "fy": -2.0,
+     "fz": 50.0,
+     "mx": -10.0,
+     "my": -10.0,
+     "mz": 0.0,
+     "cop_x": 0.19820000000000002,
+     "cop_y": 0.19879999999999998,
+     "stamp": 105,
+     "raw": [
+      3,
+      2,
+      50,
+      10,
+      -10,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gap_at_known_rate",
+   "rate_hz": 2000,
+   "frames": [
+    "beef0101640000000c0019002c031f00d4ff03006add0404",
+    "beef0101690000000c0019002c031f00d4ff030019e40404",
+    "beef0101780000000c0019002c031f00d4ff0300376f0404"
+   ],
+   "says": "At 2000/s the period is 5 ticks; a 15-tick step is a gap with 2 samples missing, reported before the first sample after it.",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 100,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.0105,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 105,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "gap",
+     "plate": 1,
+     "start_t": 0.0105,
+     "end_t": 0.012,
+     "missing": 2
+    },
+    {
+     "kind": "sample",
+     "t": 0.012,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 120,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gap_learnt_period",
+   "rate_hz": null,
+   "frames": [
+    "beef0101640000000c0019002c031f00d4ff03006add0404",
+    "beef01016e0000000c0019002c031f00d4ff0300868c0404",
+    "beef0101780000000c0019002c031f00d4ff0300376f0404",
+    "beef0101960000000c0019002c031f00d4ff0300447c0404"
+   ],
+   "says": "With no rate given, the period is the smallest step seen per plate (10 ticks here).",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 100,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.011,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 110,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.012,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 120,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "gap",
+     "plate": 1,
+     "start_t": 0.012,
+     "end_t": 0.015,
+     "missing": 2
+    },
+    {
+     "kind": "sample",
+     "t": 0.015,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 150,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gaps_per_plate",
+   "rate_hz": 1000,
+   "frames": [
+    "beef0101640000000c0019002c031f00d4ff03006add0404",
+    "beef0201640000000c0019002c031f00d4ff030018dd0404",
+    "beef02016e0000000c0019002c031f00d4ff0300f48c0404",
+    "beef0101820000000c0019002c031f00d4ff03009cdf0404"
+   ],
+   "says": "Each plate has its own clock of steps: plate 2 is on time, plate 1 misses 2 samples.",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 100,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.01,
+     "plate": 2,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 100,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 0.011,
+     "plate": 2,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 110,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "gap",
+     "plate": 1,
+     "start_t": 0.01,
+     "end_t": 0.013,
+     "missing": 2
+    },
+    {
+     "kind": "sample",
+     "t": 0.013,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 130,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stamp_wrap",
+   "rate_hz": 2000,
+   "frames": [
+    "beef0101f9ffffff0c0019002c031f00d4ff03005f940404",
+    "beef0101feffffff0c0019002c031f00d4ff0300c0fc0404",
+    "beef0101030000000c0019002c031f00d4ff0300c97f0404"
+   ],
+   "says": "The uint32 stamp wraps after 4.97 days; t keeps counting (no gap, no jump back).",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 429496.7289,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 4294967289,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 429496.7294,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 4294967294,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "sample",
+     "t": 429496.7299,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 4294967299,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "events_between_samples",
+   "rate_hz": 2000,
+   "frames": [
+    "beef0101e80300000c0019002c031f00d4ff030069a70404",
+    "beeffd0eea03000001000700000025000000090034e90404",
+    "beef0101ed0300000c0019002c031f00d4ff03009f8f0404",
+    "beeffd0eed03000007020100000000000400290087e30404"
+   ],
+   "says": "Events keep their place in the stream; t adds offset_us to the tick; saturation names the plate in source and the clipped channels in detail (bit 2 = fz).",
+   "expected": [
+    {
+     "kind": "sample",
+     "t": 0.1,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 1000,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "event",
+     "t": 0.10023699999999999,
+     "type": 1,
+     "name": "sync_in_rise",
+     "source": 0,
+     "count": 7,
+     "detail": 0,
+     "stamp": 1002,
+     "offset_us": 37
+    },
+    {
+     "kind": "sample",
+     "t": 0.1005,
+     "plate": 1,
+     "fx": 12.0,
+     "fy": -25.0,
+     "fz": 812.0,
+     "mx": -31.0,
+     "my": -44.0,
+     "mz": 3.0,
+     "cop_x": 0.05374384236453202,
+     "cop_y": 0.03725369458128079,
+     "stamp": 1005,
+     "raw": [
+      12,
+      25,
+      812,
+      31,
+      -44,
+      3
+     ]
+    },
+    {
+     "kind": "event",
+     "t": 0.1005,
+     "type": 7,
+     "name": "saturation",
+     "source": 2,
+     "count": 1,
+     "detail": 4,
+     "stamp": 1005,
+     "offset_us": 0
+    }
+   ]
+  }
+ ]
+}

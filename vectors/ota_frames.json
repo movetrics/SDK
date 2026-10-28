@@ -1,0 +1,99 @@
+{
+  "schema": "movetrics-fdt-vectors/1",
+  "file": "ota_frames.json",
+  "description": "Version frames: the GET_FW_VERSION probe and the 38-byte firmware reply captured on 2026-09-25 (anchors), the bootloader's 38-byte version reply and the bridge STOP frame (derived). The firmware-update frames themselves are not part of the public SDK.",
+  "cases": [
+    {
+      "id": "ota-anchor-version-probe",
+      "kind": "anchor",
+      "description": "OTA version probe FE ED 00 00 23 9D D8 04 04: the bytes the FDT tool sent in the identification capture, identical to the bench tool and the Kotlin client",
+      "source": "fdt:evidence/identification-01/identification-01.chunks.jsonl#line=15; tools/ota_client.py:79; android:fdt-core/src/main/java/com/movetrics/fdt/core/FirmwareUpdate.kt:95",
+      "frame_hex": "feed0000239dd80404",
+      "expect": {
+        "valid": true,
+        "command": "23",
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "ota-anchor-identification-fw-version-reply",
+      "kind": "anchor",
+      "description": "GET_FW_VERSION reply captured in the 2026-09-25 identification capture: STM32 field 001.002.003, ESP32 field 002.005.001 (38 bytes, CRC over bytes 2 to 33)",
+      "source": "fdt:evidence/identification-01/identification-01.bin#offset=128,length=38; firmware",
+      "frame_hex": "beef00233030312e3030322e303033000000003030322e3030352e30303100000000acc80404",
+      "crc_stored_hex": "acc8",
+      "crc_covers": {
+        "first": 2,
+        "last": 33
+      },
+      "field_offsets": {
+        "header": 0,
+        "platform_address": 2,
+        "commandCode": 3,
+        "stm32FW": 4,
+        "esp32FW": 19,
+        "crc": 34,
+        "eot1": 36,
+        "eot2": 37
+      },
+      "fields": {
+        "platform_address": 0,
+        "commandCode": 35,
+        "stm32FW": "001.002.003",
+        "esp32FW": "002.005.001"
+      },
+      "expect": {
+        "valid": true,
+        "command": "23",
+        "reference_kind": "firmware_version"
+      }
+    },
+    {
+      "id": "ota-derived-bootloader-version-reply",
+      "kind": "derived",
+      "description": "Bootloader reply to GET_FW_VERSION (38 bytes): STM32 field BOOT-1.0.0.3, ESP32 field 000.000.000",
+      "source": "firmware; firmware; firmware; firmware",
+      "frame_hex": "beef0023424f4f542d312e302e302e330000003030302e3030302e30303000000000ccc70404",
+      "crc_stored_hex": "ccc7",
+      "crc_covers": {
+        "first": 2,
+        "last": 33
+      },
+      "field_offsets": {
+        "header": 0,
+        "platform_address": 2,
+        "commandCode": 3,
+        "stm32FW": 4,
+        "esp32FW": 19,
+        "crc": 34,
+        "eot1": 36,
+        "eot2": 37
+      },
+      "fields": {
+        "platform_address": 0,
+        "commandCode": 35,
+        "stm32FW": "BOOT-1.0.0.3",
+        "esp32FW": "000.000.000"
+      },
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "id": "ota-derived-bridge-stop",
+      "kind": "derived",
+      "description": "Bridge STOP frame to Discovery: FE ED FF 00 05 with CRC 0x535A stored as 5a 53",
+      "source": "firmware:44",
+      "frame_hex": "feedff00055a530404",
+      "crc_stored_hex": "5a53",
+      "crc_covers": {
+        "first": 2,
+        "last": 4
+      },
+      "expect": {
+        "valid": true,
+        "command": "05"
+      }
+    }
+  ]
+}

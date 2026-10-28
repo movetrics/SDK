@@ -1,0 +1,184 @@
+{
+  "contract": "movetrics.firmware-capabilities/1.0.0",
+  "device": "fdt",
+  "about": "What each FDT firmware version does that a host has to know before it talks to it. A capability holds from its 'since' version until a later entry with the same id; a version before 1.2.8.0, or one that cannot be read (the vendor's '001.002.003'), gets 'unknown'. Facts come from the firmware line; this file is hosted by the Cloud and copied into Android and the SDK.",
+  "updated": "2026-10-28",
+  "evidence_words": {
+    "measured": "seen on an FDT on the bench",
+    "code": "read in the firmware source, not seen on a device"
+  },
+  "read_as": {
+    "1.2.9.0": "1.2.8.8"
+  },
+  "read_as_why": "A version on a side branch is looked up as the version it was built on.",
+  "capabilities": [
+    {
+      "id": "stream_rate_command",
+      "since": "1.2.8.0",
+      "value": true,
+      "evidence": "code",
+      "says": "SET_FILTER 0x1C sets the stream rate per plate and the device low-pass; RAM only, a reset restores the default.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "default_stream_rate_hz",
+      "since": "1.2.8.0",
+      "value": 500,
+      "evidence": "code",
+      "says": "Frames per second per plate when no host sent SET_FILTER.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "default_stream_rate_hz",
+      "since": "1.2.8.5",
+      "value": 1000,
+      "evidence": "measured",
+      "says": "Frames per second per plate when no host sent SET_FILTER; Studio resets the FDT at each start and gets this.",
+      "source": "Movetrics firmware 1.2.8.5 (measured)"
+    },
+    {
+      "id": "zero_while_streaming_refuses_unsteady",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "Not in this firmware.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "zero_while_streaming_refuses_unsteady",
+      "since": "1.2.8.6",
+      "value": true,
+      "evidence": "measured",
+      "says": "SET_TARE during a stream answers at once; NACK 8 means the plates were not steady, try again, the old zero is kept.",
+      "source": "Movetrics firmware 1.2.8.6 (measured)"
+    },
+    {
+      "id": "battery_percent",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "Not in this firmware.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "battery_percent",
+      "since": "1.2.8.7",
+      "value": true,
+      "evidence": "measured",
+      "says": "GET_STATUS carries a battery level 0-100 on an FDT with the voltage divider (one bench FDT so far); others send 255.",
+      "source": "Movetrics firmware 1.2.8.7 (measured)"
+    },
+    {
+      "id": "sleep_after_last_command_s",
+      "since": "1.2.8.0",
+      "value": 600,
+      "evidence": "code",
+      "says": "The FDT switches the pads off and sleeps this long after the last host command; a running stream never sleeps.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "sleep_after_last_command_s",
+      "since": "1.2.8.9",
+      "value": 300,
+      "evidence": "measured",
+      "says": "The FDT switches the pads off and sleeps this long after the last host command; a running stream never sleeps. Asleep, the Bluetooth bridge is off too.",
+      "source": "Movetrics firmware 1.2.8.9 (measured)"
+    },
+    {
+      "id": "start_waits_for_pads_after_sleep_ms",
+      "since": "1.2.8.0",
+      "value": 0,
+      "evidence": "code",
+      "says": "Not in this firmware.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "start_waits_for_pads_after_sleep_ms",
+      "since": "1.2.8.10",
+      "value": 6000,
+      "evidence": "measured",
+      "says": "After a wake, START, GET_CURRENT_CONFIG and SET_TARE outside a stream wait until the pads are ready (about 4.6 s measured, at most 6 s); GET_STATUS, GET_FW_VERSION, KEEP_ALIVE and STOP answer at once.",
+      "source": "Movetrics firmware 1.2.8.10 (measured)"
+    },
+    {
+      "id": "wake_only_on_host_command",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "Not in this firmware.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "wake_only_on_host_command",
+      "since": "1.2.8.12",
+      "value": true,
+      "evidence": "measured",
+      "says": "Noise on the USB line no longer ends the sleep; only a complete host command does, and the reason is logged.",
+      "source": "Movetrics firmware 1.2.8.12 (measured)"
+    },
+    {
+      "id": "studio_exam_start_after_sleep",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "Not in this firmware.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "studio_exam_start_after_sleep",
+      "since": "1.2.8.14",
+      "value": true,
+      "evidence": "measured",
+      "says": "Studio's exam start (START, reset 23 ms later, settings, START) works right after the FDT slept.",
+      "source": "Movetrics firmware 1.2.8.14 (measured)"
+    },
+    {
+      "id": "analog_outputs_clip",
+      "since": "1.2.8.21",
+      "value": true,
+      "evidence": "code",
+      "says": "Analog outputs stop at full scale instead of wrapping, and a double plate's analog moments equal the digital ones (before: 100 times too large).",
+      "source": "Movetrics firmware 1.2.8.21 (code)"
+    },
+    {
+      "id": "analog_outputs_offset",
+      "since": "1.2.8.22",
+      "value": true,
+      "evidence": "measured",
+      "says": "Every analog output gets a per-board offset (+190 codes = +58 mV by default, measured for one unit); record the plates empty and subtract the mean per channel.",
+      "source": "Movetrics firmware 1.2.8.22 (measured)"
+    },
+    {
+      "id": "sync_modes",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "No sync modes: start on trigger and event frames come with 1.2.8.24 (contract K1).",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "sync_modes",
+      "since": "1.2.8.24",
+      "value": true,
+      "evidence": "code",
+      "says": "SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29: start or stop on the SYNC IN jack, SYNC OUT high or pulsing while streaming, and 24-byte event frames in the stream (plate address 0xFD, code 0x0E). Probe with GET_SYNC_MODE: older firmware and the digital variant answer NACK 7. Mode 0 after power-on behaves as before; the mode survives CONTROLLER_RESET, not power-off. While a START waits for a trigger the FDT does not sleep. First drafted as 1.2.8.21, renumbered onto the firmware team's 1.2.8.22; 1.2.8.23 is a local build without it. Not yet run on hardware.",
+      "source": "Movetrics firmware 1.2.8.24 (code)"
+    },
+    {
+      "id": "stream_values_clip_int16",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "A force or moment beyond the int16 range wraps around to the other sign, so an overloaded plate can read as a small or negative value.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "stream_values_clip_int16",
+      "since": "1.2.8.24",
+      "value": true,
+      "evidence": "code",
+      "says": "A force or moment beyond the int16 range is held at the limit (32767 or -32768) instead of wrapping; a value at the limit means the channel was overloaded.",
+      "source": "Movetrics firmware 1.2.8.24 (code)"
+    }
+  ]
+}
