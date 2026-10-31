@@ -27,6 +27,7 @@ from typing import Any, Final
 
 DEFAULT_BASE_URL: Final = "https://beta.movetrics.com/api/v1"
 SAMPLE_PAGE: Final = 100_000  # the server's largest page (SAMPLE_PAGE_LIMIT)
+_LOCAL_HTTP_HOSTS: Final = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 class CloudError(Exception):
@@ -38,13 +39,42 @@ class CloudError(Exception):
         self.code = code
 
 
+def _origin(url: str) -> tuple[str, str, int | None]:
+    parts = urllib.parse.urlsplit(url)
+    scheme = parts.scheme.lower()
+    port = parts.port
+    if port is None:
+        port = {"http": 80, "https": 443}.get(scheme)
+    return scheme, (parts.hostname or "").lower(), port
+
+
+class _SameOriginRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Follow redirects only within the base URL's origin, so the bearer token is never sent elsewhere."""
+
+    def __init__(self, origin: tuple[str, str, int | None]) -> None:
+        super().__init__()
+        self._origin = origin
+
+    def redirect_request(self, req: urllib.request.Request, fp: Any, code: int, msg: str, headers: Any,
+                         newurl: str) -> urllib.request.Request | None:
+        target = urllib.parse.urljoin(req.full_url, newurl)
+        if _origin(target) != self._origin:
+            raise CloudError(code, "REDIRECT_REFUSED",
+                             f"refusing a redirect to a different origin ({target}); the token was not sent")
+        return super().redirect_request(req, fp, code, msg, headers, target)
+
+
 class CloudClient:
     def __init__(self, token: str, base_url: str = DEFAULT_BASE_URL, timeout_s: float = 60.0) -> None:
         if not token.startswith("mvt_"):
             raise ValueError("a Movetrics access token starts with mvt_ (Account > Access tokens)")
+        scheme, host, _port = _origin(base_url)
+        if scheme != "https" and not (scheme == "http" and host in _LOCAL_HTTP_HOSTS):
+            raise ValueError("base_url must use https (http is allowed only for localhost, 127.0.0.1 or [::1])")
         self._token = token
         self._base = base_url.rstrip("/")
         self._timeout = timeout_s
+        self._opener = urllib.request.build_opener(_SameOriginRedirectHandler(_origin(self._base)))
 
     def get(self, path: str, **query: Any) -> bytes:
         """GET base_url + path with the token; list values repeat the parameter (channel=a&channel=b)."""
@@ -53,7 +83,7 @@ class CloudClient:
         url = self._base + path + ("?" + urllib.parse.urlencode(pairs) if pairs else "")
         request = urllib.request.Request(url, headers={"Authorization": f"Bearer {self._token}", "Accept": "*/*"})
         try:
-            with urllib.request.urlopen(request, timeout=self._timeout) as response:
+            with self._opener.open(request, timeout=self._timeout) as response:
                 body: bytes = response.read()
                 return body
         except urllib.error.HTTPError as error:

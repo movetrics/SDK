@@ -46,6 +46,19 @@ class _Api(BaseHTTPRequestHandler):
         return self._send(404, {"detail": {"code": "NOT_FOUND", "message": "Recording not found."}})
 
 
+def _redirecting_handler(target: str) -> type[BaseHTTPRequestHandler]:
+    class _Redirect(BaseHTTPRequestHandler):
+        def log_message(self, *args: Any) -> None:
+            pass
+
+        def do_GET(self) -> None:  # noqa: N802
+            self.send_response(302)
+            self.send_header("Location", target)
+            self.end_headers()
+
+    return _Redirect
+
+
 class CloudClientTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -85,6 +98,48 @@ class CloudClientTests(unittest.TestCase):
     def test_a_token_must_look_like_one(self) -> None:
         with self.assertRaises(ValueError):
             CloudClient("secret")
+
+    def test_a_non_local_http_base_is_refused(self) -> None:
+        for base in ("http://example.com/api/v1", "http://localhost.example.com/api/v1", "ftp://example.com/api/v1"):
+            with self.subTest(base=base), self.assertRaises(ValueError):
+                CloudClient(TOKEN, base)
+
+    def test_local_http_bases_are_allowed(self) -> None:
+        port = self.server.server_port
+        for host in ("localhost", "127.0.0.1", "[::1]"):
+            with self.subTest(host=host):
+                CloudClient(TOKEN, f"http://{host}:{port}/api/v1")
+
+    def test_a_cross_origin_redirect_is_refused_and_gets_no_token(self) -> None:
+        seen: list[dict[str, str]] = []
+
+        class _Collector(BaseHTTPRequestHandler):
+            def log_message(self, *args: Any) -> None:
+                pass
+
+            def do_GET(self) -> None:  # noqa: N802
+                seen.append(dict(self.headers))
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b"{}")
+
+        elsewhere = HTTPServer(("127.0.0.1", 0), _Collector)
+        threading.Thread(target=elsewhere.serve_forever, daemon=True).start()
+        redirector = HTTPServer(("127.0.0.1", 0),
+                                _redirecting_handler(f"http://127.0.0.1:{elsewhere.server_port}/steal"))
+        threading.Thread(target=redirector.serve_forever, daemon=True).start()
+        try:
+            cloud = CloudClient(TOKEN, f"http://127.0.0.1:{redirector.server_port}/api/v1")
+            with self.assertRaises(CloudError) as raised:
+                cloud.get("/me")
+            self.assertEqual(raised.exception.code, "REDIRECT_REFUSED")
+            self.assertEqual(seen, [])
+        finally:
+            redirector.shutdown()
+            elsewhere.shutdown()
+            redirector.server_close()
+            elsewhere.server_close()
 
 
 if __name__ == "__main__":

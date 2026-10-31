@@ -1,5 +1,6 @@
 % Read results and raw samples from the Movetrics Cloud. Create a token in the Cloud (Account > Access tokens)
-% and set it outside the script, for example setenv("MOVETRICS_TOKEN", "mvt_...") in your startup.m.
+% and set MOVETRICS_TOKEN in your OS or session environment (setenv("MOVETRICS_TOKEN", "mvt_...") for this
+% session only), never in a file such as startup.m.
 addpath(fullfile(fileparts(mfilename('fullpath')), '..'));
 cloud = movetrics.Cloud(getenv("MOVETRICS_TOKEN"));
 results = cloud.results("since", "2026-10-01");     % one row per result, with method and engine version

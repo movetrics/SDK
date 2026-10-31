@@ -23,7 +23,7 @@ from .commands import (
 )
 from .errors import FdtError, NackError, ReplyTimeoutError, TransportError
 from .frames import BROADCAST_ADDRESS, AckReply, FirmwareVersionReply, NackReply, encode_host_frame
-from .status import Status, StatusRecord, parse_status
+from .status import STATUS_MAX_RECORDS, Status, StatusRecord, parse_status
 from .stream import DeviceReply, EventFrame, StreamDecoder, StreamFrame, SyncModeReply
 from .transport import Transport
 from .vocabulary import Event, Gap, Sample, SampleConverter
@@ -33,6 +33,7 @@ DEFAULT_RECORD_GAP_S: Final = 0.2
 DEFAULT_START_CHECK_S: Final = 0.25
 DEFAULT_FRAME_QUEUE_SIZE: Final = 65536
 DEFAULT_KEEP_ALIVE_S: Final = 600  # KEEP_ALIVE_INTERVAL, the firmware
+DEFAULT_REPLY_BUFFER_SIZE: Final = 256
 # The stream rate is clamped to 50..2000 frames per second per plate (the firmware). 2,000 is clean
 # over USB on 1.2.8.1+ (measured, 10 Oct 2026); the default after every reset is 500 (1,000 from firmware 1.2.8.8) with a 50 Hz low-pass.
 MIN_RATE_HZ: Final = 50
@@ -112,7 +113,7 @@ class FdtClient:
         self._frame_buffer: collections.deque[StreamFrame | EventFrame] = collections.deque()
         self._rate_hz: int | None = None
         self._frame_ready = asyncio.Event()
-        self._reply_buffer: collections.deque[DeviceReply] = collections.deque()
+        self._reply_buffer: collections.deque[DeviceReply] = collections.deque(maxlen=DEFAULT_REPLY_BUFFER_SIZE)
         self._reply_ready = asyncio.Event()
         self._streaming = False
         self._link_closed = False
@@ -157,11 +158,13 @@ class FdtClient:
     async def get_status(self) -> Status:
         """Send GET_STATUS to 00/00 and return the parsed reply.
 
-        Waits up to timeout seconds for the first record. Then it collects the other records (one per address:
-        the general record, then one per detected platform) until none has arrived for record_gap seconds. A
-        reply is 1 to 5 records, all 85 bytes long or all 86 bytes long (docs/03-host-link-framing.md section
-        3.6; the firmware). Records are kept in arrival order and are not sorted. A reply must start with
-        the general record (address 0), and its platforms must follow in increasing order (see parse_status).
+        Waits up to timeout seconds for the first record. Then it collects up to STATUS_MAX_RECORDS records
+        (one per address: the general record, then one per detected platform), stopping when no status record
+        has arrived for record_gap seconds or when timeout seconds have passed since the first record; other
+        replies do not extend that quiet window. A reply is 1 to 5 records, all 85 bytes long or all 86 bytes
+        long (docs/03-host-link-framing.md section 3.6; the firmware). Records are kept in arrival order and are
+        not sorted. A reply must start with the general record (address 0), and its platforms must follow in
+        increasing order (see parse_status).
 
         Raises NackError on a refusal, ReplyTimeoutError when no record arrives, TransportError when the link
         fails, and FrameError when the collected bytes are not a valid reply, for example a mix of lengths or
@@ -183,12 +186,15 @@ class FdtClient:
                     records.append(item)
                 elif isinstance(item, NackReply) and item.command == GET_STATUS.code:
                     raise self._nack(item)
-            while True:
-                item = await self._next_reply(loop.time() + self._record_gap)
+            overall_deadline = loop.time() + self._timeout
+            quiet_deadline = loop.time() + self._record_gap
+            while len(records) < STATUS_MAX_RECORDS:
+                item = await self._next_reply(min(quiet_deadline, overall_deadline))
                 if item is None:
                     break
                 if isinstance(item, StatusRecord):
                     records.append(item)
+                    quiet_deadline = loop.time() + self._record_gap
         return parse_status(b"".join(record.raw for record in records))
 
     async def get_firmware_version(self) -> FirmwareVersionReply:

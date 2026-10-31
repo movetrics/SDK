@@ -28,6 +28,12 @@ classdef Cloud
                 error('movetrics:Cloud', 'A Movetrics access token starts with mvt_ (Account > Access tokens).');
             end
             if nargin > 1, obj.baseUrl = char(baseUrl); end
+            lowerUrl = lower(obj.baseUrl);
+            localHttp = ~isempty(regexp(lowerUrl, '^http://(\[::1\]|localhost|127\.0\.0\.1)(:\d+)?(/|$)', 'once'));
+            if ~strncmp(lowerUrl, 'https://', 8) && ~localHttp
+                error('movetrics:Cloud', ['The Cloud base URL must use https (http is allowed only for ' ...
+                                           'localhost, 127.0.0.1 or [::1]).']);
+            end
             obj.options = weboptions('HeaderFields', {'Authorization', ['Bearer ' token]}, 'Timeout', 60, ...
                                      'ContentType', 'text');
         end

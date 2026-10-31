@@ -91,6 +91,25 @@ class GetStatusTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ReplyTimeoutError):
                 await fdt.get_status()
 
+    async def test_acks_do_not_keep_a_status_reply_open(self) -> None:
+        ack = build_device_frame(bytes((0x00, 0x22, 0x06)))
+        transport = FakeTransport(FakeController(status_reply=STATUS_85))
+
+        async def send_acks() -> None:
+            while True:
+                await asyncio.sleep(0.1)
+                transport.feed(ack)
+
+        async with FdtClient(transport, timeout=5.0, record_gap=0.25, start_check=0.02) as fdt:
+            feeder = asyncio.create_task(send_acks())
+            try:
+                status = await asyncio.wait_for(fdt.get_status(), 2.0)
+            finally:
+                feeder.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await feeder
+        self.assertEqual(status.length_class, "85")
+
     async def test_link_failure_while_waiting_is_a_transport_error(self) -> None:
         transport = FakeTransport(FakeController(silent=True))
         async with FdtClient(transport, timeout=2.0, record_gap=0.02, start_check=0.02) as fdt:
@@ -118,12 +137,15 @@ class GetStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status.length_class, "86x5")
         self.assertEqual([record.platform_address for record in status.platforms], [1, 2, 3, 4])
 
-    async def test_a_reply_of_six_records_is_refused(self) -> None:
-        transport = FakeTransport(FakeController(status_reply=STATUS_86X3 + STATUS_86X3))
+    async def test_records_beyond_the_protocol_maximum_are_not_collected(self) -> None:
+        # The client stops at STATUS_MAX_RECORDS (5), so a sixth record cannot grow the reply without bound.
+        # parse_status still refuses an oversized reply when it is handed one directly (test_status).
+        four_plate = b"".join(record_with_address(RECORD_86_GENERAL, address) for address in (0, 1, 2, 3, 4))
+        transport = FakeTransport(FakeController(status_reply=four_plate + RECORD_86_GENERAL))
         async with FdtClient(transport, **FAST) as fdt:
-            with self.assertRaises(FrameError) as raised:
-                await fdt.get_status()
-        self.assertEqual(raised.exception.reason, "unsupported_length")
+            status = await fdt.get_status()
+        self.assertEqual(status.length_class, "86x5")
+        self.assertEqual([record.platform_address for record in status.platforms], [1, 2, 3, 4])
 
     async def test_a_reply_that_mixes_85_and_86_byte_records_is_refused(self) -> None:
         transport = FakeTransport(FakeController(status_reply=STATUS_85 + RECORD_86_GENERAL))
