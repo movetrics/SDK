@@ -4,7 +4,7 @@
 import { COMMANDS, NACK_ERROR_NAMES } from "./commands.js";
 import { FdtClosedError, FdtNackError, FdtRefusedError, FdtTimeoutError } from "./errors.js";
 import { BROADCAST_ADDRESS, encodeHostFrame, ReplyScanner } from "./frames.js";
-import { parseFirmwareVersion, parseStatus } from "./status.js";
+import { parseFirmwareVersion, parseStatus, STATUS_MAX_RECORDS, } from "./status.js";
 import { parseEventFrame, parseStreamFrame, parseSyncModeReply, } from "./stream.js";
 import { AsyncQueue } from "./transport.js";
 import { SampleConverter } from "./vocabulary.js";
@@ -397,7 +397,7 @@ export class FdtClient {
         });
     }
     // Collects GET_STATUS records. The first record must come within the reply limit. After
-    // that, the reply ends at the quiet limit, or at the overall limit with the records seen so far.
+    // that, the reply ends at the quiet limit, at the overall limit, or at STATUS_MAX_RECORDS.
     #collectStatus() {
         const command = COMMANDS.GET_STATUS.code;
         const { reply: firstLimit, statusQuiet, status: overallLimit } = this.#timeouts;
@@ -439,6 +439,10 @@ export class FdtClient {
                     if (incoming.kind !== 'status')
                         return;
                     records.push(incoming);
+                    if (records.length >= STATUS_MAX_RECORDS) {
+                        finish();
+                        return;
+                    }
                     timers.clearTimeout(firstTimer);
                     firstTimer = null;
                     timers.clearTimeout(quietTimer);
