@@ -1,6 +1,6 @@
 # Firmware capability table
 
-Generated from `contracts/firmware-capabilities.v1.json` (contract `movetrics.firmware-capabilities/1.0.0`, updated 2026-10-28). Do not edit by hand.
+Generated from `contracts/firmware-capabilities.v1.json` (contract `movetrics.firmware-capabilities/1.0.0`, updated 2026-11-01). Do not edit by hand.
 
 Each row is a firmware version. A capability holds from the version in its row until a later entry with the same name. Versions before 1.2.8.0 or versions that cannot be read give `unknown`.
 

@@ -41,7 +41,7 @@ Two FDTs or another layout: set `rec.layout[plate]` to that plate's four corners
 
 Columns `time`, then per plate n: `n_ground_force_vx/vy/vz` (N), `n_ground_force_px/py/pz` (m), `n_ground_torque_x/y/z` (N·m), in OpenSim's ground frame with **Y up**: X = lab x, Y = lab z, Z = −lab y. The point is the CoP in the lab, the torque is the free moment about the vertical through the CoP (Tz = Mz − (x·Fy − y·Fx)). Below 20 N a plate's force and torque are written as 0 and its point as the plate centre, so OpenSim never applies noise at a wandering point. `external_loads={plate: body}` also writes the `ExternalLoads` XML that names the bodies (for a walking trial, which foot is on which plate per step is the caller's choice).
 
-Status: the vertical force, the CoP and the time base follow from measured facts above. The direction of the horizontal forces in the lab follows the plate frame, whose +x and +y relative to the plate's connector the maker has not stated yet (doc 18 section 7); the bench check with one known horizontal push is on the bench queue. Not yet run through OpenSim itself; the file layout follows the OpenSim external loads documentation.
+Status: the vertical force, the CoP and the time base follow from measured facts above. The direction of the horizontal forces in the lab follows the plate frame, whose +x and +y relative to the plate's connector the maker has not stated yet (doc 18 section 8); the bench check with one known horizontal push is on the bench queue. Not yet run through OpenSim itself; the file layout follows the OpenSim external loads documentation.
 
 ## Not here yet
 
