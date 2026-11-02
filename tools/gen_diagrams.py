@@ -229,7 +229,7 @@ def contract() -> None:
     body += box(16, 92, 180, 118, "acc", "The contract", ["docs/: every byte", "vocabulary: names,", "units, axes, signs"], "accT", "accT")
     body += box(236, 92, 190, 118, "box", "Shared test data", ["vectors/: 53 byte cases,", "7 vocabulary cases,", "sync and C3D golden files"])
     body.append(arrow(196, 151, 234, 151))
-    rows = [("Python", "250 tests", "acc"), ("TypeScript", "202 tests", "acc"), ("MATLAB", "61 checks, in Octave", "acc"),
+    rows = [("Python", "255 tests", "acc"), ("TypeScript", "202 tests", "acc"), ("MATLAB", "61 checks, in Octave", "acc"),
             ("Your client", "C#, Swift, Rust, …", "dash")]
     for i, (name, note, cls) in enumerate(rows):
         top = 48 + i * 58

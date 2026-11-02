@@ -53,7 +53,8 @@ The simulator speaks the FDT's real protocol. `--signal stand|cmj|empty`, `--bod
 
 | You want to | Use |
 |---|---|
-| Stream live | `FdtClient` with `SerialTransport(port)`, `BleTransport("Movetrics-BLE")` or `TcpTransport(host, port)`; `samples()` yields `Sample`, `Event` and `Gap` |
+| Stream live | `FdtClient` with `SerialTransport(port)`, `BleTransport(address)` or `TcpTransport(host, port)`; `samples()` yields `Sample`, `Event` and `Gap` |
+| Find the FDTs in Bluetooth range | `await discover_bridges()`: (address, signal strength) for each, strongest first. Every FDT advertises the name `Movetrics-BLE`, so `BleTransport("Movetrics-BLE")` only connects when exactly one is in range |
 | Read Studio exports | `read_studio_csv(path)`, `read_studio_c3d(path)`, `read_studio_details(path)` |
 | Write files for other tools | `Recording.from_samples(items, rate_hz)` or `Recording.from_studio(...)`, then `write_csv`, `write_c3d`, `write_mot` (in `movetrics_fdt.writers`) |
 | Record next to EMG, EEG or cameras | `movetrics_fdt.lsl.LslBridge(rate_hz, plates)`: `bridge.push(item)` for each item of `samples()` |
@@ -86,6 +87,10 @@ Errors are subclasses of `FdtError`: `FrameError`, `UnsupportedCommandError`, `N
 ### Commands the client will not send
 
 The FDT also accepts commands that update firmware, write calibration, reset the controller, re-zero the plates or change how the plates inside are polled. The client sends the eight commands above and nothing else. The other 41 codes it knows are in `NOT_IMPLEMENTED` in `movetrics_fdt/commands.py`, each with its reason, and asking for one raises `UnsupportedCommandError` before a byte is written. Zeroing the plates and firmware updates are done in Movetrics Studio or the Movetrics app.
+
+### Bluetooth on a desktop
+
+Measured on 2 November 2026 with an M1 MacBook Pro and two plates: 100 to 500 frames per second stream completely, 500 is at the edge (some runs lost the link), and 1000 drops the link within about a second. A phone streams faster through the same bridge. On macOS, a Python process run from a terminal is stopped by the system as soon as it uses Bluetooth, unless the app that started it holds the Bluetooth permission.
 
 ## Data rules
 
