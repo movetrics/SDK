@@ -57,7 +57,7 @@ Plug in an FDT, change one line, and the same program reads real plates. Other e
 - **Checked against references outside the SDK (measured).** Centre of pressure within 0.28 mm rms of Studio's own figures on real recordings; C3D files read by ezc3d, the library OpenSim uses, within 0.24 to 0.29 mm rms.
 - **Safe by construction.** The clients send eight commands: start, stop, rate, status, version, keep-alive, and set and read the sync mode. Firmware updates, calibration writes and resets are refused before a byte leaves the computer.
 - **Nothing hidden.** Time comes from the FDT's clock, gaps are reported and never filled, and every Cloud result names the method and version that computed it.
-- **Honest status.** This version has run against the simulator, recorded bytes and real Studio exports; the run against a real FDT is next. Every page says which: measured, simulated, or not yet. [What has been tested](https://developers.movetrics.com/concepts/tested/)
+- **Honest status.** This version has run against the simulator, recorded bytes and real Studio exports, and the Python client against a real FDT over USB and Bluetooth (2 November 2026). Every page says which: measured, simulated, or not yet. [What has been tested](https://developers.movetrics.com/concepts/tested/)
 
 ## What is in this repository
 

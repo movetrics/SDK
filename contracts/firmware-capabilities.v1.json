@@ -2,7 +2,7 @@
   "contract": "movetrics.firmware-capabilities/1.0.0",
   "device": "fdt",
   "about": "What each FDT firmware version does that a host has to know before it talks to it. A capability holds from its 'since' version until a later entry with the same id; a version before 1.2.8.0, or one that cannot be read (the vendor's '001.002.003'), gets 'unknown'. Facts come from the firmware line; this file is hosted by the Cloud and copied into Android and the SDK.",
-  "updated": "2026-10-28",
+  "updated": "2026-11-01",
   "evidence_words": {
     "measured": "seen on an FDT on the bench",
     "code": "read in the firmware source, not seen on a device"
@@ -153,7 +153,7 @@
       "since": "1.2.8.24",
       "value": true,
       "evidence": "code",
-      "says": "SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29: start or stop on the SYNC IN jack, SYNC OUT high or pulsing while streaming, and 24-byte event frames in the stream (plate address 0xFD, code 0x0E). Probe with GET_SYNC_MODE: older firmware and the digital variant answer NACK 7. Mode 0 after power-on behaves as before; the mode survives CONTROLLER_RESET, not power-off. While a START waits for a trigger the FDT does not sleep. First drafted as 1.2.8.21, renumbered onto the firmware team's 1.2.8.22; 1.2.8.23 (the production line, 28 Oct) does not have it. Not yet run on hardware.",
+      "says": "SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29: start or stop on the SYNC IN jack, SYNC OUT high or pulsing while streaming, and 24-byte event frames in the stream (plate address 0xFD, code 0x0E). Probe with GET_SYNC_MODE: older firmware and the digital variant answer NACK 7. Mode 0 after power-on behaves as before; the mode survives CONTROLLER_RESET, not power-off. While a START waits for a trigger the FDT does not sleep. First drafted as 1.2.8.21; built on the firmware team's 1.2.8.23, and 1.2.8.21 to 1.2.8.23 have no sync. Not yet run on hardware.",
       "source": "Movetrics firmware 1.2.8.24 (code)"
     },
     {

@@ -35,6 +35,13 @@ DEFAULT_CONNECT_TIMEOUT_S: Final = 20.0  # a choice of this SDK; not a firmware 
 SCAN_TIMEOUT_S: Final = 10.0  # the default scan time of bleak's find_device_by_name
 ATT_DEFAULT_MTU: Final = 23  # the default ATT MTU of the Bluetooth Core specification
 _ATT_WRITE_OVERHEAD: Final = 3  # the bytes MTU - 3 that carry a write payload (BridgeConfig.h:34)
+# A write the bridge cannot take yet fails with ATT error 0x11, Insufficient Resource, while a fast stream fills its
+# queue (bench note, 2 November 2026: STOP during a 200 Hz stream on macOS). STOP and KEEP_ALIVE are retried after
+# these pauses; every other command is not, as docs/02-transports.md section 2.6 asks (never retry START, and a
+# retried SET_TARE could run twice).
+BUSY_RETRY_DELAYS_S: Final = (0.05, 0.1, 0.2, 0.4, 0.8, 1.0, 1.0, 1.0)  # a choice of this SDK; not a firmware value
+_RETRIED_COMMANDS: Final = frozenset({0x05, 0x26})  # STOP_STREAM, KEEP_ALIVE
+_COMMAND_OFFSET: Final = 4  # FE ED address destination command ...
 
 _ADDRESS = re.compile(r"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
 _UUID = re.compile(r"[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}")
@@ -88,11 +95,38 @@ def _write_chunk_size(client: Any) -> int:
     return max(1, int(mtu) - _ATT_WRITE_OVERHEAD)
 
 
+def _bridge_busy(error: BaseException) -> bool:
+    """True for ATT error 0x11 (Insufficient Resource). bleak reports it as text on macOS and as a code elsewhere."""
+    text = str(error)
+    return "Insufficient Resource" in text or "(17," in text or getattr(error, "att_error", None) == 0x11
+
+
+async def discover_bridges(name: str = DEVICE_NAME, timeout: float = SCAN_TIMEOUT_S) -> list[tuple[str, int | None]]:
+    """Scan for bridges advertising `name` and return (address, rssi) for each, strongest first.
+
+    Every FDT bridge advertises the same name, so use this to see how many are in range and connect by address.
+    On macOS the address is the UUID the system gives the device, not its Bluetooth address.
+    """
+    bleak = _import_bleak()
+    try:
+        found = await bleak.BleakScanner.discover(timeout=timeout, return_adv=True)
+    except Exception as error:
+        raise TransportError(f"BLE scan for {name!r} failed: {error}") from error
+    bridges = [
+        (device.address, getattr(adv, "rssi", None))
+        for device, adv in found.values()
+        if name in (device.name, getattr(adv, "local_name", None))
+    ]
+    return sorted(bridges, key=lambda item: -(item[1] if item[1] is not None else -999))
+
+
 class BleTransport(Transport):
     """A BLE link to the bridge, found by its advertised name (Movetrics-BLE) or by its address.
 
     name_or_address is treated as an address when it has the form of a MAC address (AA:BB:CC:DD:EE:FF) or of a
-    UUID (the form macOS uses for devices), and as a name otherwise. FdtClient opens and closes the link.
+    UUID (the form macOS uses for devices), and as a name otherwise. Every bridge advertises the same name, so a
+    name is refused when more than one bridge answers to it; the error lists their addresses, and
+    discover_bridges() does the same scan. FdtClient opens and closes the link.
     After open(), bridge_status holds the parsed status line.
 
     Writes are split into pieces of the negotiated MTU minus 3 bytes. The bridge relays bytes in order, so
@@ -161,11 +195,17 @@ class BleTransport(Transport):
         client = self._require_open()
         payload = bytes(data)
         chunk = _write_chunk_size(client)
-        try:
-            for offset in range(0, len(payload), chunk):
-                await client.write_gatt_char(RX_UUID, payload[offset : offset + chunk], response=True)
-        except Exception as error:
-            raise TransportError(f"BLE write to {self._target} failed: {error}") from error
+        retry = len(payload) > _COMMAND_OFFSET and payload[_COMMAND_OFFSET] in _RETRIED_COMMANDS
+        for offset in range(0, len(payload), chunk):
+            piece = payload[offset : offset + chunk]
+            for delay in (*BUSY_RETRY_DELAYS_S, None):
+                try:
+                    await client.write_gatt_char(RX_UUID, piece, response=True)
+                    break
+                except Exception as error:
+                    if delay is None or not retry or not _bridge_busy(error):
+                        raise TransportError(f"BLE write to {self._target} failed: {error}") from error
+                    await asyncio.sleep(delay)
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         return self._read_chunks()
@@ -182,13 +222,25 @@ class BleTransport(Transport):
 
     async def _find(self, bleak: Any) -> Any:
         if _ADDRESS.fullmatch(self._target) or _UUID.fullmatch(self._target):
-            lookup = bleak.BleakScanner.find_device_by_address
+            try:
+                device = await bleak.BleakScanner.find_device_by_address(self._target, timeout=SCAN_TIMEOUT_S)
+            except Exception as error:
+                raise TransportError(f"BLE scan for {self._target!r} failed: {error}") from error
         else:
-            lookup = bleak.BleakScanner.find_device_by_name
-        try:
-            device = await lookup(self._target, timeout=SCAN_TIMEOUT_S)
-        except Exception as error:
-            raise TransportError(f"BLE scan for {self._target!r} failed: {error}") from error
+            try:
+                found = await bleak.BleakScanner.discover(timeout=SCAN_TIMEOUT_S, return_adv=True)
+            except Exception as error:
+                raise TransportError(f"BLE scan for {self._target!r} failed: {error}") from error
+            named = [
+                device for device, adv in found.values()
+                if self._target in (device.name, getattr(adv, "local_name", None))
+            ]
+            if len(named) > 1:
+                addresses = ", ".join(sorted(device.address for device in named))
+                raise TransportError(
+                    f"{len(named)} bridges answer to {self._target!r} ({addresses}); connect by address to choose one"
+                )
+            device = named[0] if named else None
         if device is None:
             raise TransportError(
                 f"no BLE device named or addressed {self._target!r} was found within {SCAN_TIMEOUT_S:g} s"

@@ -9,7 +9,7 @@ variable, as the examples do with MOVETRICS_TOKEN.
         print(recording["id"], recording["movement"])
     samples = cloud.samples(recording_id)          # every stored channel, all pages joined
 
-Endpoints and their shapes: services/api/app/api_v1.py in the Movetrics firmware repository (private), and docs/18-export-formats.md.
+Endpoints and their shapes: services/api/app/api_v1.py in the Movetrics Cloud source (private), and docs/18-export-formats.md.
 Samples come out exactly as stored, unfiltered; results name their metric, method, method version and engine
 version.
 """

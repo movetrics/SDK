@@ -23,7 +23,7 @@ Wide tables (CSV, spreadsheets, MATLAB tables) prefix per plate: `t, p1_fx, …,
 
 ## 2. Frames
 
-- **Plate frame**: origin at the centre of the plate's top surface; x along the 35 cm side, y along the 60 cm side, z vertical; signs as in Movetrics Studio's `-channels.csv`. Which way +x and +y point relative to the cable connector is not yet stated by the maker (doc 18 section 7, item 4).
+- **Plate frame**: origin at the centre of the plate's top surface; x along the 35 cm side, y along the 60 cm side, z vertical; signs as in Movetrics Studio's `-channels.csv`. Which way +x and +y point relative to the cable connector is not yet stated by the maker (doc 18 section 8, item 4).
 - **Pair frame**: origin midway between the two plate centres, same axes; plate 1 centre at x = −0.175 m, plate 2 at +0.175 m (inferred, fitted on the 14 Oct 2026 export, residual 0.37 mm). The `comb_` quantities live here.
 - **Lab frame**: right-handed, z up, origin and plate placement from a layout file (the Movetrics Cloud lab setup and the SDK writers share one format, doc 21 when it lands). Default: Studio's C3D, origin at the outer corner of plate 1.
 
@@ -75,7 +75,7 @@ A gap is a step between consecutive samples of one plate longer than 1.5 nominal
 | Client | Vocabulary | Notes |
 |---|---|---|
 | Python `movetrics_fdt` 0.3.0 | yes: `FdtClient.samples()`, `SampleConverter`, `plate_cop`, `combine` | tested against the simulator and the 14 Oct export |
-| MATLAB `+movetrics` | partly: `readStudioCsv` gaps and CoP; live samples next | |
-| TypeScript `movetrics-fdt-sdk` | not yet | |
-| Cloud API v1 | channel ids keep Studio's names (`channel-4-p1_ForceZ`) | mapping to these names: the firmware team |
-| Android `fdt-core` | raw wire values | mapping: the firmware team |
+| TypeScript `movetrics-fdt-sdk` 0.3.0 | yes: `FdtClient.samples()`, `SampleConverter`, `plateCop`, `combine` | passes `vectors/vocabulary.json` (code, `ts/src/vocabulary.ts`) |
+| MATLAB `+movetrics` | yes: `Fdt.read` and `convertFrames` return plate-frame samples, events and gaps; `readStudioCsv` gaps and CoP | passes the vocabulary vectors in Octave 8; not run in MATLAB itself |
+| Android app (`fdt-core`) | yes since 29 Oct 2026: "Data as CSV" writes the CSV wide table of doc 21 (format `movetrics-csv/1`, vocabulary `1.0.0-draft`), file name `<recording>-newtons-fw<firmware>.csv` | code; the app carries the same `vocabulary.json` vectors in its JVM tests. Its support bundle and Cloud upload still carry wire values. Builds before 29 Oct 2026 export wire integers |
+| Cloud API v1 | not yet: channel ids keep Studio's names (`channel-4-p1_ForceZ`) | a mapping to these names is open |

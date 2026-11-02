@@ -4,7 +4,7 @@ Every function works on the FDT's own stamps (docs/19: t from the 0.1 ms device 
 frame happened to arrive over USB: the FT232R delivers in bursts, so arrival jitters by up to 16 ms.
 
 - ClockMap: device seconds to host seconds (for LSL), from (device, arrival) pairs. Ported from the FDT repo's
-  LSL streamer (the Movetrics firmware repository (private), livestream.py): the lower envelope of arrival - device per block,
+  LSL streamer (the Movetrics FDT tool repository (private), livestream.py): the lower envelope of arrival - device per block,
   then a least-squares line, which gives offset and drift. Its simulation there: 50 ppm drift, 0-16 ms jitter,
   60 s at 2,000 Hz, mapped times within 0.3 ms of the truth.
 - align(): offset, drift and residual between edge times seen by two clocks (an EMG system's trigger log and the

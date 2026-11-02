@@ -2,7 +2,7 @@
 
 This document says what is in each file or stream a customer gets from a Movetrics system: units, axes, origins, timestamps, filtering and sample rate, with one annotated example each. It covers the live FDT stream (USB or Bluetooth), the three files Movetrics Studio writes per exam (`-channels.csv`, `-details.csv`, `.c3d`), and the Movetrics Cloud read API. Each statement is marked **measured** (checked on a real file or capture, named), **owner** (decided by Movetrics), **code** (read from firmware or Studio configuration) or **inferred** (fitted, not confirmed by the plate maker). Readers: Python `movetrics_fdt.files` and `movetrics_fdt.cloud`, MATLAB `matlab/+movetrics`.
 
-Sources checked on 28 Oct 2026: Studio exports of 10 Oct 2026 (Free Run, 7,761 rows) and 14 Oct 2026 (CMJ Analysis, double platform, 10,561 rows, CSV and C3D of the same exam); discovery firmware 1.2.8.2; the firmware (Studio `config.ini`); `the Movetrics firmware repository (private)` `services/api/app/api_v1.py`, `profiles/movetrics-studio/1.0.0.json` and `python/movetrics-ingestion/movetrics_ingestion/fdt_geometry.py`.
+Sources checked on 28 Oct 2026: Studio exports of 10 Oct 2026 (Free Run, 7,761 rows) and 14 Oct 2026 (CMJ Analysis, double platform, 10,561 rows, CSV and C3D of the same exam); discovery firmware 1.2.8.2; Studio's `config.ini`; `the Movetrics Cloud source (private)` `services/api/app/api_v1.py`, `profiles/movetrics-studio/1.0.0.json` and `python/movetrics-ingestion/movetrics_ingestion/fdt_geometry.py`; on 1 Nov 2026, the Android app's CSV export code (Section 7).
 
 ## 1. The plates and their axes
 
@@ -101,9 +101,24 @@ Base URL `https://beta.movetrics.com/api/v1` (beta). Authentication: an access t
 | `GET /recordings/{id}/samples.parquet` | the stored signal file, byte for byte |
 | `GET /results?metric_id=&since=&format=json|csv` | one row per result: recording_id, recorded_at, athlete_code, movement, metric_id, label, value, unit, method, method_version, engine_version, origin |
 
-Samples are the recording as uploaded, after unit mapping and before any analysis filter: a Studio upload keeps Studio's columns and signs (channel ids such as `channel-4-p1_ForceZ` for CSV, `c3d-analog-3-p1_ForceZ` and `c3d-platform-1-center_of_pressure-x` for C3D). Time is in seconds (`time_s`). Results use SI units (m, s, N, W) and name the method and version that computed them. The contract is additive within v1: fields may be added, never renamed or removed (code). The Cloud's own derived downloads are specified in `the Movetrics firmware repository (private)` the firmware.
+Samples are the recording as uploaded, after unit mapping and before any analysis filter: a Studio upload keeps Studio's columns and signs (channel ids such as `channel-4-p1_ForceZ` for CSV, `c3d-analog-3-p1_ForceZ` and `c3d-platform-1-center_of_pressure-x` for C3D). Time is in seconds (`time_s`). Results use SI units (m, s, N, W) and name the method and version that computed them. The contract is additive within v1: fields may be added, never renamed or removed (code). The Cloud's own derived downloads are specified in the Cloud's normalized export spec.
 
-## 7. Open points
+## 7. Movetrics Android app "Data as CSV"
+
+From the app's 29 Oct 2026 build line, "Data as CSV" on a recording writes the shared vocabulary's wide table, the same layout as the SDK's CSV writer (doc 21, CSV) and the same names as doc 19 (code). Builds before that wrote wire integers with empty SI columns, in a file named `-fz-uncalibrated` (code); read those values as Section 2.2 says.
+
+    t,p1_fx,p1_fy,p1_fz,p1_mx,p1_my,p1_mz,p1_cop_x,p1_cop_y,p2_fx,...,p2_cop_y,comb_fx,...,comb_cop_y
+
+- File name `<recording>-newtons-fw<firmware>.csv`, for example `-newtons-fw1.2.8.24.csv`, where the firmware is the FDT's GET_FW_VERSION kept with the recording; a recording made before the app kept it gets `<recording>-newtons.csv` (code).
+- `t`: seconds, the FDT stamp / 10,000. A recording in several parts (each a new START, so the stamp restarts) continues each later part from the phone's clock, so `t` never runs backwards (code).
+- `p1_*`, `p2_*`: N, N·m and m in the plate frame, Studio's signs (`fy` and `mx` negated against the stream, Section 2.3); CoP with the 30 mm sensor depth, empty below 50 N (code).
+- `comb_*`: both plates in the pair frame, by the same rule as the SDK's `combine` (code).
+- A plate with no frame at an instant leaves its cells empty, and so does `comb_` at that instant; a hole shows as a jump in `t`, never filled (code).
+- No bodyweight gain or filter is applied by the app: the values are the FDT's whole newtons, as in Studio and the SDK (code).
+
+The app's support bundle and its Cloud upload still carry the wire values; the Cloud reads those as Section 6 says.
+
+## 8. Open points
 
 1. Confirm the stream-to-file sign change (Section 2.3) with one known off-centre load recorded both as stream and as a Studio export.
 2. Ask the Studio developer whether Studio re-times rows or passes the FDT stamp, and why the C3D drops the gap.

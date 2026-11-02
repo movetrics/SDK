@@ -1,10 +1,10 @@
 """Connect to a Movetrics BLE bridge and print its status line and the controller's GET_STATUS records.
 
-    python3 ble_status.py Movetrics-BLE
+    python3 ble_status.py Movetrics-BLE      # only when one FDT is in range
     python3 ble_status.py AA:BB:CC:DD:EE:FF
 
 The example sends GET_STATUS only. When a session that sent commands ends, the bridge writes STOP to the
-controller (docs/02-transports.md section 2.5). Whether that stops a stream on hardware is item U8 there.
+controller (docs/02-transports.md section 2.5). On the bench (2 November 2026) it did: a dropped link left the stream stopped.
 
 Install the package first, from this directory: python3 -m pip install -e "../../python[ble]"
 This example has not been run against hardware in this SDK. It is checked with py_compile only.

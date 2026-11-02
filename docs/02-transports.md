@@ -100,7 +100,7 @@ The bridge's behaviour:
 - A notification carries at most the MTU minus 3 bytes and at most 244 bytes. It is sent when a full packet is waiting, or 3 ms after the last send.
 - Buffers: 4,096 bytes of commands, 32,768 bytes to the phone, and a 16,384-byte UART receive buffer.
 - Notifications wait while NimBLE's buffer pool is nearly empty, so that incoming writes such as STOP can still be accepted.
-- When a session that sent commands ends, the bridge writes the STOP frame to the controller. A phone that only connected does not stop a stream started over USB. Whether this STOP stops the stream on hardware has not been run (unverified).
+- When a session that sent commands ends, the bridge writes the STOP frame to the controller. A phone that only connected does not stop a stream started over USB. Measured on 2 November 2026 (bridge 1.3.1.0, FDT 1.2.8.24): a link dropped mid-stream without STOP left the stream stopped.
 
 The bridge sets these fault codes:
 
@@ -190,7 +190,6 @@ All of these are unverified.
 - The DTR and RTS behaviour of the stock FTDI open. The claim comes from a code comment.
 - BLE throughput on 1.2.8.0 (section 2.9).
 - The link the phone actually gets: connection interval, PHY and priority. The requests are in section 2.6. The outcome is visible only on the phone.
-- Whether STOP sent on session end stops the stream on hardware (section 2.5).
 
 ## Known inconsistencies
 

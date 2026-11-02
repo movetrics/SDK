@@ -241,6 +241,11 @@ class FdtClient:
         the ACK before it clears the stream, so frames that arrived earlier are still delivered to frames().
         Raises NackError on a refusal and ReplyTimeoutError when no ACK arrives. After a timeout the client still
         counts the stream as running.
+
+        Over Bluetooth a fast stream can fill the bridge's queue. BleTransport then retries the STOP write (and
+        KEEP_ALIVE, never other commands) for up to about 4.5 s, and if the link drops meanwhile this raises TransportError. The bridge writes STOP to the
+        controller itself when a link that sent commands ends (bench note, 2 November 2026), so a dropped link
+        leaves the stream stopped; reconnect before you start again.
         """
         lock = self._require_open()
         frame = encode_host_frame(STOP_STREAM.code, BROADCAST_ADDRESS, 0x00)

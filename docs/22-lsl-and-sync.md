@@ -39,4 +39,4 @@ This replaces the streamer of the FDT repo's for SDK users: same clock method, t
 - `ClockMap`: FDT time to host time, used by the LSL bridge; usable on its own for any host clock.
 - `edge_times(items, "sync_in_rise")`: the times of one kind of event.
 
-Wiring and the modes to set on each FDT are in the firmware team the firmware once its bench plan lands. Until then everything in this section is simulated.
+Wiring and the modes to set on each FDT will be published here once the sync firmware's bench plan has run. Until then everything in this section is simulated.

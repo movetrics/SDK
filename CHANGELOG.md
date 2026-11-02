@@ -2,6 +2,27 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased (Python, 2026-11-02)
+
+First run of the Python client against a real FDT (firmware 1.2.8.24, two plates), **measured** on a Mac.
+
+- **USB**: firmware and status replies decode; KEEP_ALIVE 300 is accepted and 0 is refused before sending; 30 s at 2,000 frames per second per plate arrived complete in three runs; opening the port does not reset the FDT; after STOP the port is silent.
+- **Bluetooth**: 100 to 500 frames per second stream; 1,000 drops the Mac's link within about a second (a phone streams faster through the same bridge). When a link drops without STOP, the bridge stops the stream itself.
+- **`BleTransport`** refuses the name `Movetrics-BLE` when more than one FDT answers to it, and lists their addresses. Every FDT advertises that name.
+- **`discover_bridges()`** (new) lists the FDTs in Bluetooth range, strongest signal first.
+- **STOP and KEEP_ALIVE** are retried for up to about 4.5 s when the bridge is busy (ATT error 0x11). START and the other commands are never retried.
+- **`set_rate()`**: a low rate needs a lower filter, for example `set_rate(100, cutoff_hz=40)`; the default 50 Hz cutoff must be below half the rate.
+
+## Unreleased (docs, 2026-11-01)
+
+No code or protocol change; the packages stay at 0.3.0.
+
+- **Android app CSV** ([chapter 18](docs/18-export-formats.md), section 7): the Movetrics Android app's "Data as CSV" now writes the same wide table as the SDK's CSV writer (newtons, newton-metres, metres, Studio's signs, CoP empty below 50 N), named with the FDT firmware. Read from the app's code, not run on a phone here.
+- **Where each client stands** ([chapter 19](docs/19-vocabulary-and-units.md), section 7): TypeScript, MATLAB and the Android app now speak the shared vocabulary; the table said "not yet" or "raw wire values" for them. The Cloud API still uses Studio's channel names.
+- **Compatibility**: the sync-modes row says which firmware line 1.2.8.24 is built on; versions 1.2.8.21 to 1.2.8.23 have no sync. Still draft firmware, not yet run on hardware.
+- **Wording**: chapter 18's sources and the Cloud export note name the Cloud, not the firmware, as their source; chapter 22 says where the sync wiring will appear instead of a garbled internal reference.
+- **Docs site**: the Cloud API page uses the Movetrics brand colours and fonts, light and dark (already live since 28 Oct; now kept in the source).
+
 ## 0.3.0 (2026-10-28): first public release
 
 One vocabulary for every client, a simulator, files for other tools, and sync.

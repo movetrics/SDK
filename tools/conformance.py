@@ -120,7 +120,7 @@ def matrix(clients: list[dict]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--android", type=Path, help="path to a the Movetrics firmware repository (private) checkout")
+    parser.add_argument("--android", type=Path, help="path to a the Movetrics Android app source (private) checkout")
     parser.add_argument("--write", action="store_true", help="rewrite CONFORMANCE.md")
     args = parser.parse_args()
     clients = [python_client(), typescript_client(), matlab_client(), kotlin_client(args.android)]

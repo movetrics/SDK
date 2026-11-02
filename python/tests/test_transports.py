@@ -23,6 +23,7 @@ from movetrics_fdt.ble_transport import (
     STATUS_UUID,
     TX_UUID,
     BleTransport,
+    discover_bridges,
     parse_status_line,
     require_uart_mode,
 )
@@ -362,7 +363,13 @@ class FakeBleakClient:
         self.calls.append(("start_notify", specifier))
         self.notify_callback = callback
 
+    busy_writes = 0  # how many writes fail with Insufficient Resource before one succeeds
+
     async def write_gatt_char(self, specifier: str, data: bytes, response: bool = False) -> None:
+        if FakeBleakClient.busy_writes > 0:
+            FakeBleakClient.busy_writes -= 1
+            self.calls.append(("busy", specifier, bytes(data), response))
+            raise Exception("Failed to write characteristic: (17, 'GATT Protocol Error: Insufficient Resource')")
         self.calls.append(("write", specifier, bytes(data), response))
 
     async def disconnect(self) -> None:
@@ -370,9 +377,22 @@ class FakeBleakClient:
         self.is_connected = False
 
 
+class FakeAdvertisement:
+    def __init__(self, device: FakeDevice, rssi: int) -> None:
+        self.local_name = device.name
+        self.rssi = rssi
+
+
 class FakeBleakScanner:
     found: dict[str, FakeDevice] = {}
+    also_found: list[FakeDevice] = []  # more devices, for several bridges with one name
     lookups: list[tuple[str, str]] = []
+
+    @staticmethod
+    async def discover(timeout: float = 5.0, return_adv: bool = False) -> dict[str, tuple[FakeDevice, FakeAdvertisement]]:
+        FakeBleakScanner.lookups.append(("scan", ""))
+        devices = [*FakeBleakScanner.found.values(), *FakeBleakScanner.also_found]
+        return {device.address: (device, FakeAdvertisement(device, -50 - i)) for i, device in enumerate(devices)}
 
     @staticmethod
     async def find_device_by_name(name: str, timeout: float = 10.0) -> FakeDevice | None:
@@ -413,7 +433,9 @@ class BleTransportTests(unittest.IsolatedAsyncioTestCase):
         FakeBleakClient.services_error = None
         FakeBleakClient.mtu = 23
         FakeBleakScanner.found = {"Movetrics-BLE": FakeDevice("Movetrics-BLE", "AA:BB:CC:DD:EE:01")}
+        FakeBleakScanner.also_found = []
         FakeBleakScanner.lookups = []
+        FakeBleakClient.busy_writes = 0
         patcher = mock.patch.dict(sys.modules, {"bleak": fake_bleak_module()})
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -518,8 +540,56 @@ class BleTransportTests(unittest.IsolatedAsyncioTestCase):
         await by_address.close()
         self.assertEqual(
             FakeBleakScanner.lookups,
-            [("name", "Movetrics-BLE"), ("address", "AA:BB:CC:DD:EE:01")],
+            [("scan", ""), ("address", "AA:BB:CC:DD:EE:01")],
         )
+
+    async def test_a_name_that_several_bridges_answer_to_is_refused_with_their_addresses(self) -> None:
+        FakeBleakScanner.also_found = [FakeDevice("Movetrics-BLE", "AA:BB:CC:DD:EE:02")]
+        with self.assertRaises(TransportError) as raised:
+            await BleTransport("Movetrics-BLE").open()
+        self.assertIn("AA:BB:CC:DD:EE:01, AA:BB:CC:DD:EE:02", str(raised.exception))
+        self.assertIn("connect by address", str(raised.exception))
+        self.assertEqual(FakeBleakClient.instances, [])  # nothing was connected
+
+    async def test_discover_bridges_lists_every_bridge_strongest_first(self) -> None:
+        FakeBleakScanner.also_found = [FakeDevice("Movetrics-BLE", "AA:BB:CC:DD:EE:02"), FakeDevice("Other", "AA:BB:CC:DD:EE:03")]
+        self.assertEqual(
+            await discover_bridges(),
+            [("AA:BB:CC:DD:EE:01", -50), ("AA:BB:CC:DD:EE:02", -51)],
+        )
+
+    async def test_a_busy_bridge_write_of_stop_is_retried_until_it_goes_through(self) -> None:
+        transport = BleTransport("AA:BB:CC:DD:EE:01")
+        await transport.open()
+        FakeBleakClient.busy_writes = 2
+        with mock.patch("movetrics_fdt.ble_transport.asyncio.sleep", new=mock.AsyncMock()) as slept:
+            await transport.write(bytes.fromhex("feedff00055a530404"))  # STOP_STREAM
+        client = FakeBleakClient.instances[-1]
+        self.assertEqual([call[0] for call in client.calls if call[0] in ("busy", "write")], ["busy", "busy", "write"])
+        self.assertEqual([call.args[0] for call in slept.await_args_list], [0.05, 0.1])
+        await transport.close()
+
+    async def test_a_bridge_that_stays_busy_is_a_transport_error(self) -> None:
+        transport = BleTransport("AA:BB:CC:DD:EE:01")
+        await transport.open()
+        FakeBleakClient.busy_writes = 99
+        with mock.patch("movetrics_fdt.ble_transport.asyncio.sleep", new=mock.AsyncMock()):
+            with self.assertRaises(TransportError) as raised:
+                await transport.write(bytes.fromhex("feedff00055a530404"))
+        self.assertIn("Insufficient Resource", str(raised.exception))
+        await transport.close()
+
+    async def test_a_busy_bridge_write_of_start_is_not_retried(self) -> None:
+        transport = BleTransport("AA:BB:CC:DD:EE:01")
+        await transport.open()
+        FakeBleakClient.busy_writes = 1
+        start = bytearray(bytes.fromhex("feedff00055a530404"))
+        start[4] = 0x01  # START_STREAM; the CRC does not matter to the transport
+        with mock.patch("movetrics_fdt.ble_transport.asyncio.sleep", new=mock.AsyncMock()) as slept:
+            with self.assertRaises(TransportError):
+                await transport.write(bytes(start))
+        slept.assert_not_awaited()
+        await transport.close()
 
     async def test_long_writes_are_split_to_the_mtu_minus_three(self) -> None:
         FakeBleakClient.mtu = 23
