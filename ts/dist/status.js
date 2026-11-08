@@ -2,7 +2,7 @@
 //
 // Status record (T_StatusResponse, the firmware, written by the firmware):
 //   0-1    BE EF header
-//   2      platform address: 0 for the general record, 1 or 2 for a pad platform
+//   2      platform address: 0 for the general record, 1 to 4 for a pad platform
 //   3      command code, 0x22
 //   4-7    errorFlags, uint32 little-endian (bit layout in the firmware)
 //   8      temperature, int8 (always 0 on this controller)
@@ -16,7 +16,9 @@
 // The 85-byte class is the same record without batterySOC: its CRC is at 81-82.
 //
 // A GET_STATUS reply is one general record (address 0), then one record for each detected
-// platform (addresses 1 and 2, in order), so it is 85 or 86 bytes times 1 to 3. The
+// platform (addresses 1 and 2 up to FDT 1.2.8.23; 1 to 4 on the four-platform firmware, draft
+// 1.2.8.24 to 1.2.8.27, docs/06-status-health-versions.md section 2.1), in order, so it is
+// 85 or 86 bytes times 1 to 5. The
 // controller sends no record count. The client reads until the line goes quiet
 // (docs/04-host-commands.md, GET_STATUS; the firmware).
 //
@@ -72,16 +74,19 @@ export function parseStatusRecord(bytes) {
         batterySOC: n === 86 ? at(bytes, 81) : null,
     };
 }
+// A general record and up to four platforms (the four-platform firmware; two before it).
+export const STATUS_MAX_RECORDS = 5;
+const HIGHEST_PLATFORM_ADDRESS = STATUS_MAX_RECORDS - 1;
 const CLASS_NAMES = {
-    85: ['85', '85x2', '85x3'],
-    86: ['86', '86x2', '86x3'],
+    85: ['85', '85x2', '85x3', '85x4', '85x5'],
+    86: ['86', '86x2', '86x3', '86x4', '86x5'],
 };
 // Reads a whole GET_STATUS reply, given as its records in the order they arrived. Every
 // record must have the same length. The first record must be the general record (address
-// 0), and the platform records must follow in increasing order with addresses 1 and 2.
+// 0), and the platform records must follow in increasing order with addresses 1 to 4.
 export function parseStatus(records) {
-    if (records.length < 1 || records.length > 3) {
-        throw new ReplyFormatError('bad_length', `a GET_STATUS reply has 1 to 3 records, got ${records.length}`);
+    if (records.length < 1 || records.length > STATUS_MAX_RECORDS) {
+        throw new ReplyFormatError('bad_length', `a GET_STATUS reply has 1 to ${STATUS_MAX_RECORDS} records, got ${records.length}`);
     }
     const length = records[0]?.length;
     if (length !== 85 && length !== 86) {
@@ -100,14 +105,14 @@ export function parseStatus(records) {
     const platforms = parsed.slice(1);
     let previous = 0;
     for (const record of platforms) {
-        if (record.platformAddress <= previous || record.platformAddress > 2) {
+        if (record.platformAddress <= previous || record.platformAddress > HIGHEST_PLATFORM_ADDRESS) {
             throw new ReplyFormatError('bad_platform_order', `status record for address ${record.platformAddress} is out of order`);
         }
         previous = record.platformAddress;
     }
     const classes = CLASS_NAMES[length];
     return {
-        lengthClass: classes[records.length - 1] ?? classes[0],
+        lengthClass: classes[records.length - 1] ?? (length === 85 ? '85' : '86'),
         general,
         platforms,
     };

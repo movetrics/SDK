@@ -103,7 +103,23 @@ describe('parseStatus', () => {
     assert.equal(codeOf(() => parseStatus([bytesOf(GENERAL_86), bytesOf(PAD2_86), bytesOf(PAD1_86)])), 'bad_platform_order');
     assert.equal(codeOf(() => parseStatus([bytesOf(GENERAL_86), bytesOf(vectorCase('status-derived-85-discovery-record').frame_hex ?? '')])), 'bad_length');
     assert.equal(codeOf(() => parseStatus([])), 'bad_length');
-    assert.equal(codeOf(() => parseStatus([bytesOf(GENERAL_86), bytesOf(PAD1_86), bytesOf(PAD2_86), bytesOf(PAD2_86)])), 'bad_length');
+    assert.equal(codeOf(() => parseStatus([bytesOf(GENERAL_86), bytesOf(PAD1_86), bytesOf(PAD2_86), bytesOf(PAD2_86)])), 'bad_platform_order');
+    const six = [GENERAL_86, PAD1_86, PAD2_86, PAD2_86, PAD2_86, PAD2_86].map((hex) => bytesOf(hex));
+    assert.equal(codeOf(() => parseStatus(six)), 'bad_length');
+  });
+
+  test('a four-plate FDT answers with five records, platforms 1 to 4, class 86x5', () => {
+    // The four-platform firmware (draft 1.2.8.24 to 1.2.8.27) sends one record per detected platform 1 to 4.
+    const records = [bytesOf(GENERAL_86), ...[1, 2, 3, 4].map((address) => edited(PAD1_86, 2, address))];
+    const status = parseStatus(records);
+    assert.equal(status.lengthClass, '86x5');
+    assert.deepEqual(
+      status.platforms.map((record) => record.platformAddress),
+      [1, 2, 3, 4],
+    );
+    const gap = parseStatus([bytesOf(GENERAL_86), bytesOf(PAD1_86), bytesOf(PAD2_86), edited(PAD1_86, 2, 4)]);
+    assert.equal(gap.lengthClass, '86x4');
+    assert.equal(codeOf(() => parseStatus([bytesOf(GENERAL_86), edited(PAD1_86, 2, 5)])), 'bad_platform_order');
   });
 });
 

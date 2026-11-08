@@ -11,6 +11,7 @@ import unittest
 from pathlib import Path
 
 from movetrics_fdt.files import read_studio_csv
+from movetrics_fdt.vocabulary import Sample, combine
 from movetrics_fdt.writers import GapError, Recording, write_c3d, write_csv, write_mot
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -25,6 +26,24 @@ except ImportError:  # pragma: no cover
 
 
 class CsvTests(unittest.TestCase):
+    def test_four_plates_get_their_own_columns_and_no_comb(self):
+        # Four-platform firmware (draft 1.2.8.24 to 1.2.8.27): comb_ is Studio's pair of plates 1 and 2 only.
+        def channels(fz):
+            return {"fx": [1.0], "fy": [2.0], "fz": [fz], "mx": [0.0], "my": [0.0], "mz": [0.0]}
+
+        for plates, comb in (((1, 2, 3, 4), False), ((3, 4), False), ((1, 2), True)):
+            with self.subTest(plates=plates):
+                recording = Recording(rate_hz=1000.0, t=[0.0], plates={p: channels(400.0) for p in plates})
+                with tempfile.TemporaryDirectory() as tmp:
+                    header = next(csv.reader((write_csv(recording, Path(tmp) / "x.csv")).open()))
+                self.assertEqual([f"p{p}_fz" in header for p in plates], [True] * len(plates))
+                self.assertEqual("comb_fz" in header, comb)
+
+    def test_combine_refuses_a_plate_outside_the_pair(self):
+        sample = {p: Sample(0.0, p, 1.0, 2.0, 400.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, (0,) * 6) for p in (1, 3)}
+        with self.assertRaises(ValueError):
+            combine(sample)
+
     def test_wide_table_and_companion(self):
         source = read_studio_csv(WITH_GAP, details=False)
         with tempfile.TemporaryDirectory() as tmp:

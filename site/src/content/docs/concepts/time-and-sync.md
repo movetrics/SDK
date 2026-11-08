@@ -13,7 +13,7 @@ If samples go missing (a loose cable, an overloaded laptop), the clients do not 
 
 ## Sync with other systems
 
-FDTs with sync ports (firmware 1.2.8.24 and later; draft) have a SYNC IN and a SYNC OUT socket.
+FDTs with sync ports (draft firmware: the sync build of 1.2.8.24, and 1.2.8.26 and later) have a SYNC IN and a SYNC OUT socket. Two different builds carry the numbers 1.2.8.24 and 1.2.8.25, and only one of them has sync, so ask the FDT: `get_sync_mode()` returns the mode on firmware with sync and `None` on firmware without it (the FDT refuses with NACK 7).
 
 - **Start on a trigger**: the stream waits for a rising edge on SYNC IN.
 - **Mark every edge**: each edge on SYNC IN or SYNC OUT arrives as an `Event` with its time on the FDT clock, finer than one sample.

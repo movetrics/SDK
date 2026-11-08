@@ -1,11 +1,11 @@
 # Conformance matrix
 
-Written by `tools/conformance.py` on 2026-11-01. A client conforms to a file when its tests read the file and pass. "not wired" means the client's tests do not read that file yet: it may still decode those bytes, but nothing checks it against the shared vectors.
+Written by `tools/conformance.py` on 2026-11-08. A client conforms to a file when its tests read the file and pass. "not wired" means the client's tests do not read that file yet: it may still decode those bytes, but nothing checks it against the shared vectors.
 
 | Client | Suite | Result |
 |---|---|---|
-| Python | ran here | passed (Ran 255 tests in 6.623s OK (skipped=5)) |
-| TypeScript | ran here | passed (202 pass, 0 fail) |
+| Python | ran here | passed (Ran 260 tests in 9.925s OK (skipped=1)) |
+| TypeScript | ran here | passed (204 pass, 0 fail) |
 | MATLAB (Octave) | ran here | passed (61 checks) |
 | Kotlin (Android fdt-core) | - | not run: android checkout not given (--android) |
 

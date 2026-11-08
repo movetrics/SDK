@@ -154,7 +154,7 @@ is accepted by both.
 
 ## Tests
 
-`npm test` runs 202 tests. They cover the vector cases above, the sync jack golden vectors
+`npm test` runs 204 tests. They cover the vector cases above, the sync jack golden vectors
 (`../python/tests/fixtures/sync_events.json`, 11 event frames and 2 GET_SYNC_MODE replies, decoded, and
 the event frames re-encoded byte for byte), the event frame and the set-rate and sync-mode requests, the vocabulary
 (placeholders, signs, CoP, gaps, the learnt period, the wrap, combine); the CRC; host framing, the

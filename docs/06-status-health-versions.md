@@ -55,6 +55,8 @@ Only a config query (0x1A), START and SET_CALIBRATION (0x11, which shares the ST
 
 A status reply sent soon after a restart can therefore hold fewer records than there are plates, and a later reply can hold more. [04-host-commands.md](04-host-commands.md) Section 3.8 describes the wait in 0x1A and START.
 
+**2.1 Four platforms (draft firmware).** The four-platform firmware (the four-platform line's 1.2.8.24 and 1.2.8.25, and 1.2.8.27; [05-measurement-stream.md](05-measurement-stream.md) Section 14) has PLATFORMS_MAX 4 + 1, and the GET_STATUS builder loops over addresses 1 to 4. So N is 0 to 4 and k is 1 to 5: a four-plate FDT answers with 430 bytes in the controller form (86 x 5). The totals still never collide: 340 and 425 against 344 and 430 for k = 4 and 5. A platform that is not detected has no record, so plates 1, 2 and 4 give k = 4 with addresses 0, 1, 2, 4. On that firmware GET_PAD_HEALTH (0x27) keeps its 120-byte layout for platforms 1 and 2 and answers a request addressed to platform 3 or 4 with platforms 3 and 4 in the same layout, and GET_CURRENT_CONFIG keeps its 16 type bytes, byte 0 for platform 1. The Python and TypeScript clients accept up to five records from SDK 0.3.1.
+
 ## 3. The status record (86 bytes)
 
 **Table 3.1 GET_STATUS record in controller 1.2.8.0**

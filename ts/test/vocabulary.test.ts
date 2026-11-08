@@ -189,4 +189,12 @@ describe('combine', () => {
     assert.equal(wrench.fz, 410);
     assert.ok(Number.isFinite(wrench.cop_x));
   });
+
+  test('a plate 3 or 4 (four-platform firmware) has no place in the pair frame and is refused', () => {
+    const samples = new Map<number, Sample>([
+      [1, sampleOf(1, 0, 0, 400, 0, 0, 0)],
+      [3, sampleOf(3, 0, 0, 400, 0, 0, 0)],
+    ]);
+    assert.throws(() => combine(samples), RangeError);
+  });
 });

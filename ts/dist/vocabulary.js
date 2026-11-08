@@ -153,7 +153,14 @@ export class SampleConverter {
 // (M + r x F with r = (cx, 0, 0), cx = -0.175 m for plate 1 and +0.175 m for plate 2). The combined CoP
 // follows from the combined wrench like a plate's, so a lightly loaded plate still counts.
 // Measured against the 14 Oct 2026 export: comb_ moments within 0.004 N*m rms (docs/19 section 3).
+// Only plates 1 and 2 have a place in the pair frame. A plate 3 or 4 (four-platform firmware, draft
+// 1.2.8.24 to 1.2.8.27) sits wherever the lab put it, so it throws a RangeError instead of being
+// summed as if it stood at the pair origin.
 export function combine(samples, copMinFzN = COP_MIN_FZ_N) {
+    const outside = [...samples.keys()].filter((plate) => PAIR_CENTRE_X_M[plate] === undefined).sort((a, b) => a - b);
+    if (outside.length > 0) {
+        throw new RangeError(`combine() covers plates 1 and 2 (Studio's comb_ frame), got plate(s) ${outside.join(', ')}`);
+    }
     let fx = 0;
     let fy = 0;
     let fz = 0;

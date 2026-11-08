@@ -14,6 +14,7 @@ from movetrics_fdt.frames import build_device_frame
 from movetrics_fdt.stream import StreamFrame, encode_stream_frame
 
 from .support import FakeController, FakeTransport, find_case
+from .test_status import record_with_address
 
 STATUS_86X3 = bytes.fromhex(find_case("status.json", "status-derived-86x3-reply")["frame_hex"])
 STATUS_85 = bytes.fromhex(find_case("status.json", "status-anchor-identification-85")["frame_hex"])
@@ -108,8 +109,17 @@ class GetStatusTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ReplyTimeoutError):
                 await fdt.get_status()
 
-    async def test_a_reply_of_four_records_is_refused(self) -> None:
-        transport = FakeTransport(FakeController(status_reply=STATUS_86X3 + RECORD_86_GENERAL))
+    async def test_a_four_plate_fdt_answers_with_five_records(self) -> None:
+        # Four-platform firmware (draft 1.2.8.24 to 1.2.8.27): the general record, then platforms 1 to 4.
+        reply = b"".join(record_with_address(RECORD_86_GENERAL, address) for address in (0, 1, 2, 3, 4))
+        transport = FakeTransport(FakeController(status_reply=reply))
+        async with FdtClient(transport, **FAST) as fdt:
+            status = await fdt.get_status()
+        self.assertEqual(status.length_class, "86x5")
+        self.assertEqual([record.platform_address for record in status.platforms], [1, 2, 3, 4])
+
+    async def test_a_reply_of_six_records_is_refused(self) -> None:
+        transport = FakeTransport(FakeController(status_reply=STATUS_86X3 + STATUS_86X3))
         async with FdtClient(transport, **FAST) as fdt:
             with self.assertRaises(FrameError) as raised:
                 await fdt.get_status()

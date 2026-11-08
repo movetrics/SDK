@@ -1,6 +1,6 @@
 {
   "name": "movetrics-fdt-sdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "TypeScript reference client for the Movetrics FDT host link: Web Serial, Web Bluetooth (via the ESP32-S3 bridge) and Node.",
   "license": "Apache-2.0",
   "homepage": "https://developers.movetrics.com",

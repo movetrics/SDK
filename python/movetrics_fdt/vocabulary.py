@@ -2,7 +2,7 @@
 
 The contract is contracts/vocabulary.v1.json (machine-readable) and docs/19-vocabulary-and-units.md. In
 short: t in s from the FDT clock; fx fy fz in N; mx my mz in N*m about the plate's moment reference 30 mm below the
-top; cop_x cop_y in m from the plate centre; plate 1 or 2; the wire integers stay available as raw.
+top; cop_x cop_y in m from the plate centre; plate 1 or 2 (1 to 4 on the four-platform firmware); the wire integers stay available as raw.
 
 SampleConverter turns decoded wire frames into Samples, Events and Gaps. It drops the stamp-0 placeholders after
 START, unwraps the uint32 stamp, applies Studio's sign map (so a live sample carries the same numbers as the same
@@ -163,13 +163,20 @@ def wide_columns(plates: Iterable[int] = (1, 2), *, combined: bool = True) -> li
 
 def combine(samples: dict[int, Sample], *, cop_min_fz_n: float = COP_MIN_FZ_N) -> dict[str, float]:
     """Sum of the plates of one instant in the pair frame (Studio's comb_ columns): forces add, moments move to the
-    pair origin, CoP from the combined wrench."""
+    pair origin, CoP from the combined wrench.
+
+    Only plates 1 and 2 have a place in the pair frame. A plate 3 or 4 (four-platform firmware, draft 1.2.8.24 to
+    1.2.8.27) sits wherever the lab put it, so it raises ValueError instead of being summed as if it stood at the
+    pair origin; give such plates a layout and combine them yourself."""
+    outside = sorted(plate for plate in samples if plate not in PAIR_CENTRE_X_M)
+    if outside:
+        raise ValueError(f"combine() covers plates 1 and 2 (Studio's comb_ frame), got plate(s) {outside}")
     fx = sum(s.fx for s in samples.values())
     fy = sum(s.fy for s in samples.values())
     fz = sum(s.fz for s in samples.values())
     mx = my = mz = 0.0
     for plate, s in samples.items():
-        cx = PAIR_CENTRE_X_M.get(plate, 0.0)
+        cx = PAIR_CENTRE_X_M[plate]
         # Moment about the pair origin: M + r x F with r = (cx, 0, 0) from the pair origin to the plate centre.
         mx += s.mx
         my += s.my - cx * s.fz

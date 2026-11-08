@@ -153,7 +153,7 @@ class FdtClient:
 
         Waits up to timeout seconds for the first record. Then it collects the other records (one per address:
         the general record, then one per detected platform) until none has arrived for record_gap seconds. A
-        reply is 1 to 3 records, all 85 bytes long or all 86 bytes long (docs/03-host-link-framing.md section
+        reply is 1 to 5 records, all 85 bytes long or all 86 bytes long (docs/03-host-link-framing.md section
         3.6; the firmware). Records are kept in arrival order and are not sorted. A reply must start with
         the general record (address 0), and its platforms must follow in increasing order (see parse_status).
 
@@ -365,7 +365,8 @@ class FdtClient:
 
     async def get_sync_mode(self) -> SyncModeReply | None:
         """GET_SYNC_MODE (0x29): the sync settings, state bits and edge counters, or None when this FDT has no sync
-        modes (NACK 7: firmware before 1.2.8.24 or the digital variant). Use it as the capability probe."""
+        modes (NACK 7: firmware before 1.2.8.24, the four-platform line's own 1.2.8.24 and 1.2.8.25, or the digital
+        variant). Use it as the capability probe; the version string alone cannot tell the two 1.2.8.24 builds apart."""
         frame = encode_host_frame(GET_SYNC_MODE.code, 0x00, 0x00)
         lock = self._require_open()
         async with lock:

@@ -1,4 +1,4 @@
-"""GET_STATUS replies: 1 to 3 records of one length (85 or 86 bytes), their platform order, the refusals,
+"""GET_STATUS replies: 1 to 5 records of one length (85 or 86 bytes), their platform order, the refusals,
 and the per-record CRC.
 """
 
@@ -75,10 +75,28 @@ class StatusLengthClassTests(unittest.TestCase):
         self.assertEqual([record.platform_address for record in status.platforms], [1, 2])
         self.assertEqual(status.platforms[1].calibrationFactorZ, 514)
 
-    def test_four_records_are_refused_in_either_length(self) -> None:
+    def test_five_records_from_a_four_plate_fdt_are_accepted_in_either_length(self) -> None:
+        # The four-platform firmware (draft 1.2.8.24 to 1.2.8.27) sends the general record and one per platform 1 to 4.
         replies = (
-            record_85_at(0) + record_85_at(1) + record_85_at(2) + record_85_at(0),  # 340 bytes: 85 x 4
-            REPLY_86X3 + RECORD_86_GENERAL,  # 344 bytes: 86 x 4
+            (reply_at(0, 1, 2, 3, 4), "85x5"),
+            (b"".join(record_with_address(RECORD_86_PLATFORM_1, address) for address in (0, 1, 2, 3, 4)), "86x5"),
+        )
+        for reply, length_class in replies:
+            with self.subTest(length=len(reply)):
+                status = parse_status(reply)
+                self.assertEqual(status.length_class, length_class)
+                self.assertEqual([record.platform_address for record in status.platforms], [1, 2, 3, 4])
+
+    def test_four_records_with_a_gap_in_the_platforms_are_accepted(self) -> None:
+        # Plates 1, 2 and 4 found, plate 3 missing: one record per detected platform, no placeholder for 3.
+        status = parse_status(reply_at(0, 1, 2, 4))
+        self.assertEqual(status.length_class, "85x4")
+        self.assertEqual([record.platform_address for record in status.platforms], [1, 2, 4])
+
+    def test_six_records_are_refused_in_either_length(self) -> None:
+        replies = (
+            reply_at(0, 1, 2, 3, 4, 0),  # 510 bytes: 85 x 6
+            REPLY_86X3 + REPLY_86X3,  # 516 bytes: 86 x 6
         )
         for reply in replies:
             with self.subTest(length=len(reply)):
@@ -189,7 +207,7 @@ class PlatformOrderTests(unittest.TestCase):
                 self.assert_bad_platform_order(reply_at(*addresses))
 
     def test_an_address_above_the_highest_platform_is_refused(self) -> None:
-        for addresses in ((3,), (0, 3), (0, 1, 3)):
+        for addresses in ((5,), (0, 5), (0, 1, 5), (0, 1, 2, 3, 0xFD)):
             with self.subTest(addresses=addresses):
                 self.assert_bad_platform_order(reply_at(*addresses))
 

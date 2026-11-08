@@ -1,5 +1,5 @@
 export type RecordLength = 85 | 86;
-export type LengthClass = '85' | '86' | '85x2' | '86x2' | '85x3' | '86x3';
+export type LengthClass = '85' | '86' | '85x2' | '86x2' | '85x3' | '86x3' | '85x4' | '86x4' | '85x5' | '86x5';
 export interface StatusRecord {
     readonly platformAddress: number;
     readonly commandCode: number;
@@ -28,5 +28,6 @@ export interface FirmwareVersion {
     readonly esp32FW: string;
 }
 export declare function parseStatusRecord(bytes: Uint8Array): StatusRecord;
+export declare const STATUS_MAX_RECORDS = 5;
 export declare function parseStatus(records: readonly Uint8Array[]): Status;
 export declare function parseFirmwareVersion(bytes: Uint8Array): FirmwareVersion;

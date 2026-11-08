@@ -26,7 +26,7 @@ from .stream import EventFrame, StreamFrame, SyncModeReply
 from .vocabulary import Event, Gap, Sample, SampleConverter, plate_cop
 from .transport import Transport
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "IMPLEMENTED",

@@ -2,6 +2,16 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased 0.3.1 (2026-11-08): four plates on one FDT
+
+Firmware 1.2.8.27 (draft) reads four plates on one FDT. Nothing in this entry was run on a real FDT by the SDK; the firmware facts are from the firmware's bench notes (**measured**) or its code.
+
+- **Status from a four-plate FDT**: `get_status()` (Python) and `getStatus()` (TypeScript) accept up to five records, the general one and plates 1 to 4. Version 0.3.0 refused that reply. Tested on derived records.
+- **`combine()`** refuses a plate other than 1 and 2, and the CSV writer adds `comb_` columns only for exactly plates 1 and 2. Before, a recording of plates 3 and 4 alone got `comb_` columns as if both stood in the middle.
+- **Two builds called 1.2.8.24**: a sync build and a four-plate build carry the same numbers 1.2.8.24 and 1.2.8.25. Probe with GET_SYNC_MODE and count the plates in the stream instead of trusting the version. The capability table says so and gains four-plate rows ([chapter 5](docs/05-measurement-stream.md), section 14).
+- **Four plates in the docs** ([chapter 5](docs/05-measurement-stream.md) section 14, [chapter 6](docs/06-status-health-versions.md) section 2.1): plate addresses 1 to 4, one START placeholder per plate slot, up to 1,000 frames per second per plate with four plates (2,000 loses about 22 %, measured), a first frame 2.4 s after a reset (measured), a watchdog restart after a hang (send START again), and the pad clip bit in the SATURATION event.
+- **Docs site**: "Four plates on one FDT" on the units page; the sync page says which 1.2.8.24 has sync.
+
 ## Unreleased (Python, 2026-11-02)
 
 First run of the Python client against a real FDT (firmware 1.2.8.24, two plates), **measured** on a Mac.

@@ -32,6 +32,10 @@ which reproduces Studio's CoP columns to 0.28 mm rms on a real two-plate export 
 
 The `comb_` columns are the two plates as one: plate 1's centre at x = -0.175 m and plate 2's at +0.175 m. Forces add, moments move to the middle, and the combined centre of pressure comes from the combined values, so it stays right when one foot is light. Against Studio's own combined columns: 0.29 mm rms (measured).
 
+## Four plates on one FDT
+
+Draft firmware 1.2.8.27 (and an earlier four-plate build) reads plates 1 to 4 on one FDT; samples carry `plate` 3 and 4 like 1 and 2, and a CSV gets `p3_` and `p4_` columns. The `comb_` columns stay Studio's pair of plates 1 and 2, so a file with plates 3 or 4 has none, and `combine()` refuses a plate it cannot place. Where plates 3 and 4 stand is up to your lab: give them corners in `recording.layout` before writing C3D. With four plates, stream at up to 1,000 samples per second per plate; at 2,000 the USB link drops about a fifth of the frames (measured). The SDK reads a four-plate FDT's status from version 0.3.1. Details: [the stream reference, section 14](../../reference/05-measurement-stream/).
+
 ## In files
 
 - **CSV**: these names as column headers (`p1_fz`, `comb_cop_x`), plus a `.json` file next to it with units, gaps and events.

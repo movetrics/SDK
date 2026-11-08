@@ -7,8 +7,9 @@ The layout is chosen by the byte count and the CRC only. A version string never 
 A reply is one record for address 0, then one record per detected platform (the firmware).
 So a reply is 1 to STATUS_MAX_RECORDS records, all of one length: 85 bytes each, or 86 bytes each. A reply
 that mixes the two lengths is refused. Every reply starts with the general record (address 0), even one that
-holds a single record, and its platforms follow in strictly increasing order, with addresses 1 and 2
-(ts/src/status.ts). decode_status_record accepts a platform record on its own; parse_status refuses it as a
+holds a single record, and its platforms follow in strictly increasing order, with addresses 1 to 4
+(ts/src/status.ts): 1 and 2 up to FDT 1.2.8.23, 1 to 4 on the four-platform firmware (draft 1.2.8.24 to 1.2.8.27,
+docs/06-status-health-versions.md section 2.1). decode_status_record accepts a platform record on its own; parse_status refuses it as a
 reply (see _check_platform_order).
 """
 
@@ -23,8 +24,10 @@ from .frames import check_envelope
 STATUS_COMMAND = 0x22
 RECORD_LENGTH = 86
 RECORD_LENGTH_NO_SOC = 85
-# One general record and up to two platforms: PLATFORMS_MAX is 2 + 1 (the firmware).
-STATUS_MAX_RECORDS = 3
+# One general record and up to four platforms. PLATFORMS_MAX was 2 + 1 (the firmware at 1.2.8.2); the
+# four-platform firmware (draft, 1.2.8.27, and the four-platform line's 1.2.8.24 and 1.2.8.25) has
+# 4 + 1, and GET_STATUS sends one record per detected platform, so a four-plate FDT answers with five records.
+STATUS_MAX_RECORDS = 5
 # The general record is address 0, so the platforms are addresses 1 up to STATUS_MAX_RECORDS - 1.
 _HIGHEST_PLATFORM_ADDRESS = STATUS_MAX_RECORDS - 1
 
@@ -64,7 +67,7 @@ class StatusRecord:
 class Status:
     """A GET_STATUS reply: its records in wire order, and the length class they came in.
 
-    length_class is "85" or "86" for one record, and "85xN" or "86xN" for N records (N is 2 or 3).
+    length_class is "85" or "86" for one record, and "85xN" or "86xN" for N records (N is 2 to 5).
     """
 
     records: tuple[StatusRecord, ...]

@@ -146,14 +146,15 @@ def _companion(recording: Recording, fmt: str, extra: dict[str, Any] | None = No
 
 def write_csv(recording: Recording, path: str | Path, *, combined: bool = True) -> Path:
     """Wide table t, p1_fx ... p1_cop_y, p2_..., comb_... in SI units, plus <path>.json with units, metadata, gaps
-    and events. Empty cells where a plate had no sample or CoP is undefined. Rows keep their real times."""
+    and events. Empty cells where a plate had no sample or CoP is undefined. Rows keep their real times. The comb_
+    columns come only for exactly plates 1 and 2 (Studio's pair frame); plates 3 and 4 get their own columns."""
     path = Path(path)
     plates = sorted(recording.plates)
     cops = {plate: recording.cop(plate) for plate in plates}
     header = ["t"]
     for plate in plates:
         header += [f"p{plate}_{name}" for name in CHANNELS + ("cop_x", "cop_y")]
-    if combined and len(plates) == 2:
+    if combined and plates == [1, 2]:
         header += [f"comb_{name}" for name in CHANNELS + ("cop_x", "cop_y")]
 
     def cell(value: float) -> str:
@@ -171,7 +172,7 @@ def write_csv(recording: Recording, path: str | Path, *, combined: bool = True) 
                 row += [cell(v) for v in values] + [cell(cops[plate][0][i]), cell(cops[plate][1][i])]
                 if not math.isnan(values[2]):
                     samples[plate] = Sample(t, plate, *values, cops[plate][0][i], cops[plate][1][i], 0, (0,) * 6)
-            if combined and len(plates) == 2:
+            if combined and plates == [1, 2]:
                 if len(samples) == 2:
                     comb = combine(samples)
                     row += [cell(comb[name]) for name in CHANNELS + ("cop_x", "cop_y")]

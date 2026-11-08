@@ -551,3 +551,33 @@ All inferred from code, none measured yet. An edge is timed by the cycle counter
 ### 13.5 Vectors
 
 `python/tests/fixtures/sync_events.json` holds event frames of every type and two GET_SYNC_MODE replies, written by the firmware's own encoder. The Python, TypeScript and MATLAB clients decode every case in their tests.
+
+## 14. Four plates and the builds after 1.2.8.24 (draft)
+
+This section is at FDT 1.2.8.27, draft firmware that is not yet released. The frame format, the command codes and the timing contract do not change.
+
+### 14.1 Two builds share 1.2.8.24 and 1.2.8.25
+
+Two firmware lines used the numbers 1.2.8.24 to 1.2.8.26 for different builds: the sync line of Section 13 (1.2.8.24, then the sensor-ceiling build 1.2.8.26) and a four-platform line (its own 1.2.8.24 and 1.2.8.25). 1.2.8.27 joins both. So the version string alone does not say what a 1.2.8.24 or 1.2.8.25 does: a host probes GET_SYNC_MODE 0x29 for the sync jack (NACK 7 means none, [04-host-commands.md](04-host-commands.md) Section 3.9) and counts the plate addresses in the stream for four plates. `contracts/firmware-capabilities.v1.json` says the same in each affected entry.
+
+### 14.2 Plate addresses 1 to 4
+
+The four-platform firmware reads plate addresses 1 to 4, each with one or two pads (PLATFORMS_MAX is 4 + 1). A stream frame's byte 2 is then 1, 2, 3 or 4; the 24-byte layout of Section 2 is unchanged. The FDT still waits for two plates after a power-on and adds a plate with a higher address when it answers, so a two-plate FDT behaves as before. Only plates 1 and 2 drive the analog outputs. GET_STATUS sends one record per detected platform, so a four-plate FDT answers with five records ([06-status-health-versions.md](06-status-health-versions.md) Section 2.1). The Python and TypeScript clients accept that from SDK 0.3.1; 0.3.0 refused it as `unsupported_length` (Python) or `bad_length` (TypeScript).
+
+### 14.3 Start-up placeholders
+
+From 1.2.8.25, START sends one placeholder frame (Section 6) for each plate slot from 1 up to the highest plate the FDT waits for: plates 1 and 2 on a two-plate FDT, more when a plate with a higher address has answered. The four-platform line's 1.2.8.24 sent one for all four slots, so a two-plate FDT sent two placeholders with plate address 0 at every START (measured, 1 Nov 2026). A host treats every frame with stamp 0 at the start of a stream as a placeholder (Section 6), whatever its plate address, and does not count plate address 0 as a plate.
+
+### 14.4 Rate with four plates
+
+Four plates at 2,000 frames per second need about 192 kB/s, and the 1,500,000 baud host link carries about 150 kB/s. Measured on 1.2.8.25 and 1.2.8.27 (3 Nov 2026): about 22 % of frames lost at 2,000 frames per second, without a stall, and none lost at 1,000. Four plates are for up to 1,000 frames per second per plate (SET_FILTER 0x1C, [04-host-commands.md](04-host-commands.md)). The loss is silent, as in Section 7: a host sees it as gaps in the stamps.
+
+### 14.5 Restart after 21 s and the watchdog
+
+On the four-platform line's 1.2.8.25, a START sent right after a reset with four plates produced its first frame after 21 s, and commands were answered only after it (measured, 3 Nov 2026). 1.2.8.27 produces the first frame after 2.41 s and answers a command sent meanwhile in 364 ms (measured). A host that waits less than about 8 s for the first frame fails on 1.2.8.25 with four plates.
+
+From 1.2.8.27 the independent watchdog runs on every boot, so a hang ends in a restart within about 8 s instead of silence until a power cycle. A host sees the stream stop, then the FDT answer again after its boot. The FDT restarts idle: the host sends START again, and the sync mode is 0, as after a power-on. The keep-alive sleep keeps the watchdog fed (3.5 minutes asleep without a restart, measured).
+
+### 14.6 Clipped load cells
+
+From 1.2.8.26 with pad 2.9.0.0, a load cell reads twice the force before it clips (pad gain 64), and a pad channel within 2 % of the int16 limit always sets bit 6 (0x40) of the SATURATION event's detail (Section 13, type 7), for pad 2.8 and 2.9 alike. The event comes only in SATURATION_EVENTS mode (SET_SYNC_MODE bit 0x20). Code only: 1.2.8.26 has not run on hardware alone; it runs inside 1.2.8.27 on the four-plate FDT.
