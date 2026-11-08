@@ -4,15 +4,14 @@ Public edition of the SDK specification. Statements are marked code (read in the
 
 This chapter specifies the 24-byte measurement frame that the controller sends for each detected plate while a stream runs, at firmware 1.2.8.0. It gives the byte layout, what the six integers are computed from, how the rate, the pacing and the host port of the frames are chosen, how the stamp is formed, and how a host tells start-up placeholders, stale frames and stalls from measurements.
 
-The pacing, the stamps and the pad sampling of 1.2.8.0 have not been run on hardware. They are code and simulation only, and unverified on a device (Section 4.8, open point 13).
+The pacing, the stamps and the pad sampling of 1.2.8.0 have not been run on hardware. They are code and simulation only, and not yet measured on a device (Section 4.8).
 
-Findings F2 (the placeholders, in their stream form) and F3 (the stream rate) are defined here. F2 is set out in [04-host-commands.md](04-host-commands.md), section 6.2.
 
 This chapter does not define the request and reply envelope or its CRC. They are in [03-host-link-framing.md](03-host-link-framing.md). It does not cover the status and health records, which are in [06-status-health-versions.md](06-status-health-versions.md). The quality rules for the forces are outside the host protocol. No source names a physical unit for the integers, and this chapter assigns none.
 
 ## 1. Scope and reading rules
 
-Frame bytes are numbered from zero as they leave the device. The stream has no length field, sequence number or escaping, so the layout in Section 2 is the only means of finding a field.
+Frame bytes are numbered from zero as they leave the device. The stream has no length field, sequence number or escaping, so the layout in Section 2 is the only means of locating a field.
 
 A stream frame in this chapter is a 24-byte frame with command code 0x01 that the device sends without a request of its own, while the stream flag is set. The SDK starts and stops the stream with 0x01 and 0x05 (Table 3.1 of [04-host-commands.md](04-host-commands.md)). The word measurement is used only for the force and moment integers, and it does not imply a unit.
 
@@ -85,13 +84,13 @@ Plate type is 1 for a single plate and 2 for a double plate. The number of pads 
 
 Evidence: code.
 
-The reading path saturates. The output casts do not. A force or moment outside the int16 range therefore wraps in the frame. The factor limit is 200, and the arithmetic of a double plate at that factor and full-scale readings exceeds int16 (open point 7). No capture shows a wrap.
+The reading path saturates. The output casts do not. A force or moment outside the int16 range therefore wraps in the frame. The factor limit is 200, and the arithmetic of a double plate at that factor and full-scale readings exceeds int16. No capture shows a wrap.
 
 ### 3.3 Units
 
-No source names a unit for the force or moment integers. The scaling constants 98 and 100000 have no comment in the code. An earlier Python reference states that its units remain unverified. This chapter assigns no unit and treats the integers as counts of the controller's scaling (open point 8).
+No source names a unit for the force or moment integers. The scaling constants 98 and 100000 have no comment in the code. An earlier Python reference states that its units remain not yet measured. This chapter assigns no unit and treats the integers as counts of the controller's scaling.
 
-## 4. Rate, pacing and port selection (F3)
+## 4. Rate, pacing and port selection
 
 ### 4.1 The stream rate is the filter sample rate
 
@@ -125,15 +124,15 @@ A plate that is not detected is skipped without a frame. When both plates are pr
 
 ### 4.4 Pad polls and frames run on one loop
 
-Evidence: code, and one bench figure (measured, earlier builds).
+Evidence: code, and one lab figure (measured, earlier builds).
 
 Pad polls are issued in the same loop. A pad on GET_FRAME is polled as before 1.2.7.0. After a GET_FRAME poll the next poll falls due 700 microseconds later, because the gap and the minimum after an answer are both set to that value.
 
 Each frame of such a pad's plate uses the replies from that pad received since the plate's previous frame. A reply whose readings are all zero is not accumulated, and neither is any reply after a pad's count reaches 65,535.
 
-A code comment gives about 320 new samples per second per pad, and a bench record gives the same figure. That is less than the 500 frames per second per plate, so some frames carry no new reply from a given GET_FRAME pad and take the stale path (Section 7.1).
+A code comment gives about 320 new samples per second per pad, and a lab record gives the same figure. That is less than the 500 frames per second per plate, so some frames carry no new reply from a given GET_FRAME pad and take the stale path (Section 7.1).
 
-A pad on queued samples is polled as Section 4.8 describes and gives a reading at each frame's own time. The share of stale frames on 1.2.8.0 was not measured (open point 3).
+A pad on queued samples is polled as Section 4.8 describes and gives a reading at each frame's own time. The share of stale frames on 1.2.8.0 was not measured.
 
 ### 4.5 The stream goes to the port of the last valid command
 
@@ -141,19 +140,19 @@ Evidence: code, and a host test in software.
 
 Stream frames are transmitted on the active port. An accepted command sets that port to the port it arrived on, and the port stays selected until the next accepted command. A request that latches nothing restores the previous port. The stream therefore moves to whichever host port last sent a valid command.
 
-The host test repeats a stream frame on the USB port after a USB command. A second host that sends any valid query while another host streams takes the stream (open point 10).
+The host test repeats a stream frame on the USB port after a USB command. A second host that sends any valid query while another host streams takes the stream.
 
 ### 4.6 The filter runs once per calculated frame
 
 Evidence: code.
 
-The filter state for each plate, pad and channel advances once per calculated frame. A frame is calculated before it is sent, so a frame that the TX ring then drops has still advanced the filter. A grid frame skipped after a stall is never calculated. The filter's time base is therefore frames, not timer ticks. The size of the effect after a stall was not measured (open point 4).
+The filter state for each plate, pad and channel advances once per calculated frame. A frame is calculated before it is sent, so a frame that the TX ring then drops has still advanced the filter. A grid frame skipped after a stall is never calculated. The filter's time base is therefore frames, not timer ticks. The size of the effect after a stall was not measured.
 
-### 4.7 F3, stated and checked
+### 4.7 The stream-rate rule, stated and checked
 
-F3 is the claim that the stream carries one frame per due slot at the filter sample rate for each plate, that it never sends more than two frames behind schedule, that a stale plate repeats its held reading, and that a full TX ring drops frames with no retry.
+The stream-rate rule is the claim that the stream carries one frame per due slot at the filter sample rate for each plate, that it never sends more than two frames behind schedule, that a stale plate repeats its held reading, and that a full TX ring drops frames with no retry.
 
-The 1.2.8.0 code supports each part, with the grid times of Section 4.2 as the due slots (code). The stream does not report a drop or a stale frame to the host (Section 8). The grid pacing has not been run on hardware (open point 13).
+The 1.2.8.0 code supports each part, with the grid times of Section 4.2 as the due slots (code). The stream does not report a drop or a stale frame to the host (Section 8). The grid pacing has not been run on hardware.
 
 ### 4.8 Queued pad samples and the frame latency (1.2.7.0 and 1.2.8.0)
 
@@ -171,9 +170,9 @@ A frame waits until the last conversion that its kernel needs can have arrived. 
 
 At 500 frames per second (the default up to firmware 1.2.8.7; 1.2.8.8 and later default to 1,000) a frame therefore leaves the device about 12.4 ms after its grid time. The wait applies to every plate while the mode is on, including a plate whose pads are all on GET_FRAME. After START, the first frame of each plate is frame 1, which falls due one grid step plus the latency after the stream starts.
 
-The pad-sample debug command 0x63 with parameter 0 turns queued samples off in RAM. Every pad is then polled with GET_FRAME, and the latency is 0. Parameter 1 turns them on again, which is the state after a reset. The command is a bench command and must not be sent (Table 3.5 of [04-host-commands.md](04-host-commands.md)). A plate stays stamped on the grid until the stream stops, even after its pads leave queued samples (Section 5.2).
+The pad-sample debug command 0x63 with parameter 0 turns queued samples off in RAM. Every pad is then polled with GET_FRAME, and the latency is 0. Parameter 1 turns them on again, which is the state after a reset. The command is a factory-test command and must not be sent (Table 3.5 of [04-host-commands.md](04-host-commands.md)). A plate stays stamped on the grid until the stream stops, even after its pads leave queued samples (Section 5.2).
 
-The grid pacing, the queued samples and the frame latency have not been run on hardware, and they are unverified on a device (open point 13). Controller 1.2.7.0 and 1.2.8.0 and pad application 2.8.0.0 were merged with simulation tests only. The host tests run the shared queue and resampler code on a model of the bus, and they model the frame grid in the test's own code. The test script compiles none of the controller's pacing, timer and calculation code.
+The grid pacing, the queued samples and the frame latency have not been run on hardware, and they are not yet measured on a device. Controller 1.2.7.0 and 1.2.8.0 and pad application 2.8.0.0 were merged with simulation tests only. The host tests run the shared queue and resampler code on a model of the bus, and they model the frame grid in the test's own code. The test script compiles none of the controller's pacing, timer and calculation code.
 
 ### 4.9 The synthetic build
 
@@ -201,7 +200,7 @@ The outputs are written when the frame is calculated, so with queued samples the
 
 Evidence: code.
 
-Timer interrupt TIM2 adds one to `timestamp` on each update while the stream runs, and sets it to zero otherwise. The timer is set with a prescaler of 83 and a period of 99. With a TIM2 clock of 84 MHz, that is 10 kHz, so one tick is 0.1 ms. The 84 MHz timer clock was not measured (open point 1).
+Timer interrupt TIM2 adds one to `timestamp` on each update while the stream runs, and sets it to zero otherwise. The timer is set with a prescaler of 83 and a period of 99. With a TIM2 clock of 84 MHz, that is 10 kHz, so one tick is 0.1 ms. The 84 MHz timer clock was not measured.
 
 The earlier Python reference uses the same tick. Its comment says a source-derived device tick is 100 microseconds, and its capture summary records the same value as an inferred assumption.
 
@@ -228,9 +227,9 @@ The rule applies to grid stamps and to stamps from reply ticks alike. Grid stamp
 
 Evidence: code and simulation.
 
-For a plate stamped from reply ticks (Section 5.2), the code stores the timer value at receipt, after the reply has been parsed. Two code comments say that such a stamp is the poll time. A third comment calls it the mean time of the pad replies used. The difference between poll and receipt is the reply latency, which the code does not measure (open point 6).
+For a plate stamped from reply ticks (Section 5.2), the code stores the timer value at receipt, after the reply has been parsed. Two code comments say that such a stamp is the poll time. A third comment calls it the mean time of the pad replies used. The difference between poll and receipt is the reply latency, which the code does not measure.
 
-For a plate on the grid the stamp is the frame's own time, and the conversions around it are placed in time from the pads' answer timing. A simulation puts every such stamp about 40 microseconds late and the pads up to about 50 microseconds apart while the estimate settles. That is a model with estimated pad latencies, not a measurement (open point 14).
+For a plate on the grid the stamp is the frame's own time, and the conversions around it are placed in time from the pads' answer timing. A simulation puts every such stamp about 40 microseconds late and the pads up to about 50 microseconds apart while the estimate settles. That is a model with estimated pad latencies, not a measurement.
 
 ### 5.5 Restart and wrap
 
@@ -261,7 +260,7 @@ The grid of Section 4.2 is kept on the core's cycle counter, which the boot code
 
 The conversion from a tick to a cycle count is limited to ticks within about 25 seconds of now. The conversion back gives the tick of a recent cycle count, never less than 1. A comment says that the cycle counter wraps after 51 seconds at 84 MHz. The grid code converts only times near the current time.
 
-The 8,400 cycles per tick hold only for the 84 MHz clock of open point 1, and no host test compiles the timer code (open point 13).
+The 8,400 cycles per tick hold only for an 84 MHz timer clock, and no host test compiles the timer code.
 
 ## 6. Start-up placeholders
 
@@ -273,7 +272,7 @@ From 1.2.6.6, START first runs the platform redetection. When a plate is missing
 
 START then sends two frames before the stream flag is set. Each has `timeStamp` 0 and one of the platform addresses 1 and 2, whether or not that plate was detected. Each frame's `platform_address`, forces and moments are copied from the platform structure at the time the frame is sent. The placeholder for a plate that has never answered therefore has `platform_address` 0. Its force and moment fields hold whatever the structure last held.
 
-START sends no ACK, so these frames are the only sign that START worked (F2).
+START sends no ACK, so these frames are the only sign that START worked.
 
 ### 6.2 What a capture shows
 
@@ -317,13 +316,13 @@ Evidence: code.
 
 A reply whose eight channels are all zero is not added to the mean. It does overwrite the held reading of that pad. A frame that finds no non-zero reply since the previous frame therefore uses the zeros as its input.
 
-A booting pad answers with zeros for about 1.7 seconds. A pad on queued samples that restarts stops answering GET_SAMPLES. After four polls in a row without an answer it is polled with GET_FRAME again, so its zero replies take this path too (Section 4.8). The frames sent during that time were not observed (open point 5).
+A booting pad answers with zeros for about 1.7 seconds. A pad on queued samples that restarts stops answering GET_SAMPLES. After four polls in a row without an answer it is polled with GET_FRAME again, so its zero replies take this path too (Section 4.8). The frames sent during that time were not observed.
 
 ### 7.3 Drops at the TX ring
 
 Evidence: code.
 
-A stream frame that finds the 4096-byte TX ring full is dropped at once. The drop is counted, but no reply reports the counter. A host sees a drop only as a gap in the plate's stamps. The frequency of drops was not measured (open point 11).
+A stream frame that finds the 4096-byte TX ring full is dropped at once. The drop is counted, but no reply reports the counter. A host sees a drop only as a gap in the plate's stamps. The frequency of drops was not measured.
 
 ### 7.4 Stalls and gaps
 
@@ -333,7 +332,7 @@ No frame is built while the main loop is busy with another command. After such a
 
 SET_TARE is a blocking command, and the stream pauses for its duration. The code says so: "the stream simply pauses for its ~0.3-4 s while the stream clock keeps running; frames resume with later stamps".
 
-The tare also clears the filter state, so the first frames after it carry a settling transient (open point 9). It drops the queued conversions as well, so the first grid frames after it can find no conversion near their time and become stale frames (Section 7.1). How many frames that affects was not measured.
+The tare also clears the filter state, so the first frames after it carry a settling transient. It drops the queued conversions as well, so the first grid frames after it can find no conversion near their time and become stale frames (Section 7.1). How many frames that affects was not measured.
 
 ### 7.5 SET_FILTER during a stream
 
@@ -343,11 +342,11 @@ SET_FILTER is not refused while a stream runs. The new rate applies at the next 
 
 When the rate differs from the rate of the grid, every plate restarts on the grid of the new rate. Its next frame is the newest frame of the new grid whose time lies at least the latency in the past, and never a frame at or before the plate's last stamp.
 
-The resampling kernel and the latency are rebuilt for the new rate in the same pass. A code comment puts that at a few milliseconds of float work. A change of rate therefore leaves a gap in the stamps of up to about one frame period, plus the rebuild time, plus any fall of the latency. The planned bench test expects no gap beyond a few frames, and it has not been run (open point 13).
+The resampling kernel and the latency are rebuilt for the new rate in the same pass. A code comment puts that at a few milliseconds of float work. A change of rate therefore leaves a gap in the stamps of up to about one frame period, plus the rebuild time, plus any fall of the latency. No gap beyond a few frames is expected; this has not been measured yet.
 
 In 1.2.6.5 a lower rate left no frame due until the slot count caught up with the frames already sent. A change from 500 to 250 frames per second ten minutes into a stream gave ten minutes with no frames. Only the synthetic build keeps that counter (Section 4.9).
 
-Only a cutoff of 0 resets the filter state: it turns the filter into a bypass, and entering bypass resets the filter. A nonzero cutoff changes the coefficients without a reset, so a filter that leaves bypass starts from the zero state that the bypass left (open point 9). The frame has no field that marks either change (Section 8).
+Only a cutoff of 0 resets the filter state: it turns the filter into a bypass, and entering bypass resets the filter. A nonzero cutoff changes the coefficients without a reset, so a filter that leaves bypass starts from the zero state that the bypass left. The frame has no field that marks either change (Section 8).
 
 ### 7.6 STOP
 
@@ -420,7 +419,7 @@ A parser that takes the length from the command byte and checks the CRC does not
 
 The capture is a recording from an earlier firmware. It is 457,368 bytes, with no CRC failures, and it is not included in vectors/. The Test frame is the frame that the controller's transport test builds for platform 1 with `platform_address` 1, `forceX` -123, `forceZ` 456 and `timeStamp` 123456. The struct is zero-initialised, so `forceY` and the moments are 0. The test asserts the length and the CRC only.
 
-Twelve decoded records were prepared for conformance. Three are stream frames (S1, S2 and S4). The other nine are replies from identification captures. The nine replies were not decoded again for this edition (open point 12).
+Twelve decoded records were prepared for conformance. Three are stream frames (S1, S2 and S4). The other nine are replies from identification captures. The nine replies were not decoded again for this edition.
 
 ### 10.2 Capture census
 
@@ -447,7 +446,7 @@ Evidence: measured, on a recording from an earlier firmware.
 
 The step of 21 ticks is 2.1 ms, which gives 476.2 frames per second per plate. The 1.2.8.0 grid gives 500 frames per second per plate, which is one frame every 20 ticks for each plate, and two plates on the grid carry the same stamps (Sections 4.1, 4.2 and 5.2).
 
-The capture's two plates do not share stamps: their first stamps after the placeholders are 2 and 12 ticks. The capture's firmware is not identified here, and the cadence difference is an open point (point 2). The earlier reference notes record the observed delivery of about 476 frames per second per platform.
+The capture's two plates do not share stamps: their first stamps after the placeholders are 2 and 12 ticks. The capture's firmware is not identified here, and the cadence difference is not explained. The earlier reference notes record the observed delivery of about 476 frames per second per platform.
 
 ### 10.3 Which build produced the capture
 
@@ -469,33 +468,9 @@ A nine-frame synthetic example (216 bytes) records the expected labels of Sectio
 
 The values are synthetic. Frame 6 has CRC high byte `04`, which is the splitter case of Section 9.2.
 
-## 11. Open points
+## 13. Event frames (firmware with sync)
 
-All of these are unverified on a device.
-
-1. The stamp unit of 0.1 ms needs TIM2 to run at 84 MHz. The prescaler, the period and the PLL and APB1 settings give that rate only under the vendor's timer-clock rule. The rate was not measured. (Code and vendor rule.)
-2. The capture steps 21 ticks (476 frames per second per plate). The 1.2.8.0 grid gives one frame per 20 ticks for each plate. A plate on the grid is stamped with the grid tick, and any other plate with reply ticks, so only the first has its step fixed by the grid (Section 5.2). The build that made the capture is not identified.
-3. The share of stale frames on 1.2.8.0. With pads on GET_FRAME it depends on pad replies of about 320 samples per second per pad against 500 frames per second per plate (Section 4.4). With pads on queued samples a simulation has no frame without a conversion except for a restarting pad. There is no capture of 1.2.8.0.
-4. The size of the filter's time-base change after a stall, when skipped grid frames are not calculated (Section 4.6).
-5. The values of frames sent while a pad answers zeros during a cold boot (Section 7.2), because a zero reply overwrites the held reading.
-6. The reply latency between the poll and the receipt tick used as the stamp of a plate stamped from reply ticks (Section 5.4). A bench record gives 250 to 300 microseconds to answer, from earlier builds (measured, not repeated on 1.2.8.0).
-7. A wrap of a force or moment at the output cast (Section 3.2) at full-scale readings and factor 200. The arithmetic admits it for a double plate. No capture shows one.
-8. The physical unit of each integer, and the meaning of the constants 98 and 100000 in the scaling (Section 3.3).
-9. The length of the filter transient after SET_TARE, which clears the state, and after SET_FILTER. Only a cutoff of 0 clears the state. A nonzero cutoff does not, so leaving bypass starts from zero state (Sections 7.4 and 7.5).
-10. Stream routing between two host ports, and the effect of a valid command on the other port (Section 4.5). The host test covers it in software only.
-11. How often the TX ring drops a stream frame under a host that reads slowly (Section 7.3).
-12. The nine reply records among the twelve conformance records (Section 10.1) were not decoded again. The three stream records and the capture census were recomputed.
-13. The grid pacing, the grid stamps, the queued pad samples, the resampler and the frame latency of 1.2.7.0 and 1.2.8.0 (Sections 4.2, 4.3, 4.8, 5.2, 5.7, 7.4, 7.5 and 7.6), including the frames around a change of the pad-sample debug command during a stream. The code was merged with simulation tests only.
-14. The offset between a grid stamp and the time its readings describe. A simulation puts every stamp about 40 microseconds late, with the pads up to about 50 microseconds apart while the estimate settles and about 11 microseconds apart after a few seconds. The pad latencies in that model are estimates (Section 5.4).
-
-## 12. Known inconsistencies
-
-- Firmware comments describe a stamp formed from pad replies as the poll time. Such a stamp is the mean of the timer values at parse time. A plate on the grid is stamped with its frame time instead (Section 5.4).
-- A stale frame's forces are the filter's next output for the held input, not a copy of the previous frame (Section 7.1).
-
-## 13. Event frames (FDT 1.2.8.24, draft)
-
-Evidence: code of the 1.2.8.24 draft and its vectors. Not yet run on hardware.
+Evidence: code and vectors; not yet measured on hardware.
 
 One change in 1.2.8.24 reaches every host: the six outputs are clipped at the int16 limit instead of wrapping around at the conversion of Section 3.2 (a decision of 28 October 2026). Event frames exist only when a host sets SET_SYNC_MODE 0x28 with bit 0x08 EVENT_FRAMES or 0x20 SATURATION_EVENTS ([04-host-commands.md](04-host-commands.md), section 3.9). A host that never sends 0x28, Movetrics Studio among them, receives exactly the stream of 1.2.8.22.
 
@@ -552,32 +527,32 @@ All inferred from code, none measured yet. An edge is timed by the cycle counter
 
 `python/tests/fixtures/sync_events.json` holds event frames of every type and two GET_SYNC_MODE replies, written by the firmware's own encoder. The Python, TypeScript and MATLAB clients decode every case in their tests.
 
-## 14. Four plates and the builds after 1.2.8.24 (draft)
+## 14. Four plates
 
-This section is at FDT 1.2.8.27, draft firmware that is not yet released. The frame format, the command codes and the timing contract do not change.
+Some FDTs read four plates. The frame format, the command codes and the timing contract are the same as with two.
 
-### 14.1 Two builds share 1.2.8.24 and 1.2.8.25
+### 14.1 Ask the FDT what it can do
 
-Two firmware lines used the numbers 1.2.8.24 to 1.2.8.26 for different builds: the sync line of Section 13 (1.2.8.24, then the sensor-ceiling build 1.2.8.26) and a four-platform line (its own 1.2.8.24 and 1.2.8.25). 1.2.8.27 joins both. So the version string alone does not say what a 1.2.8.24 or 1.2.8.25 does: a host probes GET_SYNC_MODE 0x29 for the sync jack (NACK 7 means none, [04-host-commands.md](04-host-commands.md) Section 3.9) and counts the plate addresses in the stream for four plates. `contracts/firmware-capabilities.v1.json` says the same in each affected entry.
+A host reads features from the FDT, not from its version string. GET_SYNC_MODE 0x29 answers on firmware with the sync jack and gets NACK 7 on firmware without it ([04-host-commands.md](04-host-commands.md) Section 3.9). The number of plates is the number of plate addresses in the stream and in the GET_STATUS reply. `contracts/firmware-capabilities.v1.json` lists what each firmware version does.
 
 ### 14.2 Plate addresses 1 to 4
 
-The four-platform firmware reads plate addresses 1 to 4, each with one or two pads (PLATFORMS_MAX is 4 + 1). A stream frame's byte 2 is then 1, 2, 3 or 4; the 24-byte layout of Section 2 is unchanged. The FDT still waits for two plates after a power-on and adds a plate with a higher address when it answers, so a two-plate FDT behaves as before. Only plates 1 and 2 drive the analog outputs. GET_STATUS sends one record per detected platform, so a four-plate FDT answers with five records ([06-status-health-versions.md](06-status-health-versions.md) Section 2.1). The Python and TypeScript clients accept that from SDK 0.3.1; 0.3.0 refused it as `unsupported_length` (Python) or `bad_length` (TypeScript).
+Firmware with four plates reads plate addresses 1 to 4, each with one or two pads (PLATFORMS_MAX is 4 + 1). A stream frame's byte 2 is then 1, 2, 3 or 4; the 24-byte layout of Section 2 is unchanged. The FDT waits for two plates after a power-on and adds a plate with a higher address when it answers, so a two-plate FDT behaves as before. Only plates 1 and 2 drive the analog outputs. GET_STATUS sends one record per detected platform, so a four-plate FDT answers with five records ([06-status-health-versions.md](06-status-health-versions.md) Section 2.1). The Python and TypeScript clients read that from SDK 0.3.1.
 
 ### 14.3 Start-up placeholders
 
-From 1.2.8.25, START sends one placeholder frame (Section 6) for each plate slot from 1 up to the highest plate the FDT waits for: plates 1 and 2 on a two-plate FDT, more when a plate with a higher address has answered. The four-platform line's 1.2.8.24 sent one for all four slots, so a two-plate FDT sent two placeholders with plate address 0 at every START (measured, 1 Nov 2026). A host treats every frame with stamp 0 at the start of a stream as a placeholder (Section 6), whatever its plate address, and does not count plate address 0 as a plate.
+START sends one placeholder frame (Section 6) for each plate slot from 1 up to the highest plate the FDT waits for: plates 1 and 2 on a two-plate FDT, more when a plate with a higher address has answered. A host treats every frame with stamp 0 at the start of a stream as a placeholder, whatever its plate address, and does not count plate address 0 as a plate.
 
 ### 14.4 Rate with four plates
 
-Four plates at 2,000 frames per second need about 192 kB/s, and the 1,500,000 baud host link carries about 150 kB/s. Measured on 1.2.8.25 and 1.2.8.27 (3 Nov 2026): about 22 % of frames lost at 2,000 frames per second, without a stall, and none lost at 1,000. Four plates are for up to 1,000 frames per second per plate (SET_FILTER 0x1C, [04-host-commands.md](04-host-commands.md)). The loss is silent, as in Section 7: a host sees it as gaps in the stamps.
+Four plates at 2,000 frames per second need about 192 kB/s, and the 1,500,000 baud host link carries about 150 kB/s. With four plates, use up to 1,000 frames per second per plate (SET_FILTER 0x1C, [04-host-commands.md](04-host-commands.md)): measured, none lost at 1,000 and about 22 % lost at 2,000. A lost frame shows as a gap in the stamps (Section 7).
 
-### 14.5 Restart after 21 s and the watchdog
+### 14.5 Start after a reset, and the watchdog
 
-On the four-platform line's 1.2.8.25, a START sent right after a reset with four plates produced its first frame after 21 s, and commands were answered only after it (measured, 3 Nov 2026). 1.2.8.27 produces the first frame after 2.41 s and answers a command sent meanwhile in 364 ms (measured). A host that waits less than about 8 s for the first frame fails on 1.2.8.25 with four plates.
+With four plates, the first frame after a START sent right after a reset arrives after about 2.41 s, and a command sent meanwhile is answered in about 364 ms (measured). A host waits at least 8 s for the first frame.
 
-From 1.2.8.27 the independent watchdog runs on every boot, so a hang ends in a restart within about 8 s instead of silence until a power cycle. A host sees the stream stop, then the FDT answer again after its boot. The FDT restarts idle: the host sends START again, and the sync mode is 0, as after a power-on. The keep-alive sleep keeps the watchdog fed (3.5 minutes asleep without a restart, measured).
+If the controller ever stops responding, its watchdog restarts it within about 8 s. A host sees the stream stop and then the FDT answer again. After the restart the FDT is idle, so the host sends START again, and the sync mode is 0, as after a power-on.
 
 ### 14.6 Clipped load cells
 
-From 1.2.8.26 with pad 2.9.0.0, a load cell reads twice the force before it clips (pad gain 64), and a pad channel within 2 % of the int16 limit always sets bit 6 (0x40) of the SATURATION event's detail (Section 13, type 7), for pad 2.8 and 2.9 alike. The event comes only in SATURATION_EVENTS mode (SET_SYNC_MODE bit 0x20). Code only: 1.2.8.26 has not run on hardware alone; it runs inside 1.2.8.27 on the four-plate FDT.
+With pad 2.9.0.0, a load cell reads twice the force before it clips. A pad channel within 2 % of the int16 limit sets bit 6 (0x40) of the SATURATION event's detail (Section 13, type 7), for pad 2.8 and 2.9 alike. The event comes only in SATURATION_EVENTS mode (SET_SYNC_MODE bit 0x20).

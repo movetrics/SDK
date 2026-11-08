@@ -9,7 +9,7 @@ What it models, and from where (the facts are firmware facts, not guesses about 
 - Profiles: "1.2.8.2" (500 frames/s default, 10 min sleep, START streams at once),
   "1.2.8.20" (the production line: 1,000 frames/s default, sleep 5 min after the last command with the pads off, START,
   SET_TARE and GET_CURRENT_CONFIG wait about 4.6 s for the pads after a wake
- ), and "sync" (1.2.8.24: sync modes and event frames,, not released).
+ ), and "sync" (1.2.8.24: sync modes and event frames,).
 - Commands: START 0x01, STOP 0x05, SET_FILTER 0x1C, GET_STATUS 0x22, GET_FW_VERSION 0x23, KEEP_ALIVE 0x26,
   SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29 (sync profile, docs/04 section 3.9; NACK 7 elsewhere). Every other code answers NACK 7, as the firmware does for a
   code without a case. Nothing here writes "flash": calibration and tare commands are refused with NACK 7 so a

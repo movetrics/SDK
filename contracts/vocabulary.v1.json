@@ -1,7 +1,7 @@
 {
   "schema": "movetrics.vocabulary/1",
   "version": "1.0.0-draft",
-  "status": "draft: published 28 Oct 2026; becomes 1.0.0 when the Movetrics apps and Cloud read it",
+  "status": "1.0.0-draft: published 28 Oct 2026, shared by the SDK, the Cloud and the Android app; becomes 1.0.0 when all three agree",
   "doc": "docs/19-vocabulary-and-units.md",
   "time": {
     "t": {
@@ -126,7 +126,7 @@
       "my": 1,
       "mz": 1
     },
-    "status": "code (Studio configuration); bench check pending: one known off-centre load recorded as stream and as Studio export (docs/18 section 7 item 1)"
+    "status": "code (Studio configuration); check planned: one known off-centre load recorded as stream and as Studio export (docs/18 section 7 item 1)"
   },
   "frames": {
     "plate": {
@@ -205,7 +205,7 @@
       "100": "gap",
       "101": "note"
     },
-    "status": "types 1-10 from FDT 1.2.8.24 (event frame at plate address 0xFD, code 0x0E; docs/05 section 13 and vectors/sync_events.json); firmware not yet released or benched"
+    "status": "types 1-10 from FDT 1.2.8.24 (event frame at plate address 0xFD, code 0x0E; docs/05 section 13 and vectors/sync_events.json ); sent only by firmware with the sync jack, not yet measured on hardware"
   },
   "gaps": {
     "definition": "A step between two consecutive samples of one plate longer than 1.5 nominal periods. Reported, never filled or hidden. Writers that need a uniform clock (C3D, OpenSim) say what they did (refuse, split, or resample with a flag column).",

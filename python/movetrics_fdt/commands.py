@@ -47,7 +47,7 @@ KEEP_ALIVE = Command(0x26, "KEEP_ALIVE", CONFIGURATION)
 # sends it only after GET_FW_VERSION names a Movetrics 1.2.8+ build (FdtClient.set_rate).
 SET_FILTER = Command(0x1C, "SET_FILTER", CONFIGURATION)
 
-# Sync modes, FDT 1.2.8.24 (docs/04 section 3.9, draft until that firmware is released).
+# Sync modes, FDT 1.2.8.24 (docs/04 section 3.9).
 # SET_SYNC_MODE payload: mode bits, pulse period ms (u16 LE), pulse width ms, debounce 0.1 ms, arm timeout min; 0 in
 # any byte after the mode takes the default. GET_SYNC_MODE is also the capability probe: NACK 7 on firmware before
 # 1.2.8.24 and on the digital variant.
@@ -193,19 +193,19 @@ NOT_IMPLEMENTED: tuple[OmittedCommand, ...] = (
     ),
     OmittedCommand(
         0x60, "DEBUG_ADC_CLOCK_DRIVE", CONFIGURATION,
-        "bench experiment that changes the pads' ADC clock (doc 04 Table 3.5)",
+        "factory test that changes the pads' ADC clock (doc 04 Table 3.5)",
     ),
     OmittedCommand(
         0x61, "DEBUG_POLL_TIMING", CONFIGURATION,
-        "bench experiment on the pad poll timing (doc 04 Table 3.5)",
+        "factory test on the pad poll timing (doc 04 Table 3.5)",
     ),
     OmittedCommand(
         0x62, "DEBUG_PADS_RESTART", DESTRUCTIVE,
-        "bench experiment that power-cycles the pads (doc 04 Table 3.5)",
+        "factory test that power-cycles the pads (doc 04 Table 3.5)",
     ),
     OmittedCommand(
         0x63, "DEBUG_PAD_SAMPLES", CONFIGURATION,
-        "bench experiment that switches the pad polling between GET_FRAME and queued samples, RAM only (doc 04 Table 3.5)",
+        "factory test that switches the pad polling between GET_FRAME and queued samples, RAM only (doc 04 Table 3.5)",
     ),
 )
 

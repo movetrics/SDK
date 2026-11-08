@@ -54,7 +54,7 @@ Rate, sync modes and the shared vocabulary (version 0.3.0):
 ```ts
 await client.getFwVersion();                 // setRate refuses unless this is Movetrics 1.2.8.0 or later
 await client.setRate(500, 50);               // 50 to 2000 frames per second; cutoff 0 (off) or 1 to 255 Hz
-await client.setSyncMode(SyncMode.EVENT_FRAMES | SyncMode.START_ON_RISE); // DRAFT, needs sync-mode firmware
+await client.setSyncMode(SyncMode.EVENT_FRAMES | SyncMode.START_ON_RISE); // needs firmware with the sync jack
 await client.startStream();
 for await (const item of client.samples()) {   // Sample, Event or Gap, in SI units and the plate frame
   if (item.kind === 'sample') console.log(item.t, item.plate, item.fz, item.cop_x);
@@ -81,8 +81,8 @@ session against `IMPLEMENTED_CODES`.
 | `stopStream()` | STOP_STREAM 0x05 | FF/00 | ACK |
 | `keepAlive(seconds)` | KEEP_ALIVE 0x26 | 00/00 | none. Seconds from 1 to 65535; 0 is refused |
 | `setRate(fps, cutoffHz = 50)` | SET_FILTER 0x1C (Movetrics 1.2.8+ only) | 00/00 | ACK; 100 ms settle after it |
-| `setSyncMode(mode, periodMs, widthMs, debounce, armMin)` | SET_SYNC_MODE 0x28 (DRAFT) | 00/00 | ACK. Six payload bytes; 0 = firmware default |
-| `getSyncMode()` | GET_SYNC_MODE 0x29 (DRAFT) | 00/00 | 26-byte state; `null` on NACK 7 (no sync modes) |
+| `setSyncMode(mode, periodMs, widthMs, debounce, armMin)` | SET_SYNC_MODE 0x28 (sync firmware) | 00/00 | ACK. Six payload bytes; 0 = firmware default |
+| `getSyncMode()` | GET_SYNC_MODE 0x29 (sync firmware) | 00/00 | 26-byte state; `null` on NACK 7 (no sync modes) |
 
 Not implemented, with the reason for each, in `src/commands.ts` (`NOT_IMPLEMENTED`):
 

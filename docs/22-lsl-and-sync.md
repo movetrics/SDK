@@ -28,9 +28,9 @@ asyncio.run(main())
 | `Movetrics FDT plate 1`, `… plate 2` | Force | FDT rate | `fx fy fz` N, `mx my mz` N·m, `cop_x cop_y` m (doc 19 names, units and signs) |
 | `Movetrics FDT markers` | Markers | irregular | event names (`sync_in_rise`, …), `gap plate=P missing=N`, free text from `mark()` |
 
-Source ids are fixed (`movetrics-fdt-plate1`, …) so LabRecorder reconnects after a restart. **Timing**: each sample's LSL stamp is the FDT stamp mapped onto LSL's clock by a line (offset and drift) fitted through the least-delayed frame of each second, so USB delivery jitter (up to 16 ms with the FT232R) does not enter the time base. Measured in the SDK tests (simulated arrival jitter 0 to 16 ms): stamps spaced at the FDT period within 0.2 ms after a 3 s warm-up; in the FDT repo's simulation (50 ppm drift, 60 s at 2,000 Hz) within 0.3 ms of the truth. What the mapping cannot remove is the constant part: the shortest USB delay and the FDT's filter and processing delay; `latency_s` subtracts a measured value. Gaps stay gaps (LSL carries a stamp per sample) and are announced on the marker stream. Not yet run with a real FDT and LabRecorder (bench queue).
+Source ids are fixed (`movetrics-fdt-plate1`, …) so LabRecorder reconnects after a restart. **Timing**: each sample's LSL stamp is the FDT stamp mapped onto LSL's clock by a line (offset and drift) fitted through the least-delayed frame of each second, so USB delivery jitter (up to 16 ms with the FT232R) does not enter the time base. Measured in the SDK tests (simulated arrival jitter 0 to 16 ms): stamps spaced at the FDT period within 0.2 ms after a 3 s warm-up; in the FDT repo's simulation (50 ppm drift, 60 s at 2,000 Hz) within 0.3 ms of the truth. What the mapping cannot remove is the constant part: the shortest USB delay and the FDT's filter and processing delay; `latency_s` subtracts a measured value. Gaps stay gaps (LSL carries a stamp per sample) and are announced on the marker stream. Not yet run with a real FDT and LabRecorder.
 
-This replaces the streamer of the FDT repo's for SDK users: same clock method, the shared vocabulary instead of wire signs, and the 30 mm term in the CoP.
+This replaces the earlier streamer of the FDT tool for SDK users: same clock method, the shared vocabulary instead of wire signs, and the 30 mm term in the CoP.
 
 ## Sync helpers (`movetrics_fdt.sync`)
 
@@ -39,4 +39,4 @@ This replaces the streamer of the FDT repo's for SDK users: same clock method, t
 - `ClockMap`: FDT time to host time, used by the LSL bridge; usable on its own for any host clock.
 - `edge_times(items, "sync_in_rise")`: the times of one kind of event.
 
-Wiring and the modes to set on each FDT will be published here once the sync firmware's bench plan has run. Until then everything in this section is simulated.
+Wiring and the modes to set on each FDT will be published here once they have been measured on real FDTs. Until then everything in this section is simulated.

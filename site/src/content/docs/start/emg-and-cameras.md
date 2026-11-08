@@ -22,7 +22,7 @@ Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitte
 
 For sample-level alignment the FDT can send a pulse train on SYNC OUT to your EMG system's trigger input, or start when a pulse arrives on SYNC IN. Every edge is reported with its exact FDT time, and `movetrics_fdt.sync.align()` gives offset, drift and residual from the two lists of edge times.
 
-This uses the FDT's sync modes, which are **in development**: the host side and a simulator exist, the firmware is on the bench plan. Ask us before you plan a study on it.
+This uses the FDT's sync modes, which need firmware with the sync jack. The host side and a simulator are ready; the timing has not yet been measured on real FDTs. Ask us before you plan a study on it.
 
 ## Through the analog outputs
 

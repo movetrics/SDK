@@ -37,7 +37,7 @@ The integers are whole newtons and whole newton-metres (owner, 14 Oct 2026; the 
 
 ### 2.3 Signs: stream versus Studio files
 
-Studio maps the stream to its files with `QuadrantTransform = 4,3,2,1`, which negates Fy and Mx. So for the same load: `Fy_file = -Fy_stream` and `Mx_file = -Mx_stream`, and in stream terms the plate CoP is `x = (-My - d·Fx)/Fz`, `y = (Mx - d·Fy)/Fz`. Status: from Studio's configuration, not yet confirmed by recording one known off-centre load both ways (bench check still open).
+Studio maps the stream to its files with `QuadrantTransform = 4,3,2,1`, which negates Fy and Mx. So for the same load: `Fy_file = -Fy_stream` and `Mx_file = -Mx_stream`, and in stream terms the plate CoP is `x = (-My - d·Fx)/Fz`, `y = (Mx - d·Fy)/Fz`. Status: from Studio's configuration, not yet confirmed by recording one known off-centre load both ways.
 
 ### 2.4 Timestamps
 
@@ -51,7 +51,7 @@ The stamp counts 0.1 ms ticks of the FDT's timer (10 kHz) from START and restart
 | Digital low-pass | 2nd-order Butterworth, 50 Hz | 1 to 255 Hz below half the rate, or 0 = off (raw) | same command |
 | Analog input filter on the plate electronics | about 80 Hz, RC | fixed in hardware | — |
 
-2,000 frames per second per plate over USB loses no frames on 1.2.8.1 and later (measured on the bench, 10 Oct 2026). The setting lives in RAM: send it after every connect, with the stream stopped, and wait 100 ms before START (code and bench practice). Because of the 80 Hz analog filter, content above about 80 Hz is attenuated whatever the digital setting (code/hardware note; a measured frequency response is not yet written up). The plate's own mechanical resonance was measured at about 60 Hz (26 Oct 2026; method to be confirmed): impact peaks above that are partly plate ringing.
+2,000 frames per second per plate over USB loses no frames on 1.2.8.1 and later (measured on a real FDT, 10 Oct 2026). The setting lives in RAM: send it after every connect, with the stream stopped, and wait 100 ms before START (code and lab practice). Because of the 80 Hz analog filter, content above about 80 Hz is attenuated whatever the digital setting (code/hardware note; a measured frequency response is not yet written up). The plate's own mechanical resonance was measured at about 60 Hz (26 Oct 2026; method to be confirmed): impact peaks above that are partly plate ringing.
 
 ## 3. Studio `-channels.csv`
 
@@ -118,9 +118,3 @@ From the app's 29 Oct 2026 build line, "Data as CSV" on a recording writes the s
 
 The app's support bundle and its Cloud upload still carry the wire values; the Cloud reads those as Section 6 says.
 
-## 8. Open points
-
-1. Confirm the stream-to-file sign change (Section 2.3) with one known off-centre load recorded both as stream and as a Studio export.
-2. Ask the Studio developer whether Studio re-times rows or passes the FDT stamp, and why the C3D drops the gap.
-3. Measure and publish the frequency response of the 80 Hz analog input filter and the 50 Hz digital default.
-4. State the direction of +x and +y relative to the plate's cable connector, with a drawing.

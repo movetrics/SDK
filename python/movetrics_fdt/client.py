@@ -34,11 +34,11 @@ DEFAULT_START_CHECK_S: Final = 0.25
 DEFAULT_FRAME_QUEUE_SIZE: Final = 65536
 DEFAULT_KEEP_ALIVE_S: Final = 600  # KEEP_ALIVE_INTERVAL, the firmware
 # The stream rate is clamped to 50..2000 frames per second per plate (the firmware). 2,000 is clean
-# over USB on 1.2.8.1+ (bench, 10 Oct 2026); the default after every reset is 500 (1,000 from firmware 1.2.8.8) with a 50 Hz low-pass.
+# over USB on 1.2.8.1+ (measured, 10 Oct 2026); the default after every reset is 500 (1,000 from firmware 1.2.8.8) with a 50 Hz low-pass.
 MIN_RATE_HZ: Final = 50
 MAX_RATE_HZ: Final = 2000
 DEFAULT_CUTOFF_HZ: Final = 50
-# The bench tools leave 100 ms between SET_FILTER and START (stream_check.py); the filter state is rebuilt then.
+# The firmware team's test tools leave 100 ms between SET_FILTER and START (stream_check.py); the filter state is rebuilt then.
 SET_RATE_SETTLE_S: Final = 0.1
 # SET_FILTER means cutoff + rate only on Movetrics firmware from 1.2.8.0 (doc 17, SET_FILTER section).
 MIN_SET_FILTER_FIRMWARE: Final = (1, 2, 8, 0)
@@ -244,7 +244,7 @@ class FdtClient:
 
         Over Bluetooth a fast stream can fill the bridge's queue. BleTransport then retries the STOP write (and
         KEEP_ALIVE, never other commands) for up to about 4.5 s, and if the link drops meanwhile this raises TransportError. The bridge writes STOP to the
-        controller itself when a link that sent commands ends (bench note, 2 November 2026), so a dropped link
+        controller itself when a link that sent commands ends (lab note, 2 November 2026), so a dropped link
         leaves the stream stopped; reconnect before you start again.
         """
         lock = self._require_open()
@@ -365,8 +365,8 @@ class FdtClient:
 
     async def get_sync_mode(self) -> SyncModeReply | None:
         """GET_SYNC_MODE (0x29): the sync settings, state bits and edge counters, or None when this FDT has no sync
-        modes (NACK 7: firmware before 1.2.8.24, the four-platform line's own 1.2.8.24 and 1.2.8.25, or the digital
-        variant). Use it as the capability probe; the version string alone cannot tell the two 1.2.8.24 builds apart."""
+        modes (NACK 7: firmware without the sync jack, or the digital variant). Use it as the capability probe rather
+        than the version string."""
         frame = encode_host_frame(GET_SYNC_MODE.code, 0x00, 0x00)
         lock = self._require_open()
         async with lock:

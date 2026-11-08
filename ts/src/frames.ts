@@ -200,8 +200,8 @@ function invalid(reason: HostFrameReason, deviceReply: DeviceReply): HostParseRe
 
 // ---- Reply scanner (client side) -------------------------------------------------
 
-// 'event' is a sync event frame (DRAFT layout, docs/19 section 4): address 0xFD, command 0x0E.
-// 'sync_mode' is the 26-byte GET_SYNC_MODE (0x29) reply (DRAFT).
+// 'event' is a sync event frame (docs/19 section 4): address 0xFD, command 0x0E.
+// 'sync_mode' is the 26-byte GET_SYNC_MODE (0x29).
 export type ReplyKind = 'stream' | 'event' | 'sync_mode' | 'ack' | 'nack' | 'status' | 'firmware_version';
 
 export interface ScannedReply {

@@ -1,13 +1,13 @@
 # 20 The simulator: a virtual FDT for everyone without one (contract K10)
 
-`movetrics-fdt simulate` runs a virtual controller that speaks the real host protocol on a TCP port or a pseudo-terminal. A client cannot tell it from an FDT on the byte level: same envelopes and CRC, the stamp-0 placeholders after START, the 0.1 ms grid, NACK codes, sleep and wake. Use it to build and test anything that talks to an FDT, in CI and on a laptop. It never replaces a bench check: it models what the firmware is documented to do, not what a particular board does.
+`movetrics-fdt simulate` runs a virtual controller that speaks the real host protocol on a TCP port or a pseudo-terminal. A client cannot tell it from an FDT on the byte level: same envelopes and CRC, the stamp-0 placeholders after START, the 0.1 ms grid, NACK codes, sleep and wake. Use it to build and test anything that talks to an FDT, in CI and on a laptop. It never replaces a check on a real FDT: it models what the firmware is documented to do, not what a particular board does.
 
 ## Run it
 
     pip install ./sdk/python                       # gives the movetrics-fdt command
     movetrics-fdt simulate --tcp 7800              # FDT 1.2.8.20 on 127.0.0.1:7800
     movetrics-fdt simulate --pty /tmp/fdt          # a serial-like device (Linux, macOS); open /tmp/fdt like a COM port
-    movetrics-fdt simulate --tcp 7800 --profile sync --sync-pulse-s 1     # sync modes (draft) and a 1 Hz SYNC IN pulse
+    movetrics-fdt simulate --tcp 7800 --profile sync --sync-pulse-s 1     # sync modes and a 1 Hz SYNC IN pulse
     movetrics-fdt simulate --tcp 7800 --replay exam-channels.csv          # replay a Studio export, gaps kept
 
 It prints `READY host:port` (or `READY path`) when it accepts connections. From Python:
@@ -41,10 +41,10 @@ asyncio.run(main())
 | STOP: ACK from address 0xFF | all | code |
 | GET_STATUS: general record plus one per plate, 86 bytes, battery 255 | all | code |
 | KEEP_ALIVE 0x26: sleep interval, no reply; capped at 300 s on 1.2.8.9 and later | all | code, measured |
-| Sleep after the last command (600 s or 300 s); the first command wakes it; START waits about 4.6 s for the pads on 1.2.8.10 and later | all | measured on a bench FDT (20 Oct) |
+| Sleep after the last command (600 s or 300 s); the first command wakes it; START waits about 4.6 s for the pads on 1.2.8.10 and later | all | measured on a real FDT (20 Oct) |
 | Every other code, including calibration and tare: NACK 7. A script that works here cannot write anything on a real FDT that the simulator would not have refused | all | deliberate |
 | A request with a payload and a bad CRC: NACK 9 | all | doc 03 |
-| SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29 with their refusals (NACK 3, NACK 8), event frames at address 0xFD code 0x0E with sub-tick offsets, armed start with placeholders and arm timeout, stop on fall, master out, pulse train rising at ticks 1, 1 + P, ..., saturation start and end with the channel mask | `sync` | FDT 1.2.8.24 spec, (not benched) |
+| SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29 with their refusals (NACK 3, NACK 8), event frames at address 0xFD code 0x0E with sub-tick offsets, armed start with placeholders and arm timeout, stop on fall, master out, pulse train rising at ticks 1, 1 + P, ..., saturation start and end with the channel mask | `sync` | FDT 1.2.8.24 spec, (not yet measured on hardware) |
 | int16 wrap of values beyond ±32,767 | all | code, doc 05 section 3.2 |
 
 Signals: `--signal stand` (a standing person, sway), `cmj` (a countermovement jump every 6 s), `empty`, or `--replay` a Studio `-channels.csv` (Studio signs are converted back to wire signs, so the decoded values equal the file's; the file's gaps stay gaps unless `--fill-gaps`).
@@ -59,4 +59,4 @@ Measured on the build container (28 Oct 2026): `FdtClient` over the pseudo-termi
 
 ## Not modelled
 
-Bluetooth timing, USB latency and its jitter (frames arrive as fast as the host reads), the pads' own sample queue and its stale frames, GET_CURRENT_CONFIG, SET_TARE, firmware update, the analog outputs. A host that needs one of these is checked on the bench.
+Bluetooth timing, USB latency and its jitter (frames arrive as fast as the host reads), the pads' own sample queue and its stale frames, GET_CURRENT_CONFIG, SET_TARE, firmware update, the analog outputs. A host that needs one of these is checked on a real FDT.

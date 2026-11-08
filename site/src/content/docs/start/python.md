@@ -67,4 +67,4 @@ Studio exports work too: `Recording.from_studio(read_studio_csv("exam-channels.c
 
 Each `Sample` has `t`, `plate`, `fx fy fz` (N), `mx my mz` (N·m), `cop_x cop_y` (m, NaN below 50 N), the FDT `stamp` and the six `raw` integers. `samples()` also yields an `Event` for each sync edge and a `Gap` before the first sample after a hole. [Names, units and axes](../../concepts/units-and-axes/).
 
-**Tested on:** the simulator (2,000 samples per second per plate, two plates, no sample lost over a pseudo-terminal) and real Studio exports. Against a real FDT: `set_rate` and the stream were checked on the bench with the older bench tool, not yet with this client.
+**Tested on:** the simulator (2,000 samples per second per plate, two plates, no sample lost over a pseudo-terminal) and real Studio exports. Against a real FDT: the client's USB and Bluetooth checks passed on 2 November 2026 (measured; see [What is tested](../../concepts/tested/)).

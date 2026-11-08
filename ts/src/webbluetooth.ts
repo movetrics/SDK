@@ -7,7 +7,7 @@
 // sending any command", MovetricsBridge.ino:116). open() therefore subscribes before it returns.
 // Writes use writeValueWithResponse only, because the bridge's RX characteristic has the WRITE
 // property alone (MovetricsBridge.ino:224-226).
-// The browser side is UNVERIFIED (docs/02-transports.md, U1).
+// The browser side is not yet measured (docs/02-transports.md, U1).
 
 import { AsyncQueue, type Transport } from './transport.ts';
 

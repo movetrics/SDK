@@ -36,7 +36,7 @@ SCAN_TIMEOUT_S: Final = 10.0  # the default scan time of bleak's find_device_by_
 ATT_DEFAULT_MTU: Final = 23  # the default ATT MTU of the Bluetooth Core specification
 _ATT_WRITE_OVERHEAD: Final = 3  # the bytes MTU - 3 that carry a write payload (BridgeConfig.h:34)
 # A write the bridge cannot take yet fails with ATT error 0x11, Insufficient Resource, while a fast stream fills its
-# queue (bench note, 2 November 2026: STOP during a 200 Hz stream on macOS). STOP and KEEP_ALIVE are retried after
+# queue (lab note, 2 November 2026: STOP during a 200 Hz stream on macOS). STOP and KEEP_ALIVE are retried after
 # these pauses; every other command is not, as docs/02-transports.md section 2.6 asks (never retry START, and a
 # retried SET_TARE could run twice).
 BUSY_RETRY_DELAYS_S: Final = (0.05, 0.1, 0.2, 0.4, 0.8, 1.0, 1.0, 1.0)  # a choice of this SDK; not a firmware value

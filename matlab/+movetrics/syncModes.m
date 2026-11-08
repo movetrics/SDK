@@ -1,5 +1,5 @@
 function modes = syncModes()
-%SYNCMODES The bits of SET_SYNC_MODE (DRAFT; sdk/python movetrics_fdt.client.SyncMode). 0 = no sync modes.
+%SYNCMODES The bits of SET_SYNC_MODE (sdk/python movetrics_fdt.client.SyncMode). 0 = no sync modes.
 %   m = movetrics.syncModes();
 %   mode = bitor(m.START_ON_RISE, m.EVENT_FRAMES);      % then fdt.setSyncMode(mode)
 %   START_ON_RISE 1: arm, START waits for a rising edge on SYNC IN

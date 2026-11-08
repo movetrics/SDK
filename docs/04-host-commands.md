@@ -4,7 +4,7 @@ Public edition of the SDK specification. Statements are marked code (read in the
 
 This chapter specifies the host command set of the controller at firmware 1.2.8.0, from the parser to the reply encoders. Firmware 1.2.8.0 has not been run on hardware, so everything here is code unless a row says measured or vector.
 
-For each of the 47 command codes in the firmware's command list, it gives the request payload, the reply, the effect on state, whether that effect survives a reset, the safety class, and whether the SDK clients implement it. It also gives the rules that decide whether a request reaches the command switch at all. It then sets out four findings where the firmware differs from what a host would assume: F1, F2, F4 and F5. The fifth finding, F3 (the stream rate), is in [05-measurement-stream.md](05-measurement-stream.md).
+For each of the 47 command codes in the firmware's command list, it gives the request payload, the reply, the effect on state, whether that effect survives a reset, the safety class, and whether the SDK clients implement it. It also gives the rules that decide whether a request reaches the command switch at all.
 
 It does not define the request and reply envelope, the CRC or the end marker. They are in [03-host-link-framing.md](03-host-link-framing.md). The 24-byte stream frame is in [05-measurement-stream.md](05-measurement-stream.md), and the status and health records are in [06-status-health-versions.md](06-status-health-versions.md). The firmware-update state machine is not part of this edition.
 
@@ -20,7 +20,7 @@ Safety classes are used in the tables with these meanings.
 - **Destructive**: the controller resets, the main loop stops, the pads lose power, or a flash sector is erased without a backup.
 - **Firmware update**: firmware slots are erased or written.
 
-The bench commands 0x60, 0x61 and 0x63 change RAM state only, so they are in the Configuration class (Table 3.5).
+The factory-test commands 0x60, 0x61 and 0x63 change RAM state only, so they are in the Configuration class (Table 3.5).
 
 The column "SDK" says either **implemented**, meaning the SDK clients send and parse this command, or **documented only** followed by the reason the SDK does not expose it. The implemented set is exactly 0x01, 0x05, 0x22, 0x23 and 0x26.
 
@@ -47,7 +47,7 @@ Steps 1 to 10 of Table 2.1 run before the command switch, in this order. Step 11
 | 11 | Firmware update running: 0x01 and 0x11 NACK 8; 0x1B NACK 8; 0x62 NACK 3 while streaming or updating | As stated | code |
 | 12 | Switch on the command code | No case: NACK 7 | code |
 
-The pad-disturbing list is 0x06, 0x1A, 0x31, 0x25, 0x19, 0x52, 0x53, 0x1B and 0x62. Its guard applies only while a pad firmware job owns the pad bus. It does not apply while streaming (finding F5).
+The pad-disturbing list is 0x06, 0x1A, 0x31, 0x25, 0x19, 0x52, 0x53, 0x1B and 0x62. Its guard applies only while a pad firmware job owns the pad bus. It does not apply while streaming, so the firmware accepts a flash write or a pad save during a stream: a host stops the stream first.
 
 Replies are written to the port that carried the request. The controller sets the active port to the source port before parsing, so a NACK for a malformed request goes back to the port it came from. A request that latches nothing restores the previously active port, so a bad frame on one port does not take over the stream from the other.
 
@@ -74,12 +74,12 @@ The 38 dispatched case labels are grouped below by function. Each row gives the 
 
 | Code and name | Class | Request payload | Reply | Effect | SDK | Evidence |
 |---|---|---|---|---|---|---|
-| 0x01 START_STREAM | Configuration | None. `pa` and `da` are not checked, so a START frame with `pa` 0xFF is accepted | None. No ACK (F2) | Refused with NACK 8 while a firmware update is running. Runs a platform redetection on every START: when fewer than two plates are known it sweeps again and, within the first 8 s of uptime, waits for the missing plate. It tares every detected plate that has had no tare attempt since boot (Section 3.8). Sends two placeholder frames with stamp 0, one for each plate address 1 and 2, whether or not the plate exists. Clears the means and the queued pad samples and sets the stream flag. | implemented | vector |
-| 0x11 SET_CALIBRATION | Configuration | As 0x01 | As 0x01 | Same case label as 0x01, so it starts the stream as well (F2). | documented only: alias of 0x01 | code |
+| 0x01 START_STREAM | Configuration | None. `pa` and `da` are not checked, so a START frame with `pa` 0xFF is accepted | None. No ACK | Refused with NACK 8 while a firmware update is running. Runs a platform redetection on every START: when fewer than two plates are known it sweeps again and, within the first 8 s of uptime, waits for the missing plate. It tares every detected plate that has had no tare attempt since boot (Section 3.8). Sends two placeholder frames with stamp 0, one for each plate address 1 and 2, whether or not the plate exists. Clears the means and the queued pad samples and sets the stream flag. | implemented | vector |
+| 0x11 SET_CALIBRATION | Configuration | As 0x01 | As 0x01 | Same case label as 0x01, so it starts the stream as well. | documented only: alias of 0x01 | code |
 | 0x05 STOP_STREAM | Configuration | None | ACK | Clears the stream flag. The timestamp returns to zero on the next TIM2 tick. | implemented | vector |
 | 0x16 END_CALIBRATION | Configuration | None | ACK | Same case label as 0x05. | documented only: alias of 0x05 | code |
 | 0x06 GET_FRAME | Read-only (pad link counters change) | None | None | Polls each pad of plates 1 and 2 once with a blocking transaction of up to 600 us. The readings update, which the stream reads later. Refused with NACK 8 during a pad firmware job. A code comment records that extra polls add repeats and raise pad noise. | documented only: no reply, and the stream already polls the pads | code |
-| 0x26 KEEP_ALIVE | Configuration | p0 and p1: interval in seconds, u16 little-endian. NACK 3 when the payload is shorter than two bytes | None | Sets the keep-alive interval and zeroes the counter. Interval 0 turns the sleep off in 1.2.8.0. The default is 600 s. The value is RAM only: the saved configuration holds baud rates and factors only. Section 6.3 gives the rule. | implemented | vector |
+| 0x26 KEEP_ALIVE | Configuration | p0 and p1: interval in seconds, u16 little-endian. NACK 3 when the payload is shorter than two bytes | None | Sets the keep-alive interval and zeroes the counter. Interval 0 turns the sleep off in 1.2.8.0. The default is 600 s. The value is RAM only: the saved configuration holds baud rates and factors only. The FDT does not sleep while it streams, whatever the interval. | implemented | vector |
 
 ### 3.2 Identification, status and queries
 
@@ -125,22 +125,22 @@ For 0x31, the payload is p0, a baud code. Codes outside the range the firmware a
 
 | Code and name | Class | Reply | Why it is dangerous | SDK | Evidence |
 |---|---|---|---|---|---|
-| 0x19 SAVE_CALIBRATION | Persistent write | ACK, sent before the write | **Do not send:** writes the controller's flash (baud rates and calibration factors) and is not refused while streaming (F5). A flash sector erase stalls interrupts. | documented only: the SDK does not write flash | code |
-| 0x25 CONTROLLER_RESET | Destructive (reset). Persistent write when values changed | ACK, sent before the reset | **Do not send:** with `da` 0 it saves the configuration and resets the controller, which ends the stream. With any other `da` it forwards a reset to that address, and a `da` of 0xFF resets every pad on the platform the frame names. It is not refused while streaming (F5). | documented only: resets the controller and ends the stream | code |
-| 0x52 PADS_GET_FACTORY_GF | Read-only on the host side (sends a pad command) | 16 bytes: plate, pad, then the 8 factory gain bytes held in RAM | The plate is the `pa` byte and the pad is the `da` byte. Both must be below 3. The controller sends 0x52 to the pad, waits 100 ms, then replies with whatever its RAM copy holds, so the reply can be older than the pad's answer (open point 4). Refused with NACK 8 during a pad firmware job. | documented only: calibration data | code |
-| 0x53 PADS_SAVE_FACTORY_GF | Persistent write on the pad | ACK | **Do not send:** it can erase and rewrite a pad's factory-gain flash page with no backup and no read-back. The ACK does not show that the pad's write happened (F5). | documented only: pad flash write without backup | code |
+| 0x19 SAVE_CALIBRATION | Persistent write | ACK, sent before the write | **Do not send:** writes the controller's flash (baud rates and calibration factors) and is not refused while streaming. A flash sector erase stalls interrupts. | documented only: the SDK does not write flash | code |
+| 0x25 CONTROLLER_RESET | Destructive (reset). Persistent write when values changed | ACK, sent before the reset | **Do not send:** with `da` 0 it saves the configuration and resets the controller, which ends the stream. With any other `da` it forwards a reset to that address, and a `da` of 0xFF resets every pad on the platform the frame names. It is not refused while streaming. | documented only: resets the controller and ends the stream | code |
+| 0x52 PADS_GET_FACTORY_GF | Read-only on the host side (sends a pad command) | 16 bytes: plate, pad, then the 8 factory gain bytes held in RAM | The plate is the `pa` byte and the pad is the `da` byte. Both must be below 3. The controller sends 0x52 to the pad, waits 100 ms, then replies with whatever its RAM copy holds, so the reply can be older than the pad's answer. Refused with NACK 8 during a pad firmware job. | documented only: calibration data | code |
+| 0x53 PADS_SAVE_FACTORY_GF | Persistent write on the pad | ACK | **Do not send:** it can erase and rewrite a pad's factory-gain flash page with no backup and no read-back. The ACK does not show that the pad's write happened. | documented only: pad flash write without backup | code |
 
-### 3.5 Debug and bench
+### 3.5 Debug and factory test
 
-**Table 3.5 Debug and bench commands**
+**Table 3.5 Debug and factory test commands**
 
 | Code and name | Class | Reply | Why it is dangerous | SDK | Evidence |
 |---|---|---|---|---|---|
-| 0x39 ANALOG_TEST | Destructive | ACK, then no reply ever (F1) | **Do not send:** never returns. The controller stops answering until it is reset. | documented only | code |
-| 0x60 DEBUG_ADC_CLOCK_DRIVE | Configuration (RAM) | ACK | **Do not send:** a bench experiment that changes the pads' ADC clock output. In 1.2.6.5 the one-byte form set the divider to 1, which switched the pads to 8 MHz until reset. | documented only | code |
-| 0x61 DEBUG_POLL_TIMING | Configuration (RAM) | ACK | **Do not send:** a bench experiment that changes the pad poll timing. The defaults are 700 us. | documented only | code |
+| 0x39 ANALOG_TEST | Destructive | ACK, then no reply ever | **Do not send:** factory test. The controller answers again only after a reset. | documented only | code |
+| 0x60 DEBUG_ADC_CLOCK_DRIVE | Configuration (RAM) | ACK | **Do not send:** a factory test that changes the pads' ADC clock output. In 1.2.6.5 the one-byte form set the divider to 1, which switched the pads to 8 MHz until reset. | documented only | code |
+| 0x61 DEBUG_POLL_TIMING | Configuration (RAM) | ACK | **Do not send:** a factory test that changes the pad poll timing. The defaults are 700 us. | documented only | code |
 | 0x62 DEBUG_PADS_RESTART | Destructive (pad power or pad reset) | ACK when the pads answer and tare; NACK 2 otherwise | **Do not send:** it switches the pad power off or resets every pad, then detects plates and tares. It is refused with NACK 3 while streaming or updating, and with NACK 8 during a pad firmware job. | documented only | code |
-| 0x63 (pad-sample mode switch) | Configuration (RAM) | ACK | **Do not send:** a bench experiment that switches the pad polling between GET_FRAME and queued samples, RAM only. The state after a reset is queued samples on. It does not check whether a stream is running and has no guard. The effect on the stream is in [05-measurement-stream.md](05-measurement-stream.md), section 4.8. Not run on hardware. | documented only | code |
+| 0x63 (pad-sample mode switch) | Configuration (RAM) | ACK | **Do not send:** a factory test that switches the pad polling between GET_FRAME and queued samples, RAM only. The state after a reset is queued samples on. It does not check whether a stream is running and has no guard. The effect on the stream is in [05-measurement-stream.md](05-measurement-stream.md), section 4.8. Not run on hardware. | documented only | code |
 
 The codes 0x64 and 0x65 are not in the 1.2.8.0 command list and get NACK 7. Treat the whole range 0x60 to 0x65 as debug codes that must not be sent.
 
@@ -174,7 +174,7 @@ The command list names nine codes that the switch does not handle. Each gets NAC
 
 ### 3.8 Commands that wait for a late plate (1.2.6.6 and later)
 
-Evidence: code, with one measured bench run of 1.2.6.6.
+Evidence: code, with one measured lab run of 1.2.6.6.
 
 In 1.2.6.6 and later, two command cases can hold the main loop until 8 s after a controller boot while a plate does not answer.
 
@@ -188,16 +188,16 @@ The reason: right after a controller restart a plate's pads can need seconds to 
 A host that talks to the controller right after a boot or a reset has to allow for this.
 
 1. A GET_CURRENT_CONFIG or START sent within 8 s of a boot, while a plate is missing, can take until 8 s of uptime to complete. No other command is handled meanwhile, because the wait runs inside the command case.
-2. START can tare a plate before the stream starts, and a load on the plate then becomes its zero. A bench run of 1.2.6.6 recorded the first frame 1.30 to 1.31 s after START in a sequence that began with a controller reset, because the plates were tared before streaming (measured).
-3. A plate still missing after the wait gets a placeholder with `pa` 0 (Section 6.2).
+2. START can tare a plate before the stream starts, and a load on the plate then becomes its zero. A lab run of 1.2.6.6 recorded the first frame 1.30 to 1.31 s after START in a sequence that began with a controller reset, because the plates were tared before streaming (measured).
+3. A plate still missing after the wait gets a placeholder with `pa` 0 ([05-measurement-stream.md](05-measurement-stream.md) Section 6).
 
 In 1.2.6.5 the detection sweep stopped at the first plate found, START gave a missing plate one sweep, and nothing waited. A host then sometimes saw a frame from platform 0 and no data from one plate.
 
-The 1.2.6.6 bench run recorded GET_CURRENT_CONFIG answering in 0.02 s without a reset and in 0.31 s after a host application's reset sequence. In those runs plate 2 answered within 3 s, so the late-plate wait itself did not have to act (measured). The wait has not been seen acting on hardware, and 1.2.8.0 keeps this code and has not been run on hardware (open point 11).
+The 1.2.6.6 lab run recorded GET_CURRENT_CONFIG answering in 0.02 s without a reset and in 0.31 s after a host application's reset sequence. In those runs plate 2 answered within 3 s, so the late-plate wait itself did not have to act (measured). The wait has not been seen acting on hardware, and 1.2.8.0 keeps this code and has not been run on hardware.
 
-### 3.9 Sync jack (FDT 1.2.8.24, draft)
+### 3.9 Sync jack (firmware with sync)
 
-Evidence: code of the 1.2.8.24 draft. Not yet run on hardware.
+Evidence: code and vectors; not yet measured on hardware. Firmware without the sync jack answers GET_SYNC_MODE with NACK 7, so a host asks before it uses these commands.
 
 FDTs with the analog and sync board have a SYNC IN and a SYNC OUT line. Firmware 1.2.8.24 adds two commands that decide what the FDT does with them. The event frames these modes produce are in [05-measurement-stream.md](05-measurement-stream.md), section 13.
 
@@ -205,8 +205,8 @@ FDTs with the analog and sync board have a SYNC IN and a SYNC OUT line. Firmware
 
 | Code and name | Class | Request payload | Reply | Effect | SDK value |
 |---|---|---|---|---|---|
-| 0x28 SET_SYNC_MODE | Configuration (kept over CONTROLLER_RESET, not over power-on) | p0: mode bits (table below). Optional; a missing byte or 0 takes the default: p1 and p2 pulse period in ms, u16 little-endian, 10 to 60,000, default 1,000; p3 pulse width in ms, 1 to 255 and below the period, default 5; p4 SYNC IN debounce in 0.1 ms, default 5 (0.5 ms); p5 arm timeout in minutes, default 30. `pa` and `da` are not checked; send 0 | ACK. NACK 3 for no payload, an unknown bit, MASTER_OUT together with PULSE_TRAIN, or a period or width out of range. NACK 8 while a stream runs or a START waits for its trigger. NACK 7 on firmware without sync modes | Stores the mode in RAM and in backup registers that survive a controller reset, so Studio's tare, which is a CONTROLLER_RESET, does not lose it. A power-on, brown-out, watchdog or reset-pin reset returns to mode 0 (the firmware reads the reset cause, `RCC_CSR`, at boot). Changing the mode resets the debounce and sets SYNC OUT to the new rule at once | implemented (Python `set_sync_mode`, TypeScript `setSyncMode`, MATLAB `setSyncMode`); draft |
-| 0x29 GET_SYNC_MODE | Read-only | None | 26 bytes: `BE EF`, `pa`, 0x29, mode, period u16 LE, width, debounce, arm timeout, state, contract version (1), SYNC IN edges u32 LE, SYNC OUT edges u32 LE, event queue overflows u16 LE, CRC over bytes 2 to 21, `04 04`. State bits: 0x01 armed, 0x02 restored after a reset, 0x04 the last backup write read back equal, 0x08 SYNC IN high, 0x10 SYNC OUT high, 0x20 streaming | None. Also the capability probe | implemented (`get_sync_mode`, `getSyncMode`); draft |
+| 0x28 SET_SYNC_MODE | Configuration (kept over CONTROLLER_RESET, not over power-on) | p0: mode bits (table below). Optional; a missing byte or 0 takes the default: p1 and p2 pulse period in ms, u16 little-endian, 10 to 60,000, default 1,000; p3 pulse width in ms, 1 to 255 and below the period, default 5; p4 SYNC IN debounce in 0.1 ms, default 5 (0.5 ms); p5 arm timeout in minutes, default 30. `pa` and `da` are not checked; send 0 | ACK. NACK 3 for no payload, an unknown bit, MASTER_OUT together with PULSE_TRAIN, or a period or width out of range. NACK 8 while a stream runs or a START waits for its trigger. NACK 7 on firmware without sync modes | Stores the mode in RAM and in backup registers that survive a controller reset, so Studio's tare, which is a CONTROLLER_RESET, does not lose it. A power-on, brown-out, watchdog or reset-pin reset returns to mode 0 (the firmware reads the reset cause, `RCC_CSR`, at boot). Changing the mode resets the debounce and sets SYNC OUT to the new rule at once | implemented (Python `set_sync_mode`, TypeScript `setSyncMode`, MATLAB `setSyncMode`) |
+| 0x29 GET_SYNC_MODE | Read-only | None | 26 bytes: `BE EF`, `pa`, 0x29, mode, period u16 LE, width, debounce, arm timeout, state, contract version (1), SYNC IN edges u32 LE, SYNC OUT edges u32 LE, event queue overflows u16 LE, CRC over bytes 2 to 21, `04 04`. State bits: 0x01 armed, 0x02 restored after a reset, 0x04 the last backup write read back equal, 0x08 SYNC IN high, 0x10 SYNC OUT high, 0x20 streaming | None. Also the capability probe | implemented (`get_sync_mode`, `getSyncMode`) |
 
 **Mode bits**
 
@@ -259,72 +259,9 @@ Five cases produce no reply, and a host has to treat them differently.
 4. A reply that finds the TX ring full is dropped after 50 ms (Section 2).
 5. A request that finds the command queue full is counted and dropped with no reply.
 
-## 6. Findings
-
-Findings F1, F2, F4 and F5 are defined here. Each was checked against the 1.2.8.0 code (code). The hardware behaviour that the code implies is listed in Section 7.
-
-### 6.1 F1: ANALOG_TEST never returns
-
-The firmware sends the ACK for 0x39 and then runs an endless loop with no watchdog refresh. Command parsing runs only from the main loop, so no later request is processed.
-
-The only watchdog that the firmware arms is the independent watchdog that the trial boot starts, which a code comment puts at about 8 s. The application refreshes it from the main loop. After a firmware update the trial image runs under this watchdog, so a loop that stops refreshing it is reset about 8 s later. Outside a trial boot no watchdog runs, so the loop stays stopped until something resets the controller (open point 3). The host sees one ACK and then silence.
-
-### 6.2 F2: START has no ACK and sends placeholders
-
-START and SET_CALIBRATION share one case. The case sends no ACK. It sends two frames with timestamp 0, one each for plate addresses 1 and 2, whether or not those plates were detected.
-
-The frame's `pa` byte is the plate's stored address, which the detection code sets only when it hears a plate. A placeholder for an undetected plate therefore has `pa` 0, and its force fields hold whatever the last calculation left in RAM.
-
-Before the placeholders, START runs the platform redetection. When fewer than two plates are known, its detection sweep and the wait for a late plate can block the main loop for up to three sweep rounds and then until 8 s of uptime. It also blocks for a tare of any detected plate that has had no tare attempt since boot. Section 3.8 gives the rule.
-
-A host cannot confirm START from a reply, so the first frames that follow it are the only sign that START worked. [05-measurement-stream.md](05-measurement-stream.md) covers the placeholder frames and how a host tells them from measurements.
-
-### 6.3 F4: the keep-alive timer does not sleep while streaming
-
-The keep-alive counter counts TIM2 update events. The counter is held at zero while the stream runs or when the interval is 0. Otherwise it counts, and when the count exceeds the interval times 10000 ticks it zeroes the counter and requests sleep. The main loop then refuses that sleep while streaming, so a stream never sleeps. A code comment records why: an earlier firmware cut pad power ten minutes into a recording when the host did not send KEEP_ALIVE.
-
-Any latched host command zeroes the counter, and KEEP_ALIVE also sets the interval. The default interval is 600 s. The interval is RAM only, so a reset restores 600.
-
-The sleep path turns the pad power off, disables USART1 and TIM2, and enters WFI, then restores all of them on wake. The code names no wake source. Whether host traffic wakes the controller is an open point (point 2).
-
-A phone client that is known to work writes KEEP_ALIVE with interval 600 every 30 s while a session is open. A host that keeps a session open with KEEP_ALIVE therefore never reaches the sleep. A host that streams without KEEP_ALIVE is not put to sleep either, because the sleep is refused while streaming.
-
-A stopped stream with no latched command for the full interval (600 s by default) is the only case in which the firmware sleeps on the keep-alive timer.
-
-An earlier reference firmware behaves differently: its timer counts whether or not the device streams. This chapter describes 1.2.8.0 only.
-
-### 6.4 F5: flash writes and pad saves are not refused while streaming
-
-Only pad firmware updates block the commands in the pad-disturbing list (Table 2.1, step 10). SAVE_CALIBRATION (0x19) and CONTROLLER_RESET (0x25) are in that list, but the guard checks only for a pad firmware job, and nothing checks the stream flag. Both commands therefore run during a stream.
-
-SAVE_CALIBRATION writes flash, and a code comment says a sector erase stalls interrupts. CONTROLLER_RESET writes flash when values changed and then resets the controller. A reset during a stream ends it, and the host sees the link drop.
-
-On the pad side, PADS_SAVE_FACTORY_GF with a zero value erases the factory-gain flash page, writes the header word first, and then writes the data. It keeps no backup and reads nothing back. The reader checks only the header word, so a write interrupted after the header is accepted as valid. The controller does not wait for the pad to confirm the write.
-
-## 7. Open points
-
-All of these are unverified on hardware.
-
-1. The keep-alive counter runs at 10 kHz only if TIM2 runs at 84 MHz. The PLL settings give 84 MHz SYSCLK and APB1 divided by two, and the timer clock rule for STM32F4 doubles the APB1 clock when its prescaler is not 1. The rate was not measured. (Code and vendor rule.)
-2. The keep-alive sleep: the code names no wake source, and host UART interrupts are not disabled there. Whether a host byte wakes the controller, and whether the state is correct after wake, was not tested.
-3. ANALOG_TEST (0x39) never returns and the device does not recover without a reset (Section 6.1). The hardware state after the command was not observed.
-4. The 100 ms wait in PADS_GET_FACTORY_GF is enough for the pad to answer. The pad's reply time was not measured.
-5. The duration of the flash erase that SAVE_CALIBRATION and CONTROLLER_RESET can trigger, and whether the 10 kHz timestamp loses ticks during the stall. Not measured.
-6. After SET_SERIAL_PARAM and a reset that loads the saved value, the link comes back at the new rate. The path was not run on hardware.
-7. The tare duration of 0.3 to 4 s is a code comment and is not measured here.
-8. Extra pad polls from GET_FRAME raise pad noise, as a code comment states. The comment reports a bench measurement from 1.2.3, which was not repeated.
-9. The pad-sample debug command (0x63) and the queued pad samples it switches. 1.2.8.0 was merged with simulation tests only. What a stream does when 0x63 changes during it was not observed.
-10. The late-plate wait of Section 3.8 acting on hardware. See that section.
-
-## 8. Known inconsistencies
-
-- GET_SAMPLING_RATE reports 2048 at boot. A host that reads that value as the stream rate is wrong. The stream runs at the filter SPS, which is 500 by default in 1.2.8.0 and 1,000 from 1.2.8.8.
-- On USART3, GET_STATUS reports the new baud rate as soon as SET_SERIAL_PARAM runs, while the port keeps the old rate until the next boot. Over UART4, GET_STATUS reports the default rate, not the stored one. The new rate survives that boot only if a flash write ran after the command.
-- The SDK clients do not send SET_TARE (0x1B), although the 1.2.8.0 firmware accepts it while streaming. A tare re-zeroes the plates.
-
 ## 9. Command-code registry
 
-Every code the firmware knows, so that no two features share one. "Released" means present in the released firmware; "draft" means on a firmware branch that has not been released; "stream" means a stream frame's code byte, not a host command; "bench" codes are diagnostics for the firmware team, not for hosts. Free codes are every value not listed. Plate address 0xFD is reserved for frames from the controller itself (event frames); plate addresses 1 and 2 are plates, and 0 is an undetected plate's placeholder.
+Every code the firmware knows, so that no two features share one. "Released" means present in the released firmware; "sync" means firmware with the sync jack, found with GET_SYNC_MODE; "stream" means a stream frame's code byte, not a host command; "factory test" codes are diagnostics for the factory, not for hosts. Free codes are every value not listed. Plate address 0xFD is reserved for frames from the controller itself (event frames); plate addresses 1 to 4 are plates (3 and 4 on firmware with four plates), and 0 is an undetected plate's placeholder.
 
 | Code | Name | Status |
 |---|---|---|
@@ -336,7 +273,7 @@ Every code the firmware knows, so that no two features share one. "Released" mea
 | 0x06 | GET_FRAME | released |
 | 0x07 | SET_SAMPLING_RATE | released |
 | 0x08 | GET_SAMPLING_RATE | released |
-| 0x0E | STREAM_EVENT | stream: code of event frames (plate address 0xFD), 1.2.8.24 draft |
+| 0x0E | STREAM_EVENT | stream: code of event frames (plate address 0xFD), sync |
 | 0x11 | SET_CALIBRATION | released |
 | 0x12 | SET_CHANNEL_MASK | released |
 | 0x13 | GET_CHANNEL_MASK | released |
@@ -356,8 +293,8 @@ Every code the firmware knows, so that no two features share one. "Released" mea
 | 0x25 | CONTROLLER_RESET | released |
 | 0x26 | KEEP_ALIVE | released |
 | 0x27 | GET_PAD_HEALTH | released |
-| 0x28 | SET_SYNC_MODE | draft, 1.2.8.24 |
-| 0x29 | GET_SYNC_MODE | draft, 1.2.8.24 |
+| 0x28 | SET_SYNC_MODE | sync |
+| 0x29 | GET_SYNC_MODE | sync |
 | 0x31 | SET_SERIAL_PARAM | released |
 | 0x32 | SET_WIFI_SSID | released (not dispatched, NACK 7) |
 | 0x33 | SERVER_AP_ENABLE | released |
@@ -374,9 +311,9 @@ Every code the firmware knows, so that no two features share one. "Released" mea
 | 0x53 | PADS_SAVE_FACTORY_GF | released |
 | 0x54 | PADS_GET_CF | released (not dispatched on the host side, NACK 7) |
 | 0x55 | PADS_SAVE_CF | released (not dispatched on the host side, NACK 7) |
-| 0x60 | DEBUG_ADC_CLOCK_DRIVE | bench |
-| 0x61 | DEBUG_POLL_TIMING | bench |
-| 0x62 | DEBUG_PADS_RESTART | bench |
-| 0x63 | debug: raw pad samples | bench |
-| 0x64 | DEBUG_BATTERY | bench, 1.2.8.8 and later |
-| 0x65 | DEBUG_WAKE | bench, 1.2.8.12 and later |
+| 0x60 | DEBUG_ADC_CLOCK_DRIVE | factory test |
+| 0x61 | DEBUG_POLL_TIMING | factory test |
+| 0x62 | DEBUG_PADS_RESTART | factory test |
+| 0x63 | debug: raw pad samples | factory test |
+| 0x64 | DEBUG_BATTERY | factory test, 1.2.8.8 and later |
+| 0x65 | DEBUG_WAKE | factory test, 1.2.8.12 and later |

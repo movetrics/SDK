@@ -16,20 +16,20 @@ export const DEFAULT_TIMEOUTS = {
 };
 export const DEFAULT_FRAME_BACKLOG = 4096;
 // The stream rate is clamped to 50..2000 frames per second per plate (the firmware). 2000 is
-// clean over USB on 1.2.8.1+ (bench, 10 Oct 2026); the default after every reset is 500 (1,000 from firmware 1.2.8.8) with a 50 Hz low-pass.
+// clean over USB on 1.2.8.1+ (measured, 10 Oct 2026); the default after every reset is 500 (1,000 from firmware 1.2.8.8) with a 50 Hz low-pass.
 export const MIN_RATE_HZ = 50;
 export const MAX_RATE_HZ = 2000;
 export const DEFAULT_CUTOFF_HZ = 50;
-// The bench tools leave 100 ms between SET_FILTER and START (tools/bench/stream_check.py); the filter is rebuilt then.
+// The firmware team's test tools leave 100 ms between SET_FILTER and START; the filter is rebuilt then.
 const SET_RATE_SETTLE_MS = 100;
 // SET_FILTER means cutoff and rate only on Movetrics firmware from 1.2.8.0 (doc 17, SET_FILTER section).
 const MIN_SET_FILTER_FIRMWARE = [1, 2, 8, 0];
 const FIRMWARE_VERSION_RE = /^(\d+)\.(\d+)\.(\d+)\.(\d+)/;
 // NACK 7: the firmware has no case for the command (ERR_UNKNOWN_COMMAND, the firmware).
 const NACK_UNKNOWN_COMMAND = 7;
-// NACK 8: the stream is running or armed, so the sync mode cannot change (DRAFT).
+// NACK 8: the stream is running or armed, so the sync mode cannot change.
 const NACK_STREAM_RUNNING = 8;
-// Bits of SET_SYNC_MODE (DRAFT; python/movetrics_fdt/client.py SyncMode). Combine them with |.
+// Bits of SET_SYNC_MODE (python/movetrics_fdt/client.py SyncMode). Combine them with |.
 // 0 is the behaviour of firmware without sync modes.
 export const SyncMode = {
     OFF: 0x00,
@@ -208,7 +208,7 @@ export class FdtClient {
             await delay(SET_RATE_SETTLE_MS);
         });
     }
-    // SET_SYNC_MODE (0x28, DRAFT) to 00/00. Sends all six payload bytes: the mode bits (see SyncMode), the pulse
+    // SET_SYNC_MODE (0x28) to 00/00. Sends all six payload bytes: the mode bits (see SyncMode), the pulse
     // period in ms, the pulse width in ms, the debounce in 0.1 ms and the arm timeout in minutes. A 0 in any of the
     // last four means the firmware default, so the defaults here are 0. Call it with the stream stopped.
     // Errors: NACK 7 (no sync modes) raises FdtRefusedError 'no_sync_modes'; NACK 8 (stream running or armed) raises
@@ -253,7 +253,7 @@ export class FdtClient {
             throw nackError(reply);
         });
     }
-    // GET_SYNC_MODE (0x29, DRAFT) to 00/00: the sync mode state. Returns null when the firmware answers NACK 7,
+    // GET_SYNC_MODE (0x29) to 00/00: the sync mode state. Returns null when the firmware answers NACK 7,
     // which is the capability probe: firmware without sync modes has no GET_SYNC_MODE either. Other NACKs raise
     // FdtNackError.
     async getSyncMode() {

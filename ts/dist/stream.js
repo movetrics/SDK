@@ -10,7 +10,7 @@
 // placeholder frames with timeStamp 0 (the firmware). The stream values
 // are wire integers. Their physical units are not verified (vectors/README.md, not covered 11).
 //
-// The event frame (DRAFT, 28 Oct 2026; python/movetrics_fdt/stream.py) uses the same
+// The event frame (python/movetrics_fdt/stream.py) uses the same
 // envelope with address 0xFD and command 0x0E. The controller sends one only when a host sets the
 // EVENT_FRAMES bit of SET_SYNC_MODE, so firmware without sync modes never sends one.
 //   0-1    BE EF header
@@ -33,8 +33,8 @@ import { FrameEncodeError, ReplyFormatError } from "./errors.js";
 import { ReplyScanner } from "./frames.js";
 export const STREAM_FRAME_LENGTH = 24; // the firmware
 export const STREAM_COMMAND = 0x01; // the firmware
-export const EVENT_ADDRESS = 0xfd; // DRAFT: plate address of an event frame
-export const EVENT_COMMAND = 0x0e; // DRAFT: command byte of an event frame
+export const EVENT_ADDRESS = 0xfd; // plate address of an event frame
+export const EVENT_COMMAND = 0x0e; // command byte of an event frame
 // Event types 1 to 8 (contracts/vocabulary.v1.json "events"). Types 100 and 101 are host-made and never
 // come from the controller.
 export const EVENT_NAMES = {
@@ -141,7 +141,7 @@ export function encodeStreamFrame(frame) {
     out[23] = 0x04;
     return out;
 }
-// GET_SYNC_MODE (0x29, DRAFT) reply, 26 bytes: BE EF pa 29, then the fields below, CRC over bytes 2 to 21,
+// GET_SYNC_MODE (0x29) reply, 26 bytes: BE EF pa 29, then the fields below, CRC over bytes 2 to 21,
 // then 04 04. Byte 4 is the mode; 5-6 the pulse period (ms, uint16); 7 the pulse width (ms); 8 debounce (0.1 ms);
 // 9 arm timeout (minutes); 10 state bits; 11 contract; 12-15 edges in (uint32); 16-19 edges out (uint32);
 // 20-21 overflows (uint16). A NACK 7 instead means the firmware has no sync modes (the capability probe).
@@ -185,7 +185,7 @@ export function parseSyncModeReply(bytes) {
         overflows: view.getUint16(20, true),
     };
 }
-// Reads one complete 24-byte event frame (DRAFT layout). Throws ReplyFormatError when a check fails.
+// Reads one complete 24-byte event frame. Throws ReplyFormatError when a check fails.
 // The checks run in the order length, header, CRC, end marker, then address and command.
 export function parseEventFrame(bytes) {
     checkEnvelope(bytes, 'an event frame');

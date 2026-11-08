@@ -11,7 +11,7 @@ event loop is never blocked.
 pyserial asserts DTR and RTS when it opens a port unless they were cleared first, and this transport clears both
 before the port opens. The Android override never sets either line
 (android:app/src/main/java/com/movetrics/fdt/android/NoModemControlFtdiPort.java:9, 16-26), and
-fdt:docs/architecture.md:44 says opening a port may affect modem lines. The bench effect is UNVERIFIED
+fdt:docs/architecture.md:44 says opening a port may affect modem lines. The effect has not yet been measured
 (doc 02 item U5), so the first hardware run must check for reset-like behaviour.
 """
 
@@ -91,7 +91,7 @@ class SerialTransport(Transport):
         # opens (serialutil.py SerialBase.__init__, serialposix.py open()), so without these two lines both would be
         # asserted. The Android override never sets either line
         # (android:app/src/main/java/com/movetrics/fdt/android/NoModemControlFtdiPort.java:9, 16-26).
-        # fdt:docs/architecture.md:44 says opening a port may affect modem lines. The bench effect is UNVERIFIED
+        # fdt:docs/architecture.md:44 says opening a port may affect modem lines. The effect has not yet been measured
         # (doc 02 item U5).
         device.dtr = False
         device.rts = False

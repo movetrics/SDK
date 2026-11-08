@@ -1,7 +1,7 @@
 """Command line: python -m movetrics_fdt simulate ...  (or the movetrics-fdt script after pip install).
 
     movetrics-fdt simulate --tcp 7800                     # a virtual FDT 1.2.8.20 on 127.0.0.1:7800
-    movetrics-fdt simulate --pty /tmp/fdt --profile sync  # a serial-like device with the sync modes (draft)
+    movetrics-fdt simulate --pty /tmp/fdt --profile sync  # a serial-like device with the sync modes
     movetrics-fdt simulate --tcp 7800 --replay exam-channels.csv
     movetrics-fdt simulate --tcp 7800 --signal cmj --sync-pulse-s 1 --clock-ppm 30 --drop-every 500
 """

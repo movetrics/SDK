@@ -27,7 +27,7 @@ TICKS_PER_SECOND: Final = 10_000
 MOMENT_REFERENCE_DEPTH_M: Final = 0.030
 # Plate centres in the combined frame of the CSV: the two 35 cm x 60 cm plates side by side along x.
 PLATE_CENTRE_X_M: Final = {"p1": -0.175, "p2": 0.175}
-# Studio leaves CoP empty below its CopForceThreshold (50 N in the bench config.ini).
+# Studio leaves CoP empty below its CopForceThreshold (50 N in the Studio config.ini).
 COP_MIN_FZ_N: Final = 50.0
 
 _COLUMN = re.compile(r"^(p1|p2|comb)_(ForceX|ForceY|ForceZ|MomentX|MomentY|MomentZ|COPx|COPy)$")

@@ -2,7 +2,7 @@
 
 TCP: any client that can open a socket (Python, Android tests, a browser bridge) connects to host:port and talks
 the FDT protocol as if over the FTDI serial line. One client at a time, as one commanding host at a time is the
-bench rule; a second connection waits. Pseudo-terminal (Linux and macOS): a path such as /tmp/fdt that pyserial,
+rule; a second connection waits. Pseudo-terminal (Linux and macOS): a path such as /tmp/fdt that pyserial,
 MATLAB serialport and screen open like a USB serial device.
 """
 

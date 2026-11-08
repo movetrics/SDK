@@ -7,7 +7,7 @@
 // sending any command", MovetricsBridge.ino:116). open() therefore subscribes before it returns.
 // Writes use writeValueWithResponse only, because the bridge's RX characteristic has the WRITE
 // property alone (MovetricsBridge.ino:224-226).
-// The browser side is UNVERIFIED (docs/02-transports.md, U1).
+// The browser side is not yet measured (docs/02-transports.md, U1).
 import { AsyncQueue } from "./transport.js";
 export const BLE_DEVICE_NAME = 'Movetrics-BLE'; // BridgeConfig.h:22
 export const BLE_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // BridgeConfig.h:25

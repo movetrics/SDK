@@ -165,7 +165,7 @@ def combine(samples: dict[int, Sample], *, cop_min_fz_n: float = COP_MIN_FZ_N) -
     """Sum of the plates of one instant in the pair frame (Studio's comb_ columns): forces add, moments move to the
     pair origin, CoP from the combined wrench.
 
-    Only plates 1 and 2 have a place in the pair frame. A plate 3 or 4 (four-platform firmware, draft 1.2.8.24 to
+    Only plates 1 and 2 have a place in the pair frame. A plate 3 or 4 (four-platform firmware, 1.2.8.24 to
     1.2.8.27) sits wherever the lab put it, so it raises ValueError instead of being summed as if it stood at the
     pair origin; give such plates a layout and combine them yourself."""
     outside = sorted(plate for plate in samples if plate not in PAIR_CENTRE_X_M)

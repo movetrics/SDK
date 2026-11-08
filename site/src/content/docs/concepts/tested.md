@@ -29,7 +29,7 @@ So a team that writes its own client, in C#, Swift or Rust, has a finish line: p
 | Bluetooth with this SDK from a desktop | The same FDT from an M1 MacBook Pro | 100 to 500 per second per plate complete; 1,000 drops the link within a second; a dropped link leaves the stream stopped (measured) |
 | Lab Streaming Layer timing | The simulator into a local LSL inlet, with clock drift | drift 0.13 ppm, residual 0.012 ms (simulated) |
 
-One finding came out of this work: a standard C3D reader places the centre of pressure in Studio's own C3D export 26 to 51 mm away from Studio's CSV, because of where that file puts the plate origin (measured with ezc3d). The SDK's writer moves the moments to the plate surface and sets the origin explicitly, which is why its files land within half a millimetre.
+For C3D, the SDK's writer moves the moments to the plate surface and sets the origin explicitly, so a standard reader (ezc3d, the library OpenSim uses) puts the centre of pressure within half a millimetre of the CSV (measured).
 
 ## Safe by construction
 
@@ -55,6 +55,6 @@ The Python core uses only the standard library; USB, Bluetooth, C3D and LSL supp
 | Excel workbook | Built and its Power Query code read through; not yet opened in Excel itself |
 | Sign of `fy` and `mx` | Follows Studio's configuration; not yet checked with one known off-centre load on both sides |
 | OpenSim force direction | Round trip and axis mapping simulated; not yet checked with a known horizontal load |
-| Sync modes (start on trigger, event frames) | A firmware draft; the SDK finds them by asking the FDT, not by version number |
+| Sync modes (start on trigger, event frames) | Need firmware with the sync jack; the SDK finds them by asking the FDT, not by version number. Not yet measured on hardware |
 
 Each page in these docs carries its own "Tested on" line with the same three words: **measured** (on real hardware or real recordings), **simulated** (on the simulator), or **not yet**.

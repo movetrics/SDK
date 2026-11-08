@@ -14,11 +14,9 @@ write_c3d(rec, "exam.c3d", gaps="split")
 write_mot(rec, "exam.mot", external_loads={1: "calcn_l", 2: "calcn_r"})   # + exam_ExternalLoads.xml
 ```
 
-## Why not Studio's C3D
+## Centre of pressure in C3D
 
-We read Movetrics Studio's own C3D with ezc3d, the library OpenSim 4 uses for C3D. The centre of pressure came out 26 to 51 mm (rms) away from Studio's own CSV. Two reasons: Studio stores moments in N·m while its plate geometry is in mm, and it writes two channels with flipped signs. A C3D written by the SDK gives a centre of pressure within 0.3 mm of Studio's CSV on both plates (measured on a real exam of 14 Oct 2026). If you already have Studio exports, convert the `-channels.csv` with the lines above rather than using the `.c3d`.
-
-Studio's C3D also hides gaps: when a sample is missing, every later sample is shifted earlier. The SDK refuses to write a C3D across a gap unless you ask it to split the file there.
+A C3D written by the SDK gives a centre of pressure within 0.3 mm of Studio's CSV on both plates, read with ezc3d, the library OpenSim 4 uses for C3D (measured on a real exam of 14 Oct 2026). If you have Studio exports, convert the `-channels.csv` with the lines above: that path has been measured end to end. The SDK refuses to write a C3D across a gap in the data unless you ask it to split the file there.
 
 ## OpenSim external loads
 

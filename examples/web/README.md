@@ -3,8 +3,8 @@
 A static page that drives the FDT host link from a browser: connect over USB or Bluetooth, read the
 firmware version and the status, start the stream, show the last 20 frames, and stop.
 
-Browser support is UNVERIFIED for this SDK. No pinned repository uses Web Serial or Web Bluetooth
-(`../../docs/02-transports.md`, U1). Run the page as a bench test before relying on it.
+Browser support has not yet been tested with a real FDT. No pinned repository uses Web Serial or Web Bluetooth
+(`../../docs/02-transports.md`, U1). Try the page with your FDT before relying on it.
 
 ## Run it
 
@@ -23,7 +23,7 @@ secure context. `localhost` counts as one.
 
 - **Connect USB** opens a port picker (Web Serial). It opens the port at 1,500,000 baud, 8N1, no flow
   control, then reads the version and the status, and starts the stream. Where the browser allows it,
-  it clears DTR and RTS after open. The browser effect is UNVERIFIED (see the USB note in `../../ts/README.md`).
+  it clears DTR and RTS after open. The browser effect has not yet been measured (see the USB note in `../../ts/README.md`).
 - **Connect Bluetooth** opens a device picker filtered on the bridge's service UUID. The bridge
   advertises as `Movetrics-BLE`. It subscribes to the TX characteristic before writing anything.
 - **Stop** sends STOP_STREAM (0x05). The link stays open.

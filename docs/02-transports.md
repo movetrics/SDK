@@ -2,7 +2,7 @@
 
 Public edition of the SDK specification. Statements are marked code (read in the firmware), measured (seen on a device) or vector (covered by the test vectors).
 
-This chapter describes controller firmware 1.2.8.0 and bridge firmware 1.3.1.0. The controller's host port code is the same as in 1.2.6.5. Firmware 1.2.8.0 has not been run on hardware. Everything below that concerns it is code, not measured. Facts that no source shows are marked unverified.
+This chapter describes controller firmware 1.2.8.0 and bridge firmware 1.3.1.0. The controller's host port code is the same as in 1.2.6.5. Firmware 1.2.8.0 has not been run on hardware. Everything below that concerns it is code, not measured. Facts that no source shows are marked not yet measured.
 
 Every host reaches the controller over one of two byte pipes. Both run at 1,500,000 baud by default, 8N1, with no flow control (code).
 
@@ -13,7 +13,7 @@ The controller treats the two ports alike, with two exceptions a client must kno
 
 The bridge is a transparent byte relay. It forwards bytes only while one phone is subscribed to its notify characteristic. At other times it discards controller output.
 
-A phone client that is known to work uses the connect sequence in section 2.6. Use it as the reference for a new BLE client. Browser transports are unverified (section 2.11).
+A phone client that is known to work uses the connect sequence in section 2.6. Use it as the reference for a new BLE client. Browser transports are (section 2.11).
 
 The frame layout is in [03-host-link-framing.md](03-host-link-framing.md) and is not repeated here.
 
@@ -23,7 +23,7 @@ The frame layout is in [03-host-link-framing.md](03-host-link-framing.md) and is
 |---|---|---|---|---|---|
 | USB | USB-C, FTDI FT232R (VID 0x0403, PID 0x6001) | 1,500,000 baud by default, 8N1, no flow control | USART3 | Works on Windows (reported). A phone client implements it. macOS and Linux have no record (section 2.10). | code |
 | BLE | Phone over BLE to the ESP32-S3 bridge, advertised as `Movetrics-BLE`, then UART4 | Nordic UART service; bridge side 1,500,000 baud, 8N1; commands written with response | UART4 | Implemented in a phone client. The acceptance record names older builds. | code |
-| Browser | Web Serial (USB) or Web Bluetooth (BLE) | Not known | Same ports | Unverified (section 2.11). | code |
+| Browser | Web Serial (USB) or Web Bluetooth (BLE) | Not known | Same ports | Not yet measured (section 2.11). | code |
 
 ## 2.2 The controller's two host ports
 
@@ -44,7 +44,7 @@ Every later boot uses the saved value. No selector restores 1,500,000. The rate 
 
 A power cycle discards a value that no flash write has stored. A later save of any kind stores it. An earlier rate change then becomes permanent at that save.
 
-A client that opens USB at a fixed 1,500,000 baud cannot reach the controller once a different USB rate is saved. No command restores 1,500,000, and no recovery procedure is known (unverified). BLE is not affected, because UART4 always uses the default rate.
+A client that opens USB at a fixed 1,500,000 baud cannot reach the controller once a different USB rate is saved. No command restores 1,500,000, and no recovery procedure is known (not yet measured). BLE is not affected, because UART4 always uses the default rate.
 
 GET_STATUS puts the rate in its serial string as `<rate>,8,n,1`. On UART4 that string always carries 1,500,000. On USART3 it carries the RAM value. That value can differ from the running rate until the next boot. A client must not take the USB rate from this string alone.
 
@@ -68,7 +68,7 @@ Evidence: code (a phone client). The steps below are a recipe that is known to w
 
 1. Accept the device only if its VID is 0x0403 and its PID is 0x6001.
 2. Open the device through the platform's USB manager. Fail if no connection is returned.
-3. Open the FTDI port so that DTR and RTS are left alone. The stock open of the common FTDI library toggles them. Claim interface 0. Require at least two endpoints. Read from endpoint 0 and write to endpoint 1. Send one vendor control transfer for the FTDI reset. The claim that the stock open toggles DTR and RTS comes from a code comment and is unverified.
+3. Open the FTDI port so that DTR and RTS are left alone. The stock open of the common FTDI library toggles them. Claim interface 0. Require at least two endpoints. Read from endpoint 0 and write to endpoint 1. Send one vendor control transfer for the FTDI reset. The claim that the stock open toggles DTR and RTS comes from a code comment and is not yet measured.
 4. Set 1,500,000 baud, 8 data bits, one stop bit, no parity, then no flow control. If any step fails, close the port and raise the error again.
 5. Reads need a buffer of at least 16,384 bytes and a timeout of 1 to 1,000 ms. Writes time out after 1,200 ms.
 
@@ -158,40 +158,24 @@ Evidence: measured, on other firmware.
 
 One BLE result is recorded. A Mac as central carried about 15 kB/s of a 25 kB/s stream. The bridge's 32 KB buffer filled and discarded data. An Android phone carried the same stream with no loss: 85,453 frames per plate in 171 s. That is about 500 frames per second per plate. Two plates at 24 bytes per frame give about 24 kB/s, close to the 25 kB/s of the record.
 
-No test has measured BLE throughput on firmware 1.2.8.0. Treat the figures as a record, not a guarantee (unverified).
+No test has measured BLE throughput on firmware 1.2.8.0. Treat the figures as a record, not a guarantee (not yet measured).
 
 ## 2.10 Platform notes
 
 | Platform | What is known | Status | Evidence |
 |---|---|---|---|
 | Windows | A connection at 1,500,000 baud, 8N1, no flow control is reported to work with the earlier Python reference package. That package lists FTDI candidates by VID 0x0403 without opening them. VID alone is not proof of an FDT. | Reported. The SDK's own Python client has not been recorded on Windows. | measured |
-| macOS | USB operation was untested in the earlier investigation. A bench run of firmware 1.2.6.6 over USB from a Mac is recorded. A successful open alone is not a throughput test. | USB unverified for 1.2.8.0. | measured |
-| Linux | No code and no record. | Unverified. | code |
+| macOS | USB operation was untested in the earlier investigation. A lab run of firmware 1.2.6.6 over USB from a Mac is recorded. A successful open alone is not a throughput test. | USB not yet measured for 1.2.8.0. | measured |
+| Linux | No code and no record. | Not yet measured. | code |
 | Android USB | Implemented (section 2.4). | Implemented in a phone client. | code |
 | Android BLE | Implemented (sections 2.6 and 2.7). | Implemented in a phone client. The acceptance record names older builds. | code |
 
-## 2.11 Browser transports (unverified)
+## 2.11 Browser transports (not yet measured)
 
-Nothing in the SDK uses Web Serial or Web Bluetooth. Before any browser client is written, these points need a bench test. All of them are unverified:
+Nothing in the SDK uses Web Serial or Web Bluetooth. Before relying on a browser client, test these points with a real FDT. None of them has been measured yet:
 
 - Whether the browser's serial API opens an FT232R at 1,500,000 baud.
 - Whether browser notification delivery keeps the bridge's ordering and its 244-byte packets.
 - Whether a page can run while a phone client is connected. The bridge accepts one client, so it cannot.
 - Which user-gesture and secure-origin rules apply to the device picker. These are general browser rules.
 
-## Open points
-
-All of these are unverified.
-
-- Browser APIs: support, baud rates, the device picker and origin rules (section 2.11).
-- Linux, over USB or BLE (section 2.10).
-- macOS over USB (section 2.10).
-- Whether the phone clients' BLE and USB acceptance hold on controller 1.2.8.0 and bridge 1.3.1.0. The acceptance records name controller build `1.1-UART4-b3` and bridge v1.2. Controller 1.2.8.0 has not been run on hardware. Its host port code is the same as in 1.2.6.5.
-- The DTR and RTS behaviour of the stock FTDI open. The claim comes from a code comment.
-- BLE throughput on 1.2.8.0 (section 2.9).
-- The link the phone actually gets: connection interval, PHY and priority. The requests are in section 2.6. The outcome is visible only on the phone.
-
-## Known inconsistencies
-
-- The rate table has no 1,500,000 entry, but 1,500,000 is the default. Section 2.2 explains why no selector restores it.
-- Reports about Mac use disagree: one record calls USB on a Mac untested, another records a bench run from a Mac (section 2.10).

@@ -67,7 +67,7 @@ classdef Fdt < handle
         function setRate(obj, framesPerSecond, cutoffHz)
             % SET_FILTER 0x1C: frames per second per plate (50..2000) and low-pass cutoff in Hz (0 = off,
             % otherwise below half the rate). Movetrics firmware 1.2.8.0 or later only; other firmware reads
-            % 0x1C differently, so this refuses. Leaves 100 ms before the next START, as the bench tools do.
+            % 0x1C differently, so this refuses. Leaves 100 ms before the next START, as the firmware team's test tools do.
             if nargin < 3, cutoffHz = 50; end
             if ~obj.atLeast([1 2 8 0])
                 error('movetrics:Fdt', 'setRate needs Movetrics firmware 1.2.8.0 or later; this FDT reports "%s".', obj.firmware);
@@ -98,7 +98,7 @@ classdef Fdt < handle
             % SET_SYNC_MODE 0x28 to 00/00, payload of six bytes: mode (u8), pulse period ms (u16 LE), pulse width ms
             % (u8), debounce in 0.1 ms units (u8), arm timeout in minutes (u8). A 0 in any field means the firmware
             % default, so the optional fields default to 0. mode is the sum of bits: see movetrics.syncModes.
-            % DRAFT: needs firmware with sync modes (1.2.8.24 and later). Errors: NACK 7 (no sync modes on this
+            % needs firmware with sync modes (1.2.8.24 and later). Errors: NACK 7 (no sync modes on this
             % firmware), NACK 3 (bad parameters, for example MASTER_OUT with PULSE_TRAIN), NACK 8 (stream running or
             % armed). Stop the stream first.
             if nargin < 3, pulsePeriodMs = 0; end

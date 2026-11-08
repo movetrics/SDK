@@ -54,10 +54,10 @@ Other parts of the system, such as the controller's internal pad bus, the pad an
 Every statement says where it comes from:
 
 - **code**: read in the firmware source;
-- **measured**: seen on a device, in a capture or on a bench;
+- **measured**: seen on a device, in a capture or in the lab;
 - **vector**: covered by the test vectors in [../vectors/](../vectors/);
 - **simulated**: produced by a host test or by the simulator, not by a device.
 
-Anything without a source is marked unverified. The specification describes controller firmware 1.2.8.0, which was checked by reading its code and by simulation tests. It has not been run on hardware. Conformance results are in [../CONFORMANCE.md](../CONFORMANCE.md). Every row there was run on simulated and recorded bytes, and none against a real controller.
+A statement with none of these sources says it has not been measured yet. The specification describes controller firmware 1.2.8.0, which was checked by reading its code and by simulation tests. It has not been run on hardware. Conformance results are in [../CONFORMANCE.md](../CONFORMANCE.md). Every row there was run on simulated and recorded bytes, and none against a real controller.
 
 Do not send commands marked "do not send" in [04-host-commands.md](04-host-commands.md). They erase flash, reset the controller or start a firmware update.

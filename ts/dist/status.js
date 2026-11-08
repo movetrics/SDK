@@ -16,7 +16,7 @@
 // The 85-byte class is the same record without batterySOC: its CRC is at 81-82.
 //
 // A GET_STATUS reply is one general record (address 0), then one record for each detected
-// platform (addresses 1 and 2 up to FDT 1.2.8.23; 1 to 4 on the four-platform firmware, draft
+// platform (addresses 1 and 2 up to FDT 1.2.8.23; 1 to 4 on the four-platform firmware,
 // 1.2.8.24 to 1.2.8.27, docs/06-status-health-versions.md section 2.1), in order, so it is
 // 85 or 86 bytes times 1 to 5. The
 // controller sends no record count. The client reads until the line goes quiet

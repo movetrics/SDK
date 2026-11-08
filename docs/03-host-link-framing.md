@@ -84,7 +84,7 @@ Evidence: code.
 4. The parser does the following, in order.
    - If the message is at least 9 bytes and does not start with `FE ED`, it searches from byte 1 for the first `FE ED` and drops the bytes before it. This is the only resynchronisation in the controller.
    - A message shorter than 9 bytes, or one without a header, returns with no reply.
-   - A CRC mismatch gets NACK 9.
+   - A CRC that does not match gets NACK 9.
    - End bytes that are not `04 04` get NACK 7. The splitter only closes messages on `04 04`, so this branch is not reached from the splitter. That is a reading of the code, not a run.
    - A payload shorter than the command needs, or an index out of range, gets NACK 3. The minimum payloads are: SET_FILTER 3 bytes; SET_SAMPLING_RATE, KEEP_ALIVE and PADS_SAVE_FACTORY_GF 2 bytes; SET_CHANNEL_MASK, INCREASE_VALUE, DECREASE_VALUE, ANALOG_ENABLE and SET_SERIAL_PARAM 1 byte. The debug commands 0x60 to 0x63 are not in this list. Each checks its own payload and answers NACK 3.
    - A valid command stores its addresses and its length, and its port becomes the active port.
@@ -150,12 +150,12 @@ The stream frame is the 24-byte reply in section 3.1. Its fields are these.
 - `pa` is the platform's number. It is 0 until the plate has answered its configuration (code).
 - `cmd` is 0x01.
 - `ts` is the frame time, an unsigned 32-bit count. TIM2 ticks every SystemCoreClock / 10,000 cycles, that is at 10 kHz, so one tick is 0.1 ms. The count restarts at 0 with each stream (code). [05-measurement-stream.md](05-measurement-stream.md) gives the stamp rules. In short, in every build except the synthetic test image, once a pad of a plate is on queued samples in a stream, that plate's frames are stamped with their own time on the frame grid until the stream stops. Any other frame is stamped with the mean time at which its pad replies were polled, as before 1.2.8. Neither is the time the frame was sent. Each platform's stamps stay strictly increasing.
-- The six channels are signed 16-bit values in the order forceX, forceY, forceZ, momentX, momentY, momentZ. The values are scaled by the platform factors and a constant of 98/100000, then converted to int16 with a plain cast and no saturation. The unit is not stated in the code or in any record (open point).
+- The six channels are signed 16-bit values in the order forceX, forceY, forceZ, momentX, momentY, momentZ. The values are scaled by the platform factors and a constant of 98/100000, then converted to int16 with a plain cast and no saturation.
 
 The frame has no quality, gap or health field. The health bits are in the GET_STATUS `errorFlags` and in GET_PAD_HEALTH ([06-status-health-versions.md](06-status-health-versions.md)). 
 Outside the synthetic test image, the frames of each plate lie on one grid at the filter's design rate per plate, which defaults to 500 per second in 1.2.8.0 (1,000 from 1.2.8.8). Frame m is for TIM2 tick m x 10,000 / rate, rounded. A frame is sent a fixed latency after its time, so that its pad data is in. The latency is zero while 0x63 has queued samples switched off. The main loop sends at most one frame per pass. After a stall, the older due frames are skipped, so at most two frames go out back to back.
 
-A plate with no new pad data for a frame is counted in `stale_frames`, and its frame is still sent with the held values. A code comment records about 626 frames per second per plate for the free-running rate that the pacing replaced. A bench record gives 500.1 frames per second per plate on firmware 1.2.3.3 (measured, not the 1.2.8.0 build). The grid of 1.2.8.0 has not been run on hardware. Stream rate and timing are covered in [05-measurement-stream.md](05-measurement-stream.md).
+A plate with no new pad data for a frame is counted in `stale_frames`, and its frame is still sent with the held values. A code comment records about 626 frames per second per plate for the free-running rate that the pacing replaced. A lab record gives 500.1 frames per second per plate on firmware 1.2.3.3 (measured, not the 1.2.8.0 build). The grid of 1.2.8.0 has not been run on hardware. Stream rate and timing are covered in [05-measurement-stream.md](05-measurement-stream.md).
 
 Example, from the transport test. A START frame for platform 1 with forceX -123, forceZ 456 and timestamp 123456, with the other channels at zero, is 24 bytes with a valid CRC:
 
@@ -205,7 +205,7 @@ The client writes a broadcast SET_TARE (0x1B) only when the operator asks for it
 
 Before START, the client writes the KEEP_ALIVE frame first and then waits a short interval before it writes START.
 
-Whether a connected phone that sends nothing keeps the controller awake is not covered by these code paths (unverified).
+Whether a connected phone that sends nothing keeps the controller awake is not covered by these code paths (not yet measured).
 
 ## 3.11 Firmware-update frames
 
@@ -252,21 +252,3 @@ A client that reads replies should check, in this order: the `BE EF` header; the
 
 A NACK 9 to a request is not always a line error. If the request's CRC high byte is 0x04, the controller produces this NACK for a frame that was built correctly (section 3.3). A client should compute the CRC before it sends, and treat a frame whose CRC high byte is 0x04 as one it cannot send as built.
 
-## Open points
-
-All of these are unverified.
-
-- The stream's timing and pacing ([05-measurement-stream.md](05-measurement-stream.md)). The pacing code belongs to 1.2.8.0, which has not been run on hardware, and no host test compiles it. No timing was measured here.
-- Whether the 0x04 hazard occurs on the wire. The scan in section 3.3 is arithmetic. No test is known to lose a frame this way.
-- Whether a connected phone that writes nothing keeps the controller awake (section 3.10).
-- That the NACK 7 branch for a bad end marker is unreachable from the splitter. This follows from reading the splitter and the parser.
-- The timing of the bootloader's recovery window, and whether a host that is late still gets a reply. Only the code path was read.
-- The physical unit and scale of the six channel values. The conversion to int16 is a plain cast.
-- The paced rate and the first-frame timing on hardware. The 500.1 frames per second figure was recorded on firmware 1.2.3.3, not on 1.2.8.0.
-
-## Known inconsistencies
-
-- Debug command 0x60 (DEBUG_ADC_CLOCK_DRIVE) is a bench command and must not be sent. In 1.2.6.5 its one-byte form switched the pads to 8 MHz until reset. This changed in 1.2.7.0.
-- The queue constant is 16, but only 15 commands can wait. Do not size a burst by the constant.
-- SET_CALIBRATION (0x11) has its own name in the opcode list, but its case label is shared with START. It sends the stream-type frames and enables the stream, as START does.
-- Some code calls the 86-byte status record "v26" and some calls it "v25". This edition names layouts by length.

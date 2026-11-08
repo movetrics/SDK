@@ -86,7 +86,7 @@ class SleepTests(unittest.TestCase):
         self.assertTrue(fdt.asleep)
         fdt.feed(host(0x01, 0xFF, 0xFF), 301.0)
         frames, _ = run(fdt, 305.5, step=0.01, start=301.0)
-        self.assertEqual(frames, [])  # pads still powering up (4.6 s, measured on a bench FDT)
+        self.assertEqual(frames, [])  # pads still powering up (4.6 s, measured on a real FDT)
         frames, _ = run(fdt, 306.0, step=0.01, start=305.6)
         self.assertTrue(frames)
 

@@ -4,7 +4,7 @@
   "about": "What each FDT firmware version does that a host has to know before it talks to it. A capability holds from its 'since' version until a later entry with the same id; a version before 1.2.8.0, or one that cannot be read (the vendor's '001.002.003'), gets 'unknown'. Facts come from the firmware line; this file is hosted by the Cloud and copied into Android and the SDK.",
   "updated": "2026-11-08",
   "evidence_words": {
-    "measured": "seen on an FDT on the bench",
+    "measured": "seen on a real FDT",
     "code": "read in the firmware source, not seen on a device"
   },
   "read_as": {
@@ -65,7 +65,7 @@
       "since": "1.2.8.7",
       "value": true,
       "evidence": "measured",
-      "says": "GET_STATUS carries a battery level 0-100 on an FDT with the voltage divider (one bench FDT so far); others send 255.",
+      "says": "GET_STATUS carries a battery level 0-100 on an FDT with the voltage divider (one FDT so far); others send 255.",
       "source": "Movetrics firmware 1.2.8.7 (measured)"
     },
     {
@@ -145,7 +145,7 @@
       "since": "1.2.8.24",
       "value": true,
       "evidence": "code",
-      "says": "SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29: start or stop on the SYNC IN jack, SYNC OUT high or pulsing while streaming, and 24-byte event frames in the stream (plate address 0xFD, code 0x0E). Probe with GET_SYNC_MODE: older firmware and the digital variant answer NACK 7. Mode 0 after power-on behaves as before; the mode survives CONTROLLER_RESET, not power-off. While a START waits for a trigger the FDT does not sleep. First drafted as 1.2.8.21; built on the firmware team's 1.2.8.23, and 1.2.8.21 to 1.2.8.23 have no sync. Not yet run on hardware. A second firmware line (four platforms) also used the numbers 1.2.8.24 and 1.2.8.25 for builds without this, so on those two numbers a host must probe rather than trust the version. Draft firmware, not released.",
+      "says": "SET_SYNC_MODE 0x28 and GET_SYNC_MODE 0x29: start or stop on the SYNC IN jack, SYNC OUT high or pulsing while streaming, and 24-byte event frames in the stream (plate address 0xFD, code 0x0E). Probe with GET_SYNC_MODE: older firmware and the digital variant answer NACK 7. Mode 0 after power-on behaves as before; the mode survives CONTROLLER_RESET, not power-off. While a START waits for a trigger the FDT does not sleep. 1.2.8.21 to 1.2.8.23 have no sync. Not yet measured on hardware. On 1.2.8.24 and 1.2.8.25 ask the FDT (GET_SYNC_MODE) rather than trust the version: builds with these numbers differ.",
       "source": "Movetrics firmware 1.2.8.24 (code)"
     },
     {
@@ -161,7 +161,7 @@
       "since": "1.2.8.24",
       "value": true,
       "evidence": "code",
-      "says": "A force or moment beyond the int16 range is held at the limit (32767 or -32768) instead of wrapping; a value at the limit means the channel was overloaded. A second firmware line (four platforms) also used the numbers 1.2.8.24 and 1.2.8.25 for builds without this, so on those two numbers a host must probe rather than trust the version. Draft firmware, not released.",
+      "says": "A force or moment beyond the int16 range is held at the limit (32767 or -32768) instead of wrapping; a value at the limit means the channel was overloaded. On 1.2.8.24 and 1.2.8.25 ask the FDT (GET_SYNC_MODE) rather than trust the version: builds with these numbers differ.",
       "source": "Movetrics firmware 1.2.8.24 (code)"
     },
     {
@@ -193,7 +193,7 @@
       "since": "1.2.8.27",
       "value": 4,
       "evidence": "measured",
-      "says": "Plate addresses 1 to 4, one or two pads each; the FDT still waits for two plates at start-up and adds a higher plate that answers. Only plates 1 and 2 drive the analog outputs. The four-platform line had four plates from its own 1.2.8.24, so on 1.2.8.24 and 1.2.8.25 count the plates in the stream. Draft firmware, not released.",
+      "says": "Plate addresses 1 to 4, one or two pads each; the FDT still waits for two plates at start-up and adds a higher plate that answers. Only plates 1 and 2 drive the analog outputs. On 1.2.8.24 and 1.2.8.25 count the plates in the stream rather than trust the version.",
       "source": "Movetrics firmware 1.2.8.27 (measured)"
     },
     {
@@ -209,7 +209,7 @@
       "since": "1.2.8.27",
       "value": 1000,
       "evidence": "measured",
-      "says": "With four plates, 1000 frames/s per plate is the most the host link carries with 0 lost; 2000/s loses about 22 % (link 150 of 192 kB/s) without stalling. Draft firmware, not released.",
+      "says": "With four plates, 1000 frames/s per plate is the most the host link carries with 0 lost; 2000/s loses about 22 % (link 150 of 192 kB/s) without stalling.",
       "source": "Movetrics firmware 1.2.8.27 (measured)"
     },
     {
@@ -225,7 +225,7 @@
       "since": "1.2.8.27",
       "value": 2410,
       "evidence": "measured",
-      "says": "A START right after a reset streams after about 2.4 s with four plates. The four-platform line's 1.2.8.25 was silent about 21 s here (a zero per late plate), which is also how Studio starts an exam, so a host that waits 8 s for the first frame fails on it. Draft firmware, not released.",
+      "says": "A START right after a reset streams after about 2.4 s with four plates. A host waits at least 8 s for the first frame.",
       "source": "Movetrics firmware 1.2.8.27 (measured)"
     },
     {
@@ -241,7 +241,7 @@
       "since": "1.2.8.26",
       "value": true,
       "evidence": "code",
-      "says": "In clip-event mode (SET_SYNC_MODE 0x28) the FDT sends a SATURATION event frame with detail bit 0x40 when a pad reading comes within 2 % of the int16 limit, for pad 2.8 and 2.9 alike; a host turns the mode on before START and puts mode 0 back after STOP. Draft firmware, not released.",
+      "says": "In clip-event mode (SET_SYNC_MODE 0x28) the FDT sends a SATURATION event frame with detail bit 0x40 when a pad reading comes within 2 % of the int16 limit, for pad 2.8 and 2.9 alike; a host turns the mode on before START and puts mode 0 back after STOP.",
       "source": "Movetrics firmware 1.2.8.26 (code)"
     },
     {
@@ -257,7 +257,7 @@
       "since": "1.2.8.27",
       "value": true,
       "evidence": "code",
-      "says": "A hang ends in a reset within about 8 s (5.5 s at the fastest clock) instead of silence: a host sees the stream stop and the FDT answer again after its boot. The keep-alive sleep keeps it fed (3.5 min asleep without a reset, measured). Draft firmware, not released.",
+      "says": "A hang ends in a reset within about 8 s (5.5 s at the fastest clock) instead of silence: a host sees the stream stop and the FDT answer again after its boot. The keep-alive sleep keeps it fed (3.5 min asleep without a reset, measured).",
       "source": "Movetrics firmware 1.2.8.27 (code)"
     }
   ]

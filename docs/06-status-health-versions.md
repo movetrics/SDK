@@ -16,7 +16,7 @@ The byte layouts are the C structs of the firmware. The safety class of the four
 
 The code builds controller application 1.2.8.0, controller bootloader 1.0.0.3 and pad application 2.8.0.0, whose channel-7 version value is 11. The four reply layouts are the same as in 1.2.6.5. What changed since then is how the pad bookkeeping behind errorFlags and GET_PAD_HEALTH is filled while a pad answers with queued samples (Sections 7.6 and 8.4), and the version texts (Section 9).
 
-Controller 1.2.8.0 with pad 2.8.0.0 has not been run on hardware. The behaviour this chapter gives for those versions comes from the code and from host tests that simulate the pads. It is unverified on hardware (open point 16).
+Controller 1.2.8.0 with pad 2.8.0.0 has not been run on hardware. The behaviour this chapter gives for those versions comes from the code and from host tests that simulate the pads. It is not yet measured on hardware.
 
 ## 2. Requests and record order
 
@@ -37,17 +37,17 @@ Each record is a separate write. A record that finds the TX ring full is dropped
 
 **Reply length.** A GET_STATUS reply is k records, with k = 1 + N, where N is the number of addresses 1 and 2 whose type is not PLATFORM_NONE. So k is 1, 2 or 3, and all records of one reply have the same length.
 
-The controller form has 86 bytes per record, so the reply is 86 x k bytes. The legacy form has 85 bytes per record, so its reply is 85 x k bytes. The legacy k = 1 case has a capture and two vectors. The legacy k = 2 and k = 3 cases are unverified (open point 15). For k from 1 to 3 the two forms never give the same total: 85, 170 and 255 against 86, 172 and 258. The total length therefore gives both the form and k.
+The controller form has 86 bytes per record, so the reply is 86 x k bytes. The legacy form has 85 bytes per record, so its reply is 85 x k bytes. The legacy k = 1 case has a capture and two vectors. The legacy k = 2 and k = 3 cases are not yet measured. For k from 1 to 3 the two forms never give the same total: 85, 170 and 255 against 86, 172 and 258. The total length therefore gives both the form and k.
 
 **Table 2.2 GET_STATUS reply length by the number of detected plates**
 
 | Detected plates N | Records k = 1 + N | Controller form, 86 x k | Legacy form, 85 x k |
 |---|---|---|---|
 | 0 | 1: address 0 | 86 | 85, one capture and two vectors |
-| 1 | 2: address 0, then the one detected address | 172 | 170, unverified (open point 15) |
-| 2 | 3: addresses 0, 1 and 2 | 258 | 255, unverified (open point 15) |
+| 1 | 2: address 0, then the one detected address | 172 | 170, not yet measured |
+| 2 | 3: addresses 0, 1 and 2 | 258 | 255, not yet measured |
 
-The controller's own transport test covers N = 1 only. No test covers N = 2 for firmware. A phone-client bench log summarises one device reply of 258 bytes as three 86-byte records, each with a valid CRC, and gives no bytes. The log labels the device `1.1-UART4-b3`. No capture holds the bytes of a multi-record reply. The vectors hold a derived three-record reply of 258 bytes.
+The controller's own transport test covers N = 1 only. No test covers N = 2 for firmware. A phone-client test log summarises one device reply of 258 bytes as three 86-byte records, each with a valid CRC, and gives no bytes. The log labels the device `1.1-UART4-b3`. No capture holds the bytes of a multi-record reply. The vectors hold a derived three-record reply of 258 bytes.
 
 GET_STATUS reports the plates that are detected when the request arrives. A plate becomes detected when one of its pads sends a config reply, a frame reply or a GET_SAMPLES answer. The GET_STATUS handler only builds the reply, so it neither probes the pad bus nor waits for a plate.
 
@@ -55,7 +55,7 @@ Only a config query (0x1A), START and SET_CALIBRATION (0x11, which shares the ST
 
 A status reply sent soon after a restart can therefore hold fewer records than there are plates, and a later reply can hold more. [04-host-commands.md](04-host-commands.md) Section 3.8 describes the wait in 0x1A and START.
 
-**2.1 Four platforms (draft firmware).** The four-platform firmware (the four-platform line's 1.2.8.24 and 1.2.8.25, and 1.2.8.27; [05-measurement-stream.md](05-measurement-stream.md) Section 14) has PLATFORMS_MAX 4 + 1, and the GET_STATUS builder loops over addresses 1 to 4. So N is 0 to 4 and k is 1 to 5: a four-plate FDT answers with 430 bytes in the controller form (86 x 5). The totals still never collide: 340 and 425 against 344 and 430 for k = 4 and 5. A platform that is not detected has no record, so plates 1, 2 and 4 give k = 4 with addresses 0, 1, 2, 4. On that firmware GET_PAD_HEALTH (0x27) keeps its 120-byte layout for platforms 1 and 2 and answers a request addressed to platform 3 or 4 with platforms 3 and 4 in the same layout, and GET_CURRENT_CONFIG keeps its 16 type bytes, byte 0 for platform 1. The Python and TypeScript clients accept up to five records from SDK 0.3.1.
+**2.1 Four platforms.** Firmware with four plates ([05-measurement-stream.md](05-measurement-stream.md) Section 14) has PLATFORMS_MAX 4 + 1, and the GET_STATUS builder loops over addresses 1 to 4. So N is 0 to 4 and k is 1 to 5: a four-plate FDT answers with 430 bytes in the controller form (86 x 5). The totals still never collide: 340 and 425 against 344 and 430 for k = 4 and 5. A platform that is not detected has no record, so plates 1, 2 and 4 give k = 4 with addresses 0, 1, 2, 4. On that firmware GET_PAD_HEALTH (0x27) keeps its 120-byte layout for platforms 1 and 2 and answers a request addressed to platform 3 or 4 with platforms 3 and 4 in the same layout, and GET_CURRENT_CONFIG keeps its 16 type bytes, byte 0 for platform 1. The Python and TypeScript clients accept up to five records from SDK 0.3.1.
 
 ## 3. The status record (86 bytes)
 
@@ -163,7 +163,7 @@ Layout C is not produced by any firmware or capture that the SDK knows. The cont
 | Phone client, pad health reader | errorFlags read at bytes 4 to 7, when byte 2 is 1 or 2 | Read in the same way | Ignored |
 | One host application (static analysis) | Waits for three more bytes | Not expected | Expected |
 
-A phone-client unit test builds both 86-byte and 85-byte records and checks that the stream decoder returns both replies between stream frames. That test was not run for this edition (open point 6).
+A phone-client unit test builds both 86-byte and 85-byte records and checks that the stream decoder returns both replies between stream frames. That test was not run for this edition.
 
 ### 6.3 The hold on an 85-byte record in the phone client's decoders
 
@@ -175,7 +175,7 @@ On a running stream the next byte starts the next stream frame, so the hold is s
 
 The three layouts place the CRC at different offsets: 81-82 in B, 82-83 in A and 84-85 in C (Table 6.1). Each decoder above tests the candidate length whose end marker and CRC are in place.
 
-The protocol notes state that a CRC does not select between two layouts that share a header and command when one of them has a CRC-valid prefix. They give a synthetic 88-byte example. No capture contains that case (open point 5).
+The protocol notes state that a CRC does not select between two layouts that share a header and command when one of them has a CRC-valid prefix. They give a synthetic 88-byte example. No capture contains that case.
 
 ### 6.5 The rule the SDK applies
 
@@ -185,7 +185,7 @@ Each record of the reply is checked on its own for header, command, end marker a
 
 The CRC is at bytes 81-82 in the 85-byte form and at bytes 82-83 in the 86-byte form. The earlier Python reference decoder rejects the 86-byte form (Table 6.2), and the phone client's decoders accept it.
 
-The 85 x 1 form has a capture and two vectors. The 85 x 2 and 85 x 3 forms are accepted under this rule and are unverified (open point 15).
+The 85 x 1 form has a capture and two vectors. The 85 x 2 and 85 x 3 forms are accepted under this rule and are not yet measured.
 
 ## 7. GET_PAD_HEALTH (0x27)
 
@@ -246,7 +246,7 @@ A pad outside its plate's type returns 0. The header describes 0x20 as an ADC cl
 
 ### 7.4 Where the counters are incremented
 
-Evidence: code. None of this was observed on hardware (open point 7).
+Evidence: code. None of this was observed on hardware.
 
 `cold_boots` and `soft_resets` are the counters that a host most often needs to interpret, so their sources are listed here.
 
@@ -257,11 +257,11 @@ The header comment for `cold_boots` says the count covers restarts "the pad did 
 
 ### 7.5 Tests
 
-No test is known to call the GET_PAD_HEALTH builder. The only size check is the static assert (open point 9).
+No test is known to call the GET_PAD_HEALTH builder. The only size check is the static assert.
 
 ### 7.6 Counters while a pad answers with queued samples
 
-Evidence: code and simulation. Not run on hardware (open point 16).
+Evidence: code and simulation. Not run on hardware.
 
 While a stream runs, the controller asks a pad for its queued conversions with GET_SAMPLES instead of a single frame when the pad reports version 11 or higher, is running, has no reset pending and has a `missed_in_row` count below three. The pad-sample debug command 0x63 switches this off and on in RAM ([04-host-commands.md](04-host-commands.md) Table 3.5). The fields of an entry then count as follows.
 
@@ -274,7 +274,7 @@ While a stream runs, the controller asks a pad for its queued conversions with G
 - rs485_skipped_bytes: the receive scan decodes a GET_SAMPLES answer by its own header, 0xBEE5, so its bytes are not counted as skipped.
 - The queue and the resampler keep further counters for each pad: conversions received, lost and repeated, time-base restarts, and frame values made from all, some or none of the conversions they need. No reply in this chapter carries them.
 
-Host tests check the poll count of a GET_SAMPLES request, the reply and changed counts, `pad_fw` 11 from the answer's health word, and the rate fault in `clock_fault`. No test builds a GET_PAD_HEALTH or GET_STATUS reply from these counters (open point 9).
+Host tests check the poll count of a GET_SAMPLES request, the reply and changed counts, `pad_fw` 11 from the answer's health word, and the rate fault in `clock_fault`. No test builds a GET_PAD_HEALTH or GET_STATUS reply from these counters.
 
 ## 8. The pad health word and pad_fw
 
@@ -290,7 +290,7 @@ The pad builds channel 7 as a 16-bit word with these fields:
 - bits 9 and 8: ADC re-initialisations, two bits;
 - bits 7 to 0: dropped ADC frames, impulses and held bursts, as a wrapping count.
 
-The version value of this firmware is 11. The pad application image header also carries the string "2.8.0.0". The 4-bit channel-7 value is a separate field. Pad application 2.8.0.0 raised it from 10 to 11. None of the replies in this chapter (0x22, 0x23 or 0x27) carries the string (open point 14).
+The version value of this firmware is 11. The pad application image header also carries the string "2.8.0.0". The 4-bit channel-7 value is a separate field. Pad application 2.8.0.0 raised it from 10 to 11. None of the replies in this chapter (0x22, 0x23 or 0x27) carries the string.
 
 **Table 8.1 Version values named in the pad firmware header**
 
@@ -305,7 +305,7 @@ The version value of this firmware is 11. The pad application image header also 
 | 9 | v2.6 |
 | 10 | v2.7 |
 | 11 | v2.8 (GET_SAMPLES) |
-| 3, 12 to 14 | Not named (open point 8) |
+| 3, 12 to 14 | Not named |
 
 ### 8.2 What the host keeps
 
@@ -332,7 +332,7 @@ Evidence: code and simulation. Not run on hardware.
 - `pad_fw` also selects how the pad is polled. A pad with `pad_fw` 11 or higher is asked for queued samples while it runs normally, so byte 23 of a GET_PAD_HEALTH entry tells a host which pads can use them (Section 7.6). A pad that leaves four requests in a row without an answer is asked with GET_FRAME again, because a miss is counted only when the next request is sent.
 - While a pad answers with queued samples, the controller measures the period of its conversions over windows of 1 s. From the third window on, it sets `rate_fault` when the measured period differs from the nominal one by more than 300 ppm, and clears it otherwise. The nominal period is 2048 ADC clocks, 512 us at the default ADC clock of 4 MHz.
 - Each answer sets `clock_fault` from its health word and then also when `rate_fault` is set. The flag reaches errorFlags bits 16 and 17 and GET_PAD_HEALTH flag 0x20 in the usual way (Table 4.1, Table 7.3). A frame reply from the same pad sets it from the health word alone again. The header comments still describe the flag as a fault that the pad's ADC detects.
-- Simulated pads from 2,000 ppm fast to 500 ppm slow set `rate_fault` exactly when the offset is above 300 ppm. This has not been run on hardware (open point 16).
+- Simulated pads from 2,000 ppm fast to 500 ppm slow set `rate_fault` exactly when the offset is above 300 ppm. This has not been run on hardware.
 
 ## 9. Version reply (GET_FW_VERSION, 0x23)
 
@@ -350,7 +350,7 @@ Evidence: code and simulation. Not run on hardware.
 | 34-35 | crc | CRC over bytes 2 to 33 | vector |
 | 36-37 | eot1, eot2 | `04 04` | vector |
 
-The release build sends "1.2.8.0", and the host test checks that text on the UART4 path. The synthetic build sends "1.2.8.0-SYN". No capture of a 1.2.8.0 reply exists, because that image has not been run on hardware (open point 16). The longest text the 15-byte field can hold is 14 characters, because the last byte is forced to NUL.
+The release build sends "1.2.8.0", and the host test checks that text on the UART4 path. The synthetic build sends "1.2.8.0-SYN". No capture of a 1.2.8.0 reply exists, because that image has not been run on hardware. The longest text the 15-byte field can hold is 14 characters, because the last byte is forced to NUL.
 
 ### 9.2 Version constants
 
@@ -401,7 +401,7 @@ A client should find a 38-byte reply that starts with `BE EF 00 23`, check its C
 
 The serial ID is built from the STM32 unique device ID. The controller reads 12 bytes at 0x1FFF7A10, encodes them as base64, keeps the first 16 characters, and then writes "000" and the NUL. The 16 characters of a 12-byte input need no base64 padding. A 2026-09-25 capture returns an ID of this form, ending in `000` (measured).
 
-No test is known to check the length or the content of the 0x24 reply (open point 11).
+No test is known to check the length or the content of the 0x24 reply.
 
 ## 11. The identification sequence of 2026-09-25
 
@@ -420,7 +420,7 @@ The capture holds six identification queries. The six replies total 194 bytes.
 | 5 | GET_FW_VERSION | 0x23 | 38 | CRC and end marker valid. Text "001.002.003" and "002.005.001" | Exposed (implemented) |
 | 6 | GET_SERIAL_NUMBER | 0x24 | 28 | CRC and end marker valid | Not exposed |
 
-The version text of reply 5 is the text that an earlier reference firmware hard-codes. The 1.2.8.0 firmware cannot produce it, because its stm32FW field is its own version text. The status in reply 4 carries the placeholders "123" (serial parameters and SSID) and 1.2.3.4 (IP, mask and gateway), which 1.2.8.0 no longer sends. Its calibration factors at bytes 75 to 80 are zero. The image that produced this capture is not identified (open point 2).
+The version text of reply 5 is the text that an earlier reference firmware hard-codes. The 1.2.8.0 firmware cannot produce it, because its stm32FW field is its own version text. The status in reply 4 carries the placeholders "123" (serial parameters and SSID) and 1.2.3.4 (IP, mask and gateway), which 1.2.8.0 no longer sends. Its calibration factors at bytes 75 to 80 are zero. The image that produced this capture is not identified.
 
 The SDK exposes 0x22 and 0x23 from this sequence. The 0x27 reply is specified in Section 7 but is not in this sequence and has no vector, so the SDK does not expose it.
 
@@ -431,36 +431,3 @@ The SDK exposes 0x22 and 0x23 from this sequence. The 0x27 reply is specified in
 - The earlier Python reference decoders were run over the six cases in `status.json` (see [15-conformance-and-testing.md](15-conformance-and-testing.md)). The stream parser returned one status message for each 85-byte case and none for the 86-byte cases or the three-record case, with one invalid candidate for each 86-byte record. The frame decoder returned `status` for the 85-byte cases and `unknown` for the 86-byte cases. On each 86-byte record, the frame check passes at 86 bytes and fails on the first 85.
 - The reply layouts of 1.2.8.0 were compared with those of 1.2.6.5, and none of the files that build them changed. The pad bookkeeping, the stale-frame count, the pad version and the version constants were read again for 1.2.8.0 (Sections 7.6, 8 and 9).
 
-## 13. Open points
-
-All of these are unverified on hardware unless stated.
-
-1. No capture of controller 1.2.8.0 exists, and that image has not been run on hardware (point 16). The 86-byte layout, the record count, the errorFlags bits and the 120-byte health reply are verified by code and by static asserts only. `status.json` covers the 86-byte form at k = 1 and k = 3, and no vector or capture has k = 2 (172 bytes).
-2. The image that produced the 2026-09-25 capture is not identified. Its status is 85 bytes, and its version text is "001.002.003" and "002.005.001". Neither identifies 1.2.8.0.
-3. The per-build history of the status layout and the version label is not settled. A phone-client bench log labels a device `1.1-UART4-b3` and summarises three 86-byte records. An earlier report says that build sends 85 bytes. The two disagree.
-4. Layout C (88 bytes) is in protocol notes and in static analysis of one host application. No firmware or capture produces it.
-5. The CRC-valid prefix case in the protocol notes is synthetic. The rate at which an 85-byte record and an 86-byte candidate are confused in a real stream was not measured.
-6. The phone-client unit test of the 85-byte hold was not run for this edition.
-7. The increments of `cold_boots` and `soft_resets` (Section 7.4) are code paths only. Their values after a real power cycle, a keep-alive sleep or a pad restart were not observed.
-8. Pad version values 3 and 12 to 14 are not named in the pad header. The controller keeps any value from 2 to 14. No known pad source sets a value other than 11.
-9. No test sends or checks GET_PAD_HEALTH. Reference decoders find a 0x27 reply only by a generic CRC search, and one phone-client frame decoder discards it. No run covers any of these paths.
-10. Two-plate GET_STATUS replies (258 bytes, Table 2.2) are not covered by a firmware test.
-11. No test checks the length or the content of the 0x24 reply.
-12. The range 0 to 100 for a measured battery value is found only in a struct comment and in a phone client. The firmware never produces such a value.
-13. The phone client's pad health view was not observed for this edition.
-14. The pad image header string "2.8.0.0" is said to be read by the pad bootloader and the controller. This was not traced, and no controller source names the constant.
-15. The legacy 85-byte form with k = 2 or 3 (170 and 255 bytes). No known firmware sends more than one 85-byte record in a reply. The earlier reference firmware sends one 85-byte record per request. No vector and no capture has these lengths.
-16. Controller application 1.2.8.0 and pad application 2.8.0.0 have not been run on hardware. The bookkeeping for a pad on queued samples (Section 7.6), `pad_fw` 11 and the rate check that sets CLOCK_FAULT (Section 8.4), the stale-frame count from the resampler, and the version text "1.2.8.0" are known from the code and from host tests only. No capture holds a GET_STATUS, GET_PAD_HEALTH or GET_FW_VERSION reply of that image.
-
-## 14. Known inconsistencies
-
-- An older code comment above the errorFlags loop lists three groups: bits 0-1, 4-5 and 8-9. The code sets five groups, which adds RESTARTED at bits 12-13 and CLOCK_FAULT at bits 16-17. Table 4.1 follows the code.
-- Layout names. Some code calls the 86-byte record "v26" and some calls it "v25". A phone client names the 85-byte length `STATUS_LENGTH_V24` and the 86-byte length `STATUS_LENGTH_V25`. This chapter names layouts by length and does not use "v25" or "v26".
-- The bootloader comment says "BOOT 1.0.0.1". The literal it sends is "BOOT-1.0.0.3".
-- The field comment says `cold_boots` counts "restarts the pad did on its own (power loss, replug)". The code also counts restarts the controller causes: the keep-alive sleep wake, the 0x62 power-off and the pad firmware update power-on (Section 7.4).
-- The header comment describes the 0x20 flag as an ADC clock fault for pad v2.3 and later. The pad source calls bit 10 a signal fault, which is a clock fault in v2.3 to v2.5 and "clock fault or held bursts" in v2.7. Table 7.3 gives both meanings.
-- The struct comment gives batterySOC the values "0..100 %". The only assignment sets 255, which the code calls "not measured".
-- The comment on `pad_fw` says 0 means "before v2". The controller also sets 0 for every version value outside 2 to 14.
-- The release string reads "Movetrics Discovery 001.002.003 + UART4 + OTA 1.2.8.0". It is not used. The GET_FW_VERSION reply sends "1.2.8.0". An earlier reference firmware sends "001.002.003".
-- Comments on the GET_PAD_HEALTH counters describe GET_FRAME polling only. For a pad on queued samples, GET_SAMPLES requests count as polls, answers count as replies, `changed` adds the new conversions of each answer, and a frame of a plate whose pads are on queued samples is stale only when the resampler finds no conversion near its time for any of them. Table 7.2 and Section 7.6 follow the code.
-- The comments describe CLOCK_FAULT as a fault that the pad's ADC sees, for pad v2.3 and later. The controller also sets it when the conversion period it measures for a pad on queued samples is more than 300 ppm from nominal.

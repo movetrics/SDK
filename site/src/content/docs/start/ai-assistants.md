@@ -3,7 +3,7 @@ title: Ask Claude or ChatGPT
 description: Connect an AI assistant to your Movetrics Cloud workspace, read only.
 ---
 
-Movetrics Cloud has an MCP connector: an AI assistant can list your recordings and results, read raw samples and draft printable reports, and it cannot change anything.
+Movetrics Cloud has an MCP connector: an AI assistant can list your recordings and results, read raw samples and prepare printable reports, and it cannot change anything.
 
 1. In Claude (Settings → Connectors → Add custom connector) or ChatGPT (developer mode connectors), add `https://beta.movetrics.com/api/mcp`.
 2. Sign in with your Movetrics account when asked.

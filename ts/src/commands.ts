@@ -21,12 +21,12 @@ export const COMMANDS = {
   // uint16 LE at bytes 1-2 (the firmware, case CMD_SET_FILTER). Other firmware lines read 0x1C
   // differently, so FdtClient.setRate sends it only after GET_FW_VERSION names a Movetrics 1.2.8+ build.
   SET_FILTER: { code: 0x1c, name: 'SET_FILTER', safety: 'configuration' },
-  // DRAFT (28 Oct 2026): six payload bytes, mode (uint8), pulse period ms (uint16 LE), pulse width ms
+  // six payload bytes, mode (uint8), pulse period ms (uint16 LE), pulse width ms
   // (uint8), debounce in 0.1 ms (uint8), arm timeout in minutes (uint8). A 0 in any byte means the firmware
   // default. NACK 3: bad parameters (MASTER_OUT with PULSE_TRAIN); NACK 7: no sync modes; NACK 8: stream
-  // running or armed. The code is a proposal until the firmware release publishes it in docs/04 and vectors.
+  // running or armed.
   SET_SYNC_MODE: { code: 0x28, name: 'SET_SYNC_MODE', safety: 'configuration' },
-  // DRAFT: reads the sync mode state back. 26-byte reply; NACK 7 means no sync modes.
+  // reads the sync mode state back. 26-byte reply; NACK 7 means no sync modes.
   GET_SYNC_MODE: { code: 0x29, name: 'GET_SYNC_MODE', safety: 'read-only' },
 } as const satisfies Record<string, CommandInfo>;
 
@@ -132,10 +132,10 @@ export const NOT_IMPLEMENTED: readonly NotImplementedCommand[] = [
   { code: 0x53, name: 'PADS_SAVE_FACTORY_GF', reason: 'pad flash write without backup (doc 04 6.4); outside the reviewed set (vectors README, not covered 5)' },
   { code: 0x54, name: 'PADS_GET_CF', reason: 'not dispatched on the host side (NACK 7), doc 04 3.7' },
   { code: 0x55, name: 'PADS_SAVE_CF', reason: 'pad flash save; not dispatched on the host side (NACK 7), doc 04 3.7' },
-  { code: 0x60, name: 'DEBUG_ADC_CLOCK_DRIVE', reason: 'bench experiment that changes the pads ADC clock, doc 04 3.5' },
-  { code: 0x61, name: 'DEBUG_POLL_TIMING', reason: 'bench experiment, doc 04 3.5' },
+  { code: 0x60, name: 'DEBUG_ADC_CLOCK_DRIVE', reason: 'factory test that changes the pads ADC clock, doc 04 3.5' },
+  { code: 0x61, name: 'DEBUG_POLL_TIMING', reason: 'factory test, doc 04 3.5' },
   { code: 0x62, name: 'DEBUG_PADS_RESTART', reason: 'destructive: switches pad power off or resets the pads, doc 04 3.5' },
-  { code: 0x63, name: 'DEBUG_PAD_SAMPLES', reason: 'bench experiment that switches the pad polling between GET_FRAME and queued samples, RAM only, doc 04 3.5' },
+  { code: 0x63, name: 'DEBUG_PAD_SAMPLES', reason: 'factory test that switches the pad polling between GET_FRAME and queued samples, RAM only, doc 04 3.5' },
 ];
 
 // The codes in NOT_IMPLEMENTED. encodeHostFrame refuses every one of them.

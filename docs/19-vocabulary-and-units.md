@@ -2,7 +2,7 @@
 
 Every Movetrics client, file writer and API uses the names, units and frames below, so that a sample read live in Python, decoded in MATLAB, captured in Chrome, recorded on Android or downloaded from the Cloud is the same sample with the same numbers. The machine-readable form is [`contracts/vocabulary.v1.json`](../contracts/vocabulary.v1.json); the Python reference is `movetrics_fdt.vocabulary`.
 
-Status: **draft 1.0.0**, published 28 Oct 2026 for agreement with the Cloud and Android work. It becomes 1.0.0 when both agree; a later change bumps the version and keeps 1.x readable. Each fact is marked measured, code, owner or inferred, as in doc 18.
+Status: version **1.0.0-draft** (the identifier files carry), published 28 Oct 2026 and shared by the SDK, the Cloud and the Android app. It becomes 1.0.0 when all three agree; a later change bumps the version and keeps 1.x readable. Each fact is marked measured, code, owner or inferred, as in doc 18.
 
 ## 1. Names and units
 
@@ -31,7 +31,7 @@ Wide tables (CSV, spreadsheets, MATLAB tables) prefix per plate: `t, p1_fx, …,
 
     fx = +forceX   fy = −forceY   fz = +forceZ   mx = −momentX   my = +momentY   mz = +momentZ
 
-Why Studio's signs and not the wire's: every customer file in existence uses them, the CoP formula and the C3D geometry were measured against them, and the Cloud stores Studio uploads as they are. Converting the live stream once is cheaper than converting every file. Status: from Studio's configuration; the bench check (one known off-centre load recorded both as stream and as Studio export) is on the bench queue.
+Why Studio's signs and not the wire's: every customer file in existence uses them, the CoP formula and the C3D geometry were measured against them, and the Cloud stores Studio uploads as they are. Converting the live stream once is cheaper than converting every file. Status: from Studio's configuration; a check with one known off-centre load recorded both as stream and as Studio export is planned.
 
 ## 3. Centre of pressure and moments
 
@@ -60,7 +60,7 @@ One list per recording, ordered by `t`, each with `t`, `stamp`, `offset_us`, `ty
 | 100 | `gap` | host: a hole was found (also in `gaps`) | |
 | 101 | `note` | host: a text note (annotation, LabRecorder marker) | |
 
-Types 1 to 10 come from FDT 1.2.8.24's event frame (plate address 0xFD, code 0x0E, opt-in with `SET_SYNC_MODE` 0x28), specified in doc 05 section 13 and `vectors/sync_events.json`. That firmware is not released or benched yet; the SDK decodes every case of its vectors.
+Types 1 to 10 come from FDT 1.2.8.24's event frame (plate address 0xFD, code 0x0E, opt-in with `SET_SYNC_MODE` 0x28), specified in doc 05 section 13 and `vectors/sync_events.json`. Only firmware with the sync jack sends them (ask with GET_SYNC_MODE); the SDK decodes every case of its vectors.
 
 ## 5. Gaps
 

@@ -6,7 +6,7 @@ Each row is a firmware version. A capability holds from the version in its row u
 
 Evidence words:
 
-- `measured`: seen on an FDT on the bench
+- `measured`: seen on a real FDT
 - `code`: read in the firmware source, not seen on a device
 
 | Firmware from | `stream_rate_command` | `default_stream_rate_hz` | `zero_while_streaming_refuses_unsteady` | `battery_percent` | `sleep_after_last_command_s` | `start_waits_for_pads_after_sleep_ms` | `wake_only_on_host_command` | `studio_exam_start_after_sleep` | `sync_modes` | `stream_values_clip_int16` | `analog_outputs_clip` | `platforms_max` | `four_plate_stream_rate_max_hz` | `first_frame_after_reset_four_plates_ms` | `pad_clip_flag` | `watchdog_every_boot` |
@@ -25,6 +25,6 @@ Evidence words:
 | 1.2.8.26 | true (code) | 1000 (measured) | true (measured) | true (measured) | 300 (measured) | 6000 (measured) | true (measured) | true (measured) | true (code) | true (code) | true (code) | 2 (code) | null (code) | null (code) | true (code) | false (code) |
 | 1.2.8.27 | true (code) | 1000 (measured) | true (measured) | true (measured) | 300 (measured) | 6000 (measured) | true (measured) | true (measured) | true (code) | true (code) | true (code) | 4 (measured) | 1000 (measured) | 2410 (measured) | true (code) | true (code) |
 
-Shared numbers: two different builds carry 1.2.8.24 and 1.2.8.25, a sync build (the rows above) and a four-platform build without sync. On those two numbers probe GET_SYNC_MODE (NACK 7 means no sync) and count the plate addresses in the stream instead of trusting the version. 1.2.8.27 has both.
+Ask the FDT: builds numbered 1.2.8.24 and 1.2.8.25 differ, so on those two numbers probe GET_SYNC_MODE (NACK 7 means no sync) and count the plate addresses in the stream instead of trusting the version.
 
 Side branch: firmware 1.2.9.0 is read as 1.2.8.8 until the version is renumbered.

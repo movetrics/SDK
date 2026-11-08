@@ -1,6 +1,6 @@
 // Web Serial transport for the USB link. The adapter is an FTDI FT232R on USART3, at
 // 1,500,000 baud, 8 data bits, one stop bit, no parity and no flow control
-// (docs/02-transports.md, USB row; the firmware). The browser side is UNVERIFIED:
+// (docs/02-transports.md, USB row; the firmware). The browser side is not yet measured:
 // no pinned repository uses Web Serial (docs/02-transports.md, U1).
 import { AsyncQueue } from "./transport.js";
 // The options the USB link opens with. the firmware sets the default baud rate.
@@ -37,7 +37,7 @@ export class WebSerialTransport {
                 // This call clears both lines, so neither is asserted. fdt:docs/architecture.md:44 (an
                 // earlier SDK note, not firmware fact) says opening a port may affect modem lines and that
                 // DTR/RTS choices are to be recorded. The first hardware run must check for reset-like
-                // behaviour. The browser effect is UNVERIFIED.
+                // behaviour. The browser effect is not yet measured.
                 await port.setSignals({ dataTerminalReady: false, requestToSend: false });
             }
             const readable = port.readable;

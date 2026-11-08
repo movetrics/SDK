@@ -9,11 +9,11 @@ Every `t` comes from the FDT's own 0.1 ms counter. The USB adapter delivers data
 
 ## Gaps
 
-If samples go missing (a loose cable, an overloaded laptop), the clients do not hide it. Before the first sample after a hole you get a `Gap` with the plate, the start and end time and how many samples are missing. Files keep the hole: the CSV `.json` lists it, C3D refuses or splits (C3D cannot store a hole), `.mot` refuses unless you ask it to resample and mark the filled rows. A Studio C3D export hides a 41 ms hole in a real recording by moving every later sample 41 ms early; ours does not.
+If samples go missing (a loose cable, an overloaded laptop), the clients do not hide it. Before the first sample after a hole you get a `Gap` with the plate, the start and end time and how many samples are missing. Files keep the hole: the CSV `.json` lists it, C3D refuses or splits (C3D cannot store a hole), `.mot` refuses unless you ask it to resample and mark the filled rows.
 
 ## Sync with other systems
 
-FDTs with sync ports (draft firmware: the sync build of 1.2.8.24, and 1.2.8.26 and later) have a SYNC IN and a SYNC OUT socket. Two different builds carry the numbers 1.2.8.24 and 1.2.8.25, and only one of them has sync, so ask the FDT: `get_sync_mode()` returns the mode on firmware with sync and `None` on firmware without it (the FDT refuses with NACK 7).
+FDTs with sync ports have a SYNC IN and a SYNC OUT socket, on firmware with the sync jack. Ask the FDT rather than reading its version: `get_sync_mode()` returns the mode on firmware with sync and `None` on firmware without it (the FDT refuses with NACK 7).
 
 - **Start on a trigger**: the stream waits for a rising edge on SYNC IN.
 - **Mark every edge**: each edge on SYNC IN or SYNC OUT arrives as an `Event` with its time on the FDT clock, finer than one sample.
@@ -23,4 +23,4 @@ FDTs with sync ports (draft firmware: the sync build of 1.2.8.24, and 1.2.8.26 a
 
 For Lab Streaming Layer (LabRecorder, EMG, eye trackers), see [EMG and cameras](../../start/emg-and-cameras/). Full detail: [LSL and sync](../../reference/22-lsl-and-sync/).
 
-**Tested on:** the simulator with a clock running 50 ppm off (drift recovered within the test tolerance of 10 ppm). Not yet on a real FDT; the sync firmware is a draft waiting for the bench.
+**Tested on:** the simulator with a clock running 50 ppm off (drift recovered within the test tolerance of 10 ppm). Not yet measured on a real FDT.

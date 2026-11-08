@@ -16,7 +16,7 @@ CoP formula are in [../docs/18-export-formats.md](../docs/18-export-formats.md).
 ```matlab
 fdt = movetrics.Fdt("COM5");      % close Movetrics Studio first: one app on the port at a time
 fdt.setRate(2000, 0);              % frames/s per plate (50-2000), low-pass cutoff in Hz (0 = off)
-m = movetrics.syncModes();         % optional: sync modes (draft, firmware with sync modes only)
+m = movetrics.syncModes();         % optional: sync modes (firmware with the sync jack only)
 fdt.setSyncMode(bitor(m.START_ON_RISE, m.EVENT_FRAMES));
 fdt.start();
 data = fdt.read(10);
@@ -40,8 +40,8 @@ reset: it then streams its default (1,000 frames/s per plate from firmware 1.2.8
 
 Older versions returned the wire values in `fy` and `mx`. Code that expects the Studio signs now gets them
 without changes; code that used `raw` values from `fy`/`mx` should read `raw`.
-`setSyncMode` needs firmware with sync modes and raises an error with NACK 7 on older firmware. The event frame
-layout and the sync modes are draft until firmware 1.2.8.24 is released.
+`setSyncMode` needs firmware with the sync jack. On firmware
+without the sync jack it stops with an error that names NACK 7.
 
 ## Files: CoP and OpenSim
 
