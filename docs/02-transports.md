@@ -9,7 +9,7 @@ Every host reaches the controller over one of two byte pipes. Both run at 1,500,
 - USB: the FTDI FT232R on the controller's USART3.
 - Bluetooth LE: the ESP32-S3 bridge on the controller's UART4.
 
-The controller treats the two ports alike, with two exceptions a client must know. First, a reply and the stream go to the port of the last accepted command. Second, SET_SERIAL_PARAM does not check its source port.
+The controller treats the two ports alike, with two exceptions a client must know. First, a reply goes to the port of the last accepted command; the stream follows it too on firmware before 1.2.8.28, and stays with the port that started it from 1.2.8.28 (section 2.3). Second, SET_SERIAL_PARAM does not check its source port.
 
 The bridge is a transparent byte relay. It forwards bytes only while one phone is subscribed to its notify characteristic. At other times it discards controller output.
 
@@ -56,9 +56,9 @@ The controller takes the oldest queued command, records the port it arrived on, 
 
 The transport test checks this. A bad CRC on the USB port is NACKed on USB while the stream stays on BLE. A truncated KEEP_ALIVE is handled the same way.
 
-An accepted command moves the stream and all replies to its own port. Every transmit uses the active port at the moment it is queued. The stream follows whichever port sent the last accepted command, until the next one arrives.
+An accepted command moves the replies to its own port. Up to firmware 1.2.8.27 it also moves the stream: every transmit uses the active port at the moment it is queued, so the stream follows whichever port sent the last accepted command, until the next one arrives. From 1.2.8.28 the stream stays with the port that started it ([05-measurement-stream.md](05-measurement-stream.md), section 4.5).
 
-Two clients on the two ports share one stream. The client that sent the most recent accepted command receives the samples and the replies. A client must not hold a second link open while another one streams.
+Two clients on the two ports: from 1.2.8.28 the client that started the stream keeps it until it stops it; the other client can ask seven questions and gets NACK 8 for anything else, START and STOP included. Up to 1.2.8.27 the client that sent the most recent accepted command received the samples and the replies. Either way, a client must not hold a second link open while another one streams.
 
 SET_SERIAL_PARAM has no source-port check. A command from UART4 can therefore set the USB rate, under the save and boot rules in section 2.2.
 
@@ -179,3 +179,17 @@ Nothing in the SDK uses Web Serial or Web Bluetooth. Before relying on a browser
 - Whether a page can run while a phone client is connected. The bridge accepts one client, so it cannot.
 - Which user-gesture and secure-origin rules apply to the device picker. These are general browser rules.
 
+## 2.12 BLE: pairing (bridge 1.4 and later)
+
+Bridge 1.4 (1.4.0.0, and 1.4.1.0 with the reset-button rules below) serves only a paired host. A host built for 1.3 needs one change: be paired (bonded) before it subscribes or writes. Everything else in sections 2.5 to 2.7 holds.
+
+- **Pairing.** LE Secure Connections with bonding, method "Just Works" by default (the FDT has no display or keys); legacy pairing is refused, so a Bluetooth 4.0 or 4.1 host cannot pair. RX and the update characteristics need an encrypted link, so an unpaired write gets "Insufficient Authentication", and the stream goes only to a bonded link. The bridge sends a security request right after a connection, so a bonded host encrypts at once. The status characteristic stays readable without pairing and carries no stream data.
+- **Pairing window.** A new host can bond only while the window is open, for 2 minutes; the first new bond closes it. Bridge 1.4.0.0 opens it after every switch-on and after a paired session writes `P` to the update control characteristic. Bridge 1.4.1.0 opens it at switch-on only while no device is paired (first setup), after one press of the FDT's reset button (FDT 1.2.8.32 and later), and after a paired session's `P`; two presses within 10 s forget every paired device and open the window, and `F` from a host is refused. After the bridge forgot its devices, remove "Movetrics-BLE" from the host's Bluetooth settings before pairing again: the host still holds its half of the old bond.
+- **What each host does.** Android, macOS, iOS and Chrome or Edge (Web Bluetooth) pair by themselves when the first encrypted operation asks for it; Android shows its pairing dialog. On Windows, if a host does not prompt, pair once in Settings > Bluetooth inside the window, or call the platform's pair function (bleak's `BleakClient.pair()`). On Linux (BlueZ) pair with `bluetoothctl` or bleak's `pair()`; the Python client does that with `BleTransport(address, pair=True)`.
+- **A link without access is dropped**: 8 s after connecting outside the window (4 s from 1.4.1.0), 30 s inside it, and at once when pairing or encryption fails (fault 7, NOT_AUTHORISED, in `lastFault`). The bridge still has one connection, so while a paired host streams nobody else can connect.
+- **STOP at session end** only when the session's last stream command was START. A host that only asked questions no longer stops a stream that another host started.
+- **MTU.** The bridge asks for MTU 247 itself when the host has not, so a host that never asks still gets full notifications.
+- **Status line.** From 1.4 it adds `acc` (0 pending, 1 granted, 2 refused), `enc`, `bond`, `pair` (seconds left in the window), `bonds`, `grant` and `refuse` (links since switch-on) and `pin` (1 = a build with a fixed passkey); from 1.4.1.0 `pair`, `bonds` and `btn` go only to a link with access. The line can be up to 320 characters, so read it with a long read. A host tells a pairing bridge by `v=1.4` or later, or by the presence of `acc`. Every field is `key=value`; a missing key means unknown.
+- **Bytes that are not a frame.** For about 10 s after a press of the reset button, a host connected then can receive up to three bursts of 8 bytes between the FDT's replies: a NUL from the line break, then `M` `B`, the operation, a 16-bit nonce and a CRC-16. A decoder that finds frames by header, length, end marker and CRC skips them, as the SDK's decoders do (tested over every nonce, including the ones that put BE EF inside a burst). The press also restarts the FDT, so a stream running then ends anyway.
+
+Evidence: code and simulated (the bridge's host tests run its sketch against stand-ins for the Bluetooth stack); not yet measured on hardware.

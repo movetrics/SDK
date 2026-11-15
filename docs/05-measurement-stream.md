@@ -134,13 +134,15 @@ A code comment gives about 320 new samples per second per pad, and a lab record 
 
 A pad on queued samples is polled as Section 4.8 describes and gives a reading at each frame's own time. The share of stale frames on 1.2.8.0 was not measured.
 
-### 4.5 The stream goes to the port of the last valid command
+### 4.5 The stream goes to the port that started it (from 1.2.8.28)
 
-Evidence: code, and a host test in software.
+Evidence: code, and a host test in software. Not yet measured on hardware.
 
-Stream frames are transmitted on the active port. An accepted command sets that port to the port it arrived on, and the port stays selected until the next accepted command. A request that latches nothing restores the previous port. The stream therefore moves to whichever host port last sent a valid command.
+From firmware 1.2.8.28 stream frames are transmitted on the port whose START (or SET_CALIBRATION) was accepted; replies still go to the port that asked. While a stream runs, or a START waits for SYNC IN, the other port gets answers to seven questions (GET_SAMPLING_RATE, GET_CHANNEL_MASK, GET_STATUS, GET_FW_VERSION, GET_SERIAL_NUMBER, GET_PAD_HEALTH, GET_SYNC_MODE) and NACK 8 (ERR_UNEFFECTIVE_COMMAND) for every other command, which changes nothing. Without a stream any port may command. A host that disappears without STOP keeps the stream until it stops it or the controller restarts. The host test replays the case this rule is for: the USB host streams, a Bluetooth client asks a question and its bridge then sends STOP; the question is answered on Bluetooth, the STOP gets NACK 8 there and the frames stay on USB.
 
-The host test repeats a stream frame on the USB port after a USB command. A second host that sends any valid query while another host streams takes the stream.
+A client that gets NACK 8 to START or STOP should tell its user that another host may own the stream. The Python and TypeScript clients say so in their error message.
+
+Up to 1.2.8.27 stream frames are transmitted on the active port. An accepted command sets that port to the port it arrived on, and the port stays selected until the next accepted command. A request that latches nothing restores the previous port. The stream therefore moves to whichever host port last sent a valid command: a second host that sends any valid query while another host streams takes the stream.
 
 ### 4.6 The filter runs once per calculated frame
 

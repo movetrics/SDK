@@ -26,6 +26,7 @@ export interface ClientOptions {
     readonly timeouts?: Partial<ClientTimeouts>;
     readonly frameBacklog?: number;
 }
+export declare const STREAM_NOT_NOW_HINT: string;
 export declare class FdtClient {
     #private;
     constructor(transport: Transport, options?: ClientOptions);

@@ -11,7 +11,7 @@ CONTRACT = Path(__file__).resolve().parents[2] / "contracts" / "analog-outputs.v
 
 class AnalogTests(unittest.TestCase):
     def test_table_matches_the_contract(self):
-        rows = json.loads(CONTRACT.read_text())["outputs"]
+        rows = json.loads(CONTRACT.read_text(encoding="utf-8"))["outputs"]  # "N·m": the Windows default code page misreads it
         self.assertEqual(len(rows), 16)
         for row in rows:
             spec = OUTPUTS[row["output"]]

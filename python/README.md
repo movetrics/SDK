@@ -105,6 +105,10 @@ Measured on 2 November 2026 with an M1 MacBook Pro and two plates: 100 to 500 fr
 
 Connect, check the bridge's RX, TX and status characteristics, read the status line and require `mode=UART`, subscribe to TX, and only then write ([chapter 02](https://github.com/movetrics/sdk/blob/main/docs/02-transports.md), section 2.6). Writes use write-with-response, split to the negotiated MTU minus 3 bytes. The bridge accepts one client; when a session that sent commands ends, the bridge sends STOP to the FDT. The transport exposes the bridge's status line as `transport.bridge_status`.
 
+Newer bridges (1.4 and later) talk only to a paired computer; `bridge_needs_pairing(transport.bridge_status)` tells which kind you reached. A computer pairs inside the bridge's pairing window: the first switch-on of an FDT with no paired device, or one press of the FDT's reset button, opens it for 2 minutes. Windows and macOS pair when the bridge asks; on Linux, or when the system does not ask, pass `BleTransport(address, pair=True)`. Without access, `open()` or the first write raises `TransportError` that says how to pair (tested against a fake bleak, not yet run on hardware).
+
+When another host streams over the FDT's other port, newer firmware (1.2.8.28 and later) keeps the stream with that host: your `start_stream()` or `stop_stream()` then raises `NackError` with code 8 and a message that says so.
+
 ## Tests
 
 ```sh

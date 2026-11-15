@@ -23,12 +23,16 @@ export class FdtNackError extends Error {
     command;
     platformAddress;
     errorCode;
-    constructor(command, platformAddress, errorCode, errorName) {
-        super(`controller NACK ${errorCode} (${errorName}) to command 0x${command.toString(16).padStart(2, '0')}`);
+    // What the refusal most likely means, or '' when the code says it all.
+    hint;
+    constructor(command, platformAddress, errorCode, errorName, hint = '') {
+        const message = `controller NACK ${errorCode} (${errorName}) to command 0x${command.toString(16).padStart(2, '0')}`;
+        super(hint ? `${message}: ${hint}` : message);
         this.name = 'FdtNackError';
         this.command = command;
         this.platformAddress = platformAddress;
         this.errorCode = errorCode;
+        this.hint = hint;
     }
 }
 export class FdtTimeoutError extends Error {

@@ -5,7 +5,7 @@ when they open a link, so install the extras you need: 'movetrics-fdt[serial]' o
 See README.md in this directory.
 """
 
-from .ble_transport import BleTransport, discover_bridges
+from .ble_transport import BleTransport, bridge_needs_pairing, discover_bridges
 from .client import FdtClient, SyncMode
 from .cloud import CloudClient, CloudError
 from .commands import IMPLEMENTED, NOT_IMPLEMENTED, Command, OmittedCommand
@@ -26,13 +26,14 @@ from .stream import EventFrame, StreamFrame, SyncModeReply
 from .vocabulary import Event, Gap, Sample, SampleConverter, plate_cop
 from .transport import Transport
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 __all__ = [
     "IMPLEMENTED",
     "NOT_IMPLEMENTED",
     "AckReply",
     "BleTransport",
+    "bridge_needs_pairing",
     "discover_bridges",
     "CloudClient",
     "CloudError",

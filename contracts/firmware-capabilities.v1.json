@@ -2,7 +2,7 @@
   "contract": "movetrics.firmware-capabilities/1.0.0",
   "device": "fdt",
   "about": "What each FDT firmware version does that a host has to know before it talks to it. A capability holds from its 'since' version until a later entry with the same id; a version before 1.2.8.0, or one that cannot be read (the vendor's '001.002.003'), gets 'unknown'. Facts come from the firmware line; this file is hosted by the Cloud and copied into Android and the SDK.",
-  "updated": "2026-11-08",
+  "updated": "2026-11-15",
   "evidence_words": {
     "measured": "seen on a real FDT",
     "code": "read in the firmware source, not seen on a device"
@@ -259,6 +259,22 @@
       "evidence": "code",
       "says": "A hang ends in a reset within about 8 s (5.5 s at the fastest clock) instead of silence: a host sees the stream stop and the FDT answer again after its boot. The keep-alive sleep keeps it fed (3.5 min asleep without a reset, measured).",
       "source": "Movetrics firmware 1.2.8.27 (code)"
+    },
+    {
+      "id": "stream_stays_with_starting_port",
+      "since": "1.2.8.0",
+      "value": false,
+      "evidence": "code",
+      "says": "The stream goes to the port (USB or Bluetooth) of the last accepted command, so a second host that sends any accepted command, even a question, while another host streams takes the stream.",
+      "source": "Movetrics firmware 1.2.8.0 (code)"
+    },
+    {
+      "id": "stream_stays_with_starting_port",
+      "since": "1.2.8.28",
+      "value": true,
+      "evidence": "code",
+      "says": "The stream stays with the port whose START was accepted. While it runs, the other port gets answers to GET_SAMPLING_RATE, GET_CHANNEL_MASK, GET_STATUS, GET_FW_VERSION, GET_SERIAL_NUMBER, GET_PAD_HEALTH and GET_SYNC_MODE, and NACK 8 to every other command, START and STOP included. A host that leaves without STOP keeps the stream until the FDT restarts. Not yet measured on hardware.",
+      "source": "Movetrics firmware 1.2.8.28 (code)"
     }
   ]
 }

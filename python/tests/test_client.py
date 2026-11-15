@@ -190,6 +190,43 @@ class StreamLifecycleTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(raised.exception.error_name, "ERR_INVALID_PARAMETER")
             self.assertFalse(fdt.streaming)
 
+    async def test_start_refused_by_another_hosts_stream_says_so(self) -> None:
+        # Firmware 1.2.8.28 and later answer NACK 8 to START and STOP from the port that did not start the stream
+        # (docs/05-measurement-stream.md section 4.5).
+        nack = build_device_frame(bytes((0xFF, 0x01, 0x15, 0x08, 0x00)))
+        transport = FakeTransport(lambda frame: [nack] if frame[4] == 0x01 else [])
+        async with FdtClient(transport, **FAST) as fdt:
+            with self.assertRaises(NackError) as raised:
+                await fdt.start_stream()
+            self.assertFalse(fdt.streaming)
+        self.assertEqual(raised.exception.error_code, 8)
+        self.assertIn("another host", str(raised.exception))
+        self.assertIn("another host", raised.exception.hint)
+
+    async def test_stop_refused_with_nack_8_names_the_other_host(self) -> None:
+        def controller(frame: bytes) -> list[bytes]:
+            if frame[4] == 0x05:
+                return [build_device_frame(bytes((0xFF, 0x05, 0x15, 0x08, 0x00)))]
+            return []
+
+        client = FdtClient(FakeTransport(controller), **FAST)
+        await client.__aenter__()
+        try:
+            with self.assertRaises(NackError) as raised:
+                await client.stop_stream()
+            self.assertIn("another host", str(raised.exception))
+        finally:
+            client._streaming = False  # nothing to stop on the way out
+            await client.__aexit__(None, None, None)
+
+    async def test_other_nacks_carry_no_stream_hint(self) -> None:
+        transport = FakeTransport(FakeController(refuse_start=True))
+        async with FdtClient(transport, **FAST) as fdt:
+            with self.assertRaises(NackError) as raised:
+                await fdt.start_stream()
+        self.assertEqual(raised.exception.hint, "")
+        self.assertNotIn("another host", str(raised.exception))
+
     async def test_starting_twice_is_refused(self) -> None:
         async with FdtClient(FakeTransport(FakeController()), **FAST) as fdt:
             await fdt.start_stream()

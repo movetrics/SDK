@@ -33,7 +33,7 @@ from movetrics_fdt.analog import to_vocabulary
 plate, name, value = to_vocabulary("A1", 0.205)     # (1, "fz", 164.0)
 ```
 
-Three things to know before you use them in a study: they update at most 500 times per second and lag the force by about 12 ms, so they are not a time reference (use the pulses or LSL for that); the centre of pressure comes in 1 cm steps, so compute it from the forces and moments instead; and A3, A5, A11, A13 (Fy, Mx) have the opposite sign to Studio and our files. [Full scale table and limits](../../reference/23-analog-outputs/).
+Three things to know before you use them in a study: they update at most 500 times per second and lag the force by about 12 ms, so they are not a time reference (use the pulses or LSL for that); the centre of pressure comes in 1 cm steps, so compute it from the forces and moments instead; and A3, A5, A11, A13 (Fy, Mx) have the opposite sign to Studio and our files. Two more for every session: zero differs from unit to unit by up to tens of mV, so record a few seconds with the plates empty and subtract each channel's mean; and keep the plates empty when Movetrics Studio starts a test, because it restarts the FDT, which takes its zero then. The moment outputs need firmware 1.2.8.21 or later (before that they read 100 times too large), and on an F1-3D S plate Mz is computed from Fx, not measured. [Full scale table and limits](../../reference/23-analog-outputs/).
 
 ## Two FDTs as one four-plate system
 

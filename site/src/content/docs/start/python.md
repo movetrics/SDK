@@ -50,6 +50,15 @@ from movetrics_fdt import SerialTransport
 transport = SerialTransport("COM3")                    # Windows; macOS: "/dev/tty.usbserial-XXXX"
 ```
 
+Over Bluetooth, install the `ble` extra and connect by address (every FDT advertises the name `Movetrics-BLE`; `await discover_bridges()` lists the ones in range):
+
+```python
+from movetrics_fdt import BleTransport
+transport = BleTransport("AA:BB:CC:DD:EE:FF", pair=True)   # pair=True: Linux, or a system that does not ask
+```
+
+Newer FDTs talk only to a paired computer. Pair while the FDT's pairing window is open: the first switch-on with no paired device, or one press of the FDT's reset button, opens it for 2 minutes. Windows and macOS pair when the FDT asks. If another computer streams from the same FDT over its other port, newer firmware keeps the stream with that computer, and your `start_stream()` says so.
+
 ## 5. Save it in the formats your tools read
 
 ```python

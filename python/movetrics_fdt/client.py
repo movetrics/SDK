@@ -61,6 +61,12 @@ class SyncMode(enum.IntFlag):
 NACK_INVALID_PARAMETER: Final = 3
 NACK_UNKNOWN_COMMAND: Final = 7
 NACK_NOT_NOW: Final = 8
+# NACK 8 to START or STOP: firmware 1.2.8.28 and later keep a stream with the port that started it, and the other port
+# may then only ask questions (docs/05-measurement-stream.md section 4.5); a firmware update gets the same answer.
+STREAM_NOT_NOW_HINT: Final = (
+    "another host on the FDT's other port (USB or Bluetooth) may own the stream, and only it can stop it; "
+    "or a firmware update is running"
+)
 
 
 class FdtClient:
@@ -447,7 +453,10 @@ class FdtClient:
                 await asyncio.wait_for(self._reply_ready.wait(), deadline - loop.time())
 
     def _nack(self, reply: NackReply) -> NackError:
-        return NackError(reply.command, reply.error_code, reply.error_name)
+        hint = ""
+        if reply.error_code == NACK_NOT_NOW and reply.command in (START_STREAM.code, STOP_STREAM.code):
+            hint = STREAM_NOT_NOW_HINT
+        return NackError(reply.command, reply.error_code, reply.error_name, hint)
 
     async def _read_loop(self) -> None:
         decoder = StreamDecoder(on_reply=self._queue_reply)

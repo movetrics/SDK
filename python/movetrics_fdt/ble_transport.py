@@ -12,6 +12,12 @@ RX characteristic accepts only write-with-response (MovetricsBridge.ino:224-226;
 
 When a session that sent commands ends, the bridge writes STOP to the controller (MovetricsBridge.ino:99;
 section 2.5). Whether that stops a stream on hardware is doc 02 item U8.
+
+From bridge 1.4 the bridge serves commands and the stream only to a paired (bonded) host (section 2.12).
+Windows, macOS and Android pair when the first encrypted operation asks for it; on Linux (BlueZ) and on some
+Windows setups pass pair=True, which calls bleak's pair() after connecting. A new host can pair only while the
+bridge's pairing window is open. Without access the subscription or the first write fails, and open() then says
+how to pair.
 """
 
 from __future__ import annotations
@@ -45,6 +51,17 @@ _COMMAND_OFFSET: Final = 4  # FE ED address destination command ...
 
 _ADDRESS = re.compile(r"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
 _UUID = re.compile(r"[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}")
+
+# Words that bleak's backends use when the bridge refuses an unpaired link (ATT errors 0x05 and 0x0F, or BlueZ's
+# "NotPermitted"/"NotAuthorized"); a choice of this SDK, matched case-insensitively.
+_AUTH_ERROR = re.compile(r"authenticat|encrypt|not ?permitted|not ?authori[sz]ed|\(5,|\(15,|0x0?5\b|0x0f\b", re.I)
+PAIRING_HINT: Final = (
+    "the bridge serves only paired hosts (bridge 1.4 and later). Pair this computer while the bridge's pairing "
+    "window is open: the first switch-on of an FDT with no paired device, or one press of the FDT's reset "
+    "button, opens it for 2 minutes (bridge 1.4.0.0: 2 minutes after every switch-on). On Linux, or where the "
+    "system does not ask by itself, pass pair=True or pair in the system's Bluetooth settings. After the "
+    "bridge forgot its devices, remove Movetrics-BLE from this computer's Bluetooth settings first"
+)
 
 _INSTALL_HINT: Final = "BleTransport needs bleak. Install it with: pip install 'movetrics-fdt[ble]'"
 
@@ -87,6 +104,23 @@ def require_uart_mode(fields: Mapping[str, str]) -> None:
         raise TransportError(
             f"the bridge reports mode={mode!r}; this transport needs mode=UART (doc 02 section 2.6)"
         )
+
+
+def bridge_needs_pairing(fields: Mapping[str, str]) -> bool:
+    """True when the status line comes from a bridge that serves only paired hosts (1.4 and later).
+
+    Bridge 1.4 adds the fields acc (0 pending, 1 granted, 2 refused), enc and bond to the line; older bridges
+    have none of them and serve any host.
+    """
+    if "acc" in fields:
+        return True
+    match = re.match(r"(\d+)\.(\d+)", fields.get("v", ""))
+    return match is not None and (int(match.group(1)), int(match.group(2))) >= (1, 4)
+
+
+def _is_auth_error(error: BaseException) -> bool:
+    """True when a GATT error says the link is not paired or not encrypted."""
+    return bool(_AUTH_ERROR.search(str(error)))
 
 
 def _write_chunk_size(client: Any) -> int:
@@ -133,13 +167,20 @@ class BleTransport(Transport):
     the split does not change the byte stream. Every command this package sends fits in one piece.
     """
 
-    def __init__(self, name_or_address: str, *, connect_timeout: float = DEFAULT_CONNECT_TIMEOUT_S) -> None:
+    def __init__(
+        self,
+        name_or_address: str,
+        *,
+        connect_timeout: float = DEFAULT_CONNECT_TIMEOUT_S,
+        pair: bool = False,
+    ) -> None:
         if not name_or_address:
             raise ValueError("name_or_address must not be empty")
         if connect_timeout <= 0:
             raise ValueError(f"connect_timeout must be positive, got {connect_timeout}")
         self._target = name_or_address
         self._connect_timeout = connect_timeout
+        self._pair = pair
         self._client: Any = None
         self._loop: asyncio.AbstractEventLoop | None = None
         self._inbox: asyncio.Queue[bytes | None] | None = None
@@ -175,21 +216,37 @@ class BleTransport(Transport):
             await client.connect()
         except Exception as error:
             raise TransportError(f"could not connect to {self._target}: {error}") from error
+        fields: dict[str, str] = {}
         try:
             self._check_characteristics(client)
-            raw = await client.read_gatt_char(STATUS_UUID)
+            raw = await client.read_gatt_char(STATUS_UUID)  # readable without pairing on every bridge
             fields = parse_status_line(bytes(raw).decode("ascii", errors="replace"))
             require_uart_mode(fields)
+            if self._pair:
+                await self._pair_link(client)
             await client.start_notify(TX_UUID, self._on_notify)
         except BaseException as error:
             with contextlib.suppress(Exception):
                 await client.disconnect()
             if isinstance(error, TransportError) or not isinstance(error, Exception):
                 raise
+            if _is_auth_error(error) or (fields.get("acc") == "2"):
+                raise TransportError(f"the bridge at {self._target} refused this host: {PAIRING_HINT}") from error
             # bleak raises BleakError (an Exception, not an OSError) for GATT failures; callers see one type.
             raise TransportError(f"could not set up the bridge at {self._target}: {error}") from error
         self._status = fields
         self._client = client
+
+    async def _pair_link(self, client: Any) -> None:
+        """Ask the system to pair (bond) with the bridge. A backend that pairs by itself (macOS) has no pair()."""
+        try:
+            paired = await client.pair()
+        except NotImplementedError:
+            return
+        except Exception as error:
+            raise TransportError(f"pairing with the bridge at {self._target} failed ({error}): {PAIRING_HINT}") from error
+        if paired is False:
+            raise TransportError(f"pairing with the bridge at {self._target} was refused: {PAIRING_HINT}")
 
     async def write(self, data: bytes) -> None:
         client = self._require_open()
@@ -204,6 +261,8 @@ class BleTransport(Transport):
                     break
                 except Exception as error:
                     if delay is None or not retry or not _bridge_busy(error):
+                        if _is_auth_error(error):
+                            raise TransportError(f"BLE write to {self._target} was refused: {PAIRING_HINT}") from error
                         raise TransportError(f"BLE write to {self._target} failed: {error}") from error
                     await asyncio.sleep(delay)
 

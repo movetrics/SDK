@@ -1,19 +1,20 @@
 {
  "schema": "movetrics.analog-outputs/1",
- "version": "1.0.0-draft",
- "source": "Nur Engineering GmbH, 'Movetrics FDT analog outputs: scale per channel', 27 Oct 2026, FDT firmware 1.2.8.22 (project files: hardware/Nur-Engineering_FDT_analog_outputs_2026-10-27.pdf)",
- "applies_to": "FDTs with the analog interface board, firmware 1.2.8.22 and later in the firmware team's firmware line. Before 1.2.8.21 the moment outputs of a double plate were 100 times too large and values past full scale wrapped around.",
+ "version": "1.1.0",
+ "source": "Nur Engineering GmbH, 'Movetrics FDT analog outputs: scale per channel', 27 Oct 2026, measured on FDT firmware 1.2.8.22; checked against the firmware source",
+ "applies_to": "FDTs with the analog interface board, firmware 1.2.8.21 and later (scale, channel order and clipping). Before 1.2.8.21, the released 1.2.8.2 included, the moment outputs of a double plate were 100 times too large and values past full scale wrapped around; ask the FDT for its version (GET_FW_VERSION).",
  "range_v": [
   -10,
   10
  ],
- "zero": "0 V = zeroed plate; the FDT zeroes at power-up, reset and the software's Zero command; no separate analog zero",
+ "zero": "0 V = zeroed plate; the FDT zeroes at power-up, reset and the software's Zero command; no separate analog zero. Studio restarts the FDT when a test starts (outputs 0 V for about 3 s while it takes its zero): keep the plates empty then",
+ "zero_offset": "per unit: 1.2.8.22 adds +58 mV (190 codes) to every output, the value measured on one board; another FDT can read tens of mV off zero at rest, and each output stage can add up to about 24 mV of its own (inferred). Subtract each channel's mean over a few seconds with empty plates and the stream running",
  "value_from_volts": "value = volts * units_per_volt (wire signs: fy and mx are the reverse of Studio's and of the vocabulary's plate frame)",
  "signs": "Fz positive for a load pressing on the plate; other force and moment channels carry the FDT wire sign. CoP sign and origin are not stated by the maker.",
  "resolution": "the stream carries whole N, N·m and cm, so each output moves in steps of its mv_per_unit; CoP therefore in 1 cm steps",
  "cop_zero_below_fz_n": 30,
  "clip": "values past full scale stay at the end of the range",
- "update": "only while streaming; at most 500 updates/s per plate (every frame at 500/s, every second frame at 1000/s); hold the last value after STOP, 0 V at power-up",
+ "update": "only while streaming; at most 500 updates/s per plate (every frame at 500/s, every second frame at 1000/s); hold the last value after STOP, 0 V at power-up; start recording after the stream runs; use one stream rate and filter for data you compare",
  "filters": "the FDT's digital low-pass (50 Hz default) plus a first-order output low-pass at about 220 Hz (schematic, not measured)",
  "electrical": {
   "dac_bits": 16,
@@ -168,5 +169,6 @@
    "mv_per_unit": 333.3,
    "units_per_volt": 3
   }
- ]
+ ],
+ "mz_on_single_plate": "an F1-3D S plate (one Fx and one Fy cell) has no measured Mz: the FDT derives mz = 0.02 m * Fx, on the analog output (A4, A12) as in the digital frame"
 }

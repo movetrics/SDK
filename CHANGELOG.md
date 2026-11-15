@@ -2,6 +2,17 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased 0.3.2 (2026-11-15): one stream owner, paired Bluetooth, analog zero
+
+Newer FDT firmware keeps a stream with the host that started it, and newer Bluetooth bridges talk only to a paired host. Nothing in this entry was run on a real FDT by the SDK; the firmware facts are read from the firmware's code and its own tests.
+
+- **NACK 8 to START or STOP** now says what it most likely means: from firmware 1.2.8.28 the stream stays with the port (USB or Bluetooth) that started it, and the other port may only ask seven questions. `NackError.hint` (Python) and `FdtNackError.hint` (TypeScript) carry the explanation. Tested against fake transports.
+- **Bluetooth pairing**: `BleTransport(address, pair=True)` asks the system to pair before subscribing (Linux, or a system that does not ask by itself); `bridge_needs_pairing(transport.bridge_status)` tells a pairing bridge (1.4 and later) from an older one. When the bridge refuses an unpaired host, `open()` or the write raises `TransportError` that explains the pairing window. Tested against a fake bleak. The Bluetooth example gained `--pair`.
+- **Bytes between frames**: after a press of the FDT's reset button a Bluetooth host can receive up to three 8-byte bursts between replies. The Python and TypeScript decoders skip them; new tests feed every nonce of both kinds of burst, including those that put a frame header inside the burst.
+- **Docs**: [chapter 2](docs/02-transports.md) sections 2.3 and 2.12 (stream owner, pairing, status fields, the burst), [chapter 5](docs/05-measurement-stream.md) section 4.5, the command registry gains 0x66 (factory test). The capability table gains `stream_stays_with_starting_port`.
+- **Analog outputs** ([chapter 23](docs/23-analog-outputs.md), `contracts/analog-outputs.v1.json` 1.1.0): the zero offset is per unit (tens of mV possible; subtract the empty-plate mean), firmware before 1.2.8.21 gives moment outputs 100 times too large, keep the plates empty while Studio starts a test, start recording after the stream runs, use one rate and filter, and on an F1-3D S plate Mz is computed from Fx. The scale applies from 1.2.8.21.
+- **Docs site**: the Python page shows Bluetooth with pairing; the EMG and cameras page adds the analog zero and firmware notes.
+
 ## Unreleased 0.3.1 (2026-11-08): four plates on one FDT
 
 Some FDTs read four plates. Nothing in this entry was run on a real FDT by the SDK; the firmware facts are **measured** on real FDTs or read from the firmware's code.

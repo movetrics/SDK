@@ -19,6 +19,7 @@ from typing import Any
 from unittest import mock
 
 from movetrics_fdt.ble_transport import (
+    bridge_needs_pairing,
     RX_UUID,
     STATUS_UUID,
     TX_UUID,
@@ -34,6 +35,9 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIR = PACKAGE_ROOT / "movetrics_fdt"
 THIRD_PARTY_BY_FILE = {"files.py": {"ezc3d"}, "writers.py": {"ezc3d", "numpy"}, "lsl.py": {"pylsl"}, "serial_transport.py": {"serial"}, "ble_transport.py": {"bleak"}}
 GOOD_STATUS = "v=1.3;fw=1.3.1.0;mode=UART;sub=0;mtu=23;lastFault=0"
+# Bridge 1.4 adds acc, enc, bond, grant, refuse and pin to its status line; pair, bonds and btn go only to a paired
+# link from 1.4.1.0, so an unpaired host reads a line without them.
+PAIRING_STATUS = "v=1.4;fw=1.4.1.0;mode=UART;sub=0;mtu=247;lastFault=0;acc=0;enc=0;bond=0;grant=0;refuse=0;pin=0"
 
 
 def _imported_roots(path: Path, *, inside_functions: bool) -> set[str]:
@@ -123,6 +127,15 @@ class StatusLineTests(unittest.TestCase):
         self.assertIn("mode='ECHO'", str(raised.exception))
         with self.assertRaises(TransportError):
             require_uart_mode({"v": "1.3"})
+
+    def test_bridge_1_4_needs_pairing_and_older_bridges_do_not(self) -> None:
+        self.assertTrue(bridge_needs_pairing(parse_status_line(PAIRING_STATUS)))
+        self.assertTrue(bridge_needs_pairing({"v": "1.4", "mode": "UART"}))
+        self.assertTrue(bridge_needs_pairing({"v": "1.10", "mode": "UART"}))
+        self.assertTrue(bridge_needs_pairing({"v": "1.3", "acc": "1"}))
+        self.assertFalse(bridge_needs_pairing(parse_status_line(GOOD_STATUS)))
+        self.assertFalse(bridge_needs_pairing({"v": "1.0", "mode": "UART"}))
+        self.assertFalse(bridge_needs_pairing({"mode": "UART"}))
 
     def test_older_version_string_is_accepted_when_mode_is_uart(self) -> None:
         require_uart_mode({"v": "1.0", "mode": "UART"})
@@ -329,6 +342,8 @@ class FakeBleakClient:
     connect_error: Exception | None = None
     read_error: Exception | None = None
     services_error: Exception | None = None
+    notify_error: Exception | None = None
+    pair_result: Any = True  # what pair() returns; an Exception instance is raised
     mtu = 23
 
     def __init__(self, device: object, *, disconnected_callback: Any = None, timeout: float = 10.0) -> None:
@@ -361,7 +376,15 @@ class FakeBleakClient:
 
     async def start_notify(self, specifier: str, callback: Any) -> None:
         self.calls.append(("start_notify", specifier))
+        if FakeBleakClient.notify_error is not None:
+            raise FakeBleakClient.notify_error
         self.notify_callback = callback
+
+    async def pair(self) -> bool:
+        self.calls.append(("pair",))
+        if isinstance(FakeBleakClient.pair_result, BaseException):
+            raise FakeBleakClient.pair_result
+        return bool(FakeBleakClient.pair_result)
 
     busy_writes = 0  # how many writes fail with Insufficient Resource before one succeeds
 
@@ -431,6 +454,8 @@ class BleTransportTests(unittest.IsolatedAsyncioTestCase):
         FakeBleakClient.connect_error = None
         FakeBleakClient.read_error = None
         FakeBleakClient.services_error = None
+        FakeBleakClient.notify_error = None
+        FakeBleakClient.pair_result = True
         FakeBleakClient.mtu = 23
         FakeBleakScanner.found = {"Movetrics-BLE": FakeDevice("Movetrics-BLE", "AA:BB:CC:DD:EE:01")}
         FakeBleakScanner.also_found = []
@@ -449,6 +474,65 @@ class BleTransportTests(unittest.IsolatedAsyncioTestCase):
         await transport.write(b"\xfe\xed")
         self.assertEqual(client.calls[-1], ("write", RX_UUID, b"\xfe\xed", True))
         await transport.close()
+
+    async def test_pair_true_pairs_after_the_status_read_and_before_subscribing(self) -> None:
+        FakeBleakClient.status_text = PAIRING_STATUS
+        transport = BleTransport("Movetrics-BLE", pair=True)
+        await transport.open()
+        client = FakeBleakClient.instances[-1]
+        self.assertEqual(client.calls, [("connect",), ("read", STATUS_UUID), ("pair",), ("start_notify", TX_UUID)])
+        self.assertTrue(bridge_needs_pairing(transport.bridge_status))
+        await transport.close()
+
+    async def test_without_pair_no_pairing_is_requested(self) -> None:
+        transport = BleTransport("Movetrics-BLE")
+        await transport.open()
+        self.assertNotIn(("pair",), FakeBleakClient.instances[-1].calls)
+        await transport.close()
+
+    async def test_a_backend_that_pairs_by_itself_is_fine(self) -> None:
+        FakeBleakClient.pair_result = NotImplementedError("CoreBluetooth pairs on its own")
+        transport = BleTransport("Movetrics-BLE", pair=True)
+        await transport.open()
+        self.assertIn(("start_notify", TX_UUID), FakeBleakClient.instances[-1].calls)
+        await transport.close()
+
+    async def test_a_refused_pairing_explains_the_pairing_window(self) -> None:
+        FakeBleakClient.pair_result = False
+        with self.assertRaises(TransportError) as raised:
+            await BleTransport("Movetrics-BLE", pair=True).open()
+        self.assertIn("pairing window", str(raised.exception))
+        self.assertIn(("disconnect",), FakeBleakClient.instances[-1].calls)
+
+    async def test_an_unpaired_subscription_explains_the_pairing_window(self) -> None:
+        FakeBleakClient.status_text = PAIRING_STATUS
+        FakeBleakClient.notify_error = RuntimeError("Failed to start notify: Insufficient Authentication")
+        with self.assertRaises(TransportError) as raised:
+            await BleTransport("Movetrics-BLE").open()
+        self.assertIn("pairing window", str(raised.exception))
+        self.assertIn("reset button", str(raised.exception))
+        self.assertIn(("disconnect",), FakeBleakClient.instances[-1].calls)
+
+    async def test_an_unpaired_write_explains_the_pairing_window(self) -> None:
+        transport = BleTransport("Movetrics-BLE")
+        await transport.open()
+        client = FakeBleakClient.instances[-1]
+
+        async def refuse(specifier: str, data: bytes, response: bool = False) -> None:
+            raise RuntimeError("[org.bluez.Error.NotPermitted] Write not permitted")
+
+        client.write_gatt_char = refuse  # type: ignore[method-assign]
+        with self.assertRaises(TransportError) as raised:
+            await transport.write(b"\xfe\xed")
+        self.assertIn("pairing window", str(raised.exception))
+        await transport.close()
+
+    async def test_other_gatt_failures_keep_their_own_message(self) -> None:
+        FakeBleakClient.notify_error = RuntimeError("characteristic gone")
+        with self.assertRaises(TransportError) as raised:
+            await BleTransport("Movetrics-BLE").open()
+        self.assertIn("characteristic gone", str(raised.exception))
+        self.assertNotIn("pairing window", str(raised.exception))
 
     async def test_notifications_arrive_in_order_and_close_ends_the_iteration(self) -> None:
         transport = BleTransport("Movetrics-BLE")

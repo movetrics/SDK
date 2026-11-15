@@ -128,9 +128,23 @@ function mergeTimeouts(overrides: Partial<ClientTimeouts> | undefined): Record<k
   return merged;
 }
 
+// NACK 8 to START or STOP: firmware 1.2.8.28 and later keep a stream with the port that started it, and the other
+// port may then only ask questions (docs/05-measurement-stream.md section 4.5); a firmware update gets the same answer.
+export const STREAM_NOT_NOW_HINT =
+  "another host on the FDT's other port (USB or Bluetooth) may own the stream, and only it can stop it; " +
+  'or a firmware update is running';
+
 function nackError(reply: ScannedReply): FdtNackError {
   const code = reply.errorCode ?? 0;
-  return new FdtNackError(reply.command, reply.platformAddress, code, NACK_ERROR_NAMES[code] ?? 'UNKNOWN_NACK_CODE');
+  const streamCommand = reply.command === COMMANDS.START_STREAM.code || reply.command === COMMANDS.STOP_STREAM.code;
+  const hint = code === NACK_STREAM_RUNNING && streamCommand ? STREAM_NOT_NOW_HINT : '';
+  return new FdtNackError(
+    reply.command,
+    reply.platformAddress,
+    code,
+    NACK_ERROR_NAMES[code] ?? 'UNKNOWN_NACK_CODE',
+    hint,
+  );
 }
 
 // The one reply the client is waiting for.

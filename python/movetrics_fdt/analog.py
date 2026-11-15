@@ -1,6 +1,6 @@
 """The FDT's analog outputs (A1-A16) as numbers: volts from a DAQ or EMG system back to N, N*m and m.
 
-Scale from Nur Engineering's sheet of 27 Oct 2026 for firmware 1.2.8.22 (contracts/analog-outputs.v1.json,
+Scale from Nur Engineering's sheet of 27 Oct 2026, for firmware 1.2.8.21 and later (contracts/analog-outputs.v1.json,
 docs/23-analog-outputs.md). The outputs carry the FDT's wire signs, so to_vocabulary() flips fy and mx into the
 plate frame that every Movetrics file and client uses (Studio's). The centre of pressure comes back in m but keeps
 the outputs' 1 cm steps, its sign and origin are not stated by the maker, and it reads 0 below 30 N: prefer the CoP

@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 import unittest
 
+from movetrics_fdt.crc import crc16_ccitt_false
 from movetrics_fdt.errors import FrameError
 from movetrics_fdt.frames import AckReply, NackReply, build_device_frame
 from movetrics_fdt.stream import (
@@ -153,3 +154,46 @@ class StreamDecoderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def button_burst(op: int, nonce: int) -> bytes:
+    """What a Bluetooth host may see after a press of the FDT's reset button (FDT 1.2.8.32 with bridge 1.4.1.0):
+    the break read as a NUL, then 'M' 'B' op nonce-lo nonce-hi and the CRC-16/CCITT-FALSE of those five bytes."""
+    body = bytes((0x4D, 0x42, op, nonce & 0xFF, nonce >> 8))
+    crc = crc16_ccitt_false(body)
+    return b"\x00" + body + bytes((crc & 0xFF, crc >> 8))
+
+
+class ButtonMessageTests(unittest.TestCase):
+    """The reset button's 8-byte message between replies is skipped like any other bytes that are not a frame."""
+
+    def test_three_bursts_between_replies_and_frames(self) -> None:
+        replies: list[object] = []
+        decoder = StreamDecoder(on_reply=replies.append)
+        ack = build_device_frame(bytes((0x00, 0x1B, 0x06)))
+        burst = button_burst(1, 0x1234)
+        data = ack + burst * 3 + sample(7) + burst + sample(8)
+        for size in (len(data), 20, 7, 1):  # whole, and split as BLE notifications may split it
+            replies.clear()
+            decoder = StreamDecoder(on_reply=replies.append)
+            frames: list[StreamFrame] = []
+            for offset in range(0, len(data), size):
+                frames += decoder.push(data[offset : offset + size])
+            self.assertEqual([frame.timeStamp for frame in frames], [7, 8], size)
+            self.assertEqual(replies, [AckReply(platform_address=0x00, command=0x1B, raw=ack)], size)
+            self.assertEqual(decoder.discarded_bytes, 4 * len(burst), size)
+
+    def test_every_nonce_and_both_ops_leave_the_next_frame_intact(self) -> None:
+        # Some nonces put BE EF, a frame header, inside the burst.
+        frame = sample(42)
+        for op in (1, 2):
+            for nonce in range(0x10000):
+                decoder = StreamDecoder()
+                frames = decoder.push(button_burst(op, nonce) + frame)
+                self.assertEqual(len(frames), 1, (op, nonce))
+                self.assertEqual(frames[0].timeStamp, 42, (op, nonce))
+
+    def test_a_break_read_as_three_nuls(self) -> None:
+        decoder = StreamDecoder()
+        frames = decoder.push(b"\x00\x00" + button_burst(2, 0xEFBE) + sample(3))
+        self.assertEqual([frame.timeStamp for frame in frames], [3])

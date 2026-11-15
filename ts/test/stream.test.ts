@@ -153,3 +153,45 @@ describe('StreamDecoder', () => {
     assert.deepEqual(new StreamDecoder().push(reply), []);
   });
 });
+
+// After a press of the FDT's reset button (FDT 1.2.8.32 with bridge 1.4.1.0) a Bluetooth host may see up to three
+// 8-byte bursts between replies: a NUL from the break, then 'M' 'B' op nonce-lo nonce-hi and their CRC.
+function buttonBurst(op: number, nonce: number): Uint8Array {
+  const body = Uint8Array.from([0x4d, 0x42, op, nonce & 0xff, nonce >> 8]);
+  const crc = crc16CcittFalse(body);
+  return Uint8Array.from([0x00, ...body, crc & 0xff, crc >> 8]);
+}
+
+describe('StreamDecoder and the reset button message', () => {
+  test('bursts between an ACK and frames are skipped, whatever the chunk size', () => {
+    const burst = buttonBurst(1, 0x1234);
+    const second: StreamFrame = { ...SAMPLE, timeStamp: 123460 };
+    const stream = new Uint8Array([
+      ...bytesOf('beef011b06e3440404'),
+      ...burst,
+      ...burst,
+      ...burst,
+      ...encodeStreamFrame(SAMPLE),
+      ...burst,
+      ...encodeStreamFrame(second),
+    ]);
+    for (const size of [stream.length, 20, 7, 1]) {
+      const decoder = new StreamDecoder();
+      const frames: StreamFrame[] = [];
+      for (let i = 0; i < stream.length; i += size) frames.push(...decoder.push(stream.subarray(i, i + size)));
+      assert.deepEqual(frames, [SAMPLE, second], `chunk size ${size}`);
+    }
+  });
+
+  test('every nonce of both ops leaves the next frame intact, BE EF inside the burst included', () => {
+    const frame = encodeStreamFrame(SAMPLE);
+    for (const op of [1, 2]) {
+      for (let nonce = 0; nonce < 0x10000; nonce += 1) {
+        const frames = new StreamDecoder().push(new Uint8Array([...buttonBurst(op, nonce), ...frame]));
+        if (frames.length !== 1 || frames[0]?.timeStamp !== SAMPLE.timeStamp) {
+          assert.fail(`op ${op} nonce 0x${nonce.toString(16)}: ${frames.length} frames`);
+        }
+      }
+    }
+  });
+});

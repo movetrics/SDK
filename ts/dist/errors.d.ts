@@ -13,7 +13,8 @@ export declare class FdtNackError extends Error {
     readonly command: number;
     readonly platformAddress: number;
     readonly errorCode: number;
-    constructor(command: number, platformAddress: number, errorCode: number, errorName: string);
+    readonly hint: string;
+    constructor(command: number, platformAddress: number, errorCode: number, errorName: string, hint?: string);
 }
 export declare class FdtTimeoutError extends Error {
     readonly command: number;

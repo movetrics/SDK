@@ -132,6 +132,7 @@ describe('FdtClient requests', () => {
         assert.ok(error instanceof FdtNackError);
         assert.equal(error.errorCode, 1);
         assert.equal(error.message, 'controller NACK 1 (ERR_PLATFORM_NOT_EXIST) to command 0x23');
+        assert.equal(error.hint, '');
         return true;
       });
     } finally {
@@ -203,6 +204,25 @@ describe('FdtClient commands without a success reply', () => {
         assert.ok(error instanceof FdtNackError);
         assert.equal(error.errorCode, 8);
         assert.equal(error.command, 0x01);
+        // Firmware 1.2.8.28 and later: another host on the other port owns the stream.
+        assert.match(error.message, /another host/);
+        assert.match(error.hint, /another host/);
+        return true;
+      });
+    } finally {
+      await client.close();
+    }
+  });
+
+  test('stopStream refused with NACK 8 says another host may own the stream', async () => {
+    const transport = new FakeTransport();
+    transport.respond = (frame) => (frame[4] === 0x05 ? [reply([0xff, 0x05, 0x15, 0x08, 0x00])] : []);
+    const client = clientFor(transport);
+    try {
+      await assert.rejects(client.stopStream(), (error: unknown) => {
+        assert.ok(error instanceof FdtNackError);
+        assert.equal(error.errorCode, 8);
+        assert.match(error.message, /another host/);
         return true;
       });
     } finally {

@@ -142,7 +142,7 @@ For 0x31, the payload is p0, a baud code. Codes outside the range the firmware a
 | 0x62 DEBUG_PADS_RESTART | Destructive (pad power or pad reset) | ACK when the pads answer and tare; NACK 2 otherwise | **Do not send:** it switches the pad power off or resets every pad, then detects plates and tares. It is refused with NACK 3 while streaming or updating, and with NACK 8 during a pad firmware job. | documented only | code |
 | 0x63 (pad-sample mode switch) | Configuration (RAM) | ACK | **Do not send:** a factory test that switches the pad polling between GET_FRAME and queued samples, RAM only. The state after a reset is queued samples on. It does not check whether a stream is running and has no guard. The effect on the stream is in [05-measurement-stream.md](05-measurement-stream.md), section 4.8. Not run on hardware. | documented only | code |
 
-The codes 0x64 and 0x65 are not in the 1.2.8.0 command list and get NACK 7. Treat the whole range 0x60 to 0x65 as debug codes that must not be sent.
+The codes 0x64 to 0x66 are not in the 1.2.8.0 command list and get NACK 7. Treat the whole range 0x60 to 0x66 as debug codes that must not be sent.
 
 ### 3.6 Firmware update
 
@@ -317,3 +317,4 @@ Every code the firmware knows, so that no two features share one. "Released" mea
 | 0x63 | debug: raw pad samples | factory test |
 | 0x64 | DEBUG_BATTERY | factory test, 1.2.8.8 and later |
 | 0x65 | DEBUG_WAKE | factory test, 1.2.8.12 and later |
+| 0x66 | DEBUG_PLATFORM_CAL | factory test, 1.2.8.30 and later (read-only: the calibration records a platform's pads hold) |

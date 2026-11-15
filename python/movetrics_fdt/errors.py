@@ -32,13 +32,13 @@ class UnsupportedCommandError(FdtError):
 class NackError(FdtError):
     """The controller refused a command with NACK."""
 
-    def __init__(self, command: int, error_code: int, error_name: str) -> None:
-        super().__init__(
-            f"controller NACK {error_code} ({error_name}) for command 0x{command:02X}"
-        )
+    def __init__(self, command: int, error_code: int, error_name: str, hint: str = "") -> None:
+        message = f"controller NACK {error_code} ({error_name}) for command 0x{command:02X}"
+        super().__init__(f"{message}: {hint}" if hint else message)
         self.command = command
         self.error_code = error_code
         self.error_name = error_name
+        self.hint = hint
 
 
 class ReplyTimeoutError(FdtError):
