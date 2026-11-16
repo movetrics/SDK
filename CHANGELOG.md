@@ -2,6 +2,15 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased (2026-11-16): NOKOV XINGYING take sync and analog plate worksheet
+
+The FDT next to NOKOV's XINGYING motion capture software, from XINGYING's manual (4.7, English and Chinese) and NOKOV's public GitHub. No XINGYING system was available: nothing in this entry has run with XINGYING; what was run is said for each item.
+
+- **A file for every XINGYING take**: `movetrics-fdt nokov-record` streams the FDT continuously and cuts a take at each of XINGYING's Remote Trigger messages (UDP, port 7061): `<take>.csv` or `.c3d`, named like the take, plus `<take>.nokov.json` with the messages, their arrival and the cut in FDT time. The arrival is mapped onto the FDT clock with the LSL clock map (`ClockMap.to_device`, new, its exact inverse), so takes are aligned to the trigger's arrival, not to the sample. Repeats from a second network card count once; stray stops, a start before a stop, a stop naming another take, `RESULT` other than `SUCCESS` and messages that needed repair are noted in the take; nothing is overwritten; take names keep their script and lose what file systems refuse. `--lsl` also publishes the FDT on LSL with one marker per trigger. Tested: the manual's four example messages byte for byte, UTF-8 and GBK names, hostile datagrams, the cutter on synthetic streams, and end to end over local UDP with the simulator, where a 2.16 s take held 2,162 samples per plate at 1,000 frames/s (simulated). A Windows CI job runs these tests.
+- **Start and stop XINGYING**: `movetrics-fdt nokov-control start|stop` sends the Remote Control messages (UDP, port 7060) as in the manual's examples; `nokov-listen` shows what XINGYING sends. Not yet sent to XINGYING.
+- **The analog outputs as a XINGYING force plate**: `movetrics-fdt nokov-analog-setup` prints the wiring (XINGYING channels 1 to 6 = A2, A3, A1, A5, A6, A4 for plate 1), a calibration matrix in N per V and N·m per V with the moments moved to the top surface as the SDK's C3D files do, what XINGYING's manual leaves open, the known-load check to run first and the limits. It refuses firmware before 1.2.8.21. Computed consistency only: the matrix gives the same centre of pressure as `plate_cop` and as the C3D writer read back with ezc3d. Not run in XINGYING.
+- **Docs**: [chapter 24](docs/24-nokov.md), the site page "Work with NOKOV XINGYING", cross-references in chapters 22 and 23, the EMG and cameras page, the READMEs and AGENTS.md.
+
 ## Unreleased (2026-11-16): LSL from a web page and from MATLAB, the clock map pinned down
 
 The FDT reaches LabRecorder from every client: Python as before, a web page through a local relay, and MATLAB. Nothing in this entry was run with a real FDT, LabRecorder, a browser, MATLAB itself or Noraxon hardware; what was run is said for each item.

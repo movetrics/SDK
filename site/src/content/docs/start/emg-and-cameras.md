@@ -24,6 +24,8 @@ Next to Noraxon EMG: Noraxon's own bridge, [Noraxon-LSL](https://github.com/Nora
 
 Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitted offset and drift, so USB delivery jitter (up to 16 ms) does not enter the data. Alignment between devices is as good as LSL's own clock sync between computers, typically about a millisecond on one machine or a local network. [Details](../../reference/22-lsl-and-sync/).
 
+With NOKOV's XINGYING motion capture, `movetrics-fdt nokov-record` writes an FDT file for every XINGYING take, and `--lsl` publishes the FDT on LSL at the same time. [Work with NOKOV XINGYING](../nokov/).
+
 ## With a cable: sync pulses
 
 For sample-level alignment the FDT can send a pulse train on SYNC OUT to your EMG system's trigger input, or start when a pulse arrives on SYNC IN. Every edge is reported with its exact FDT time, and `movetrics_fdt.sync.align()` gives offset, drift and residual from the two lists of edge times.

@@ -11,7 +11,7 @@ Force data is only useful if the numbers are right and their limits are known. T
 
 The SDK starts from a written contract, not from a client library. The [reference](../../reference/00-overview/) describes every byte the FDT sends and accepts, and the [vocabulary](../../reference/19-vocabulary-and-units/) fixes the names, units, axes and signs every client must produce. From that contract come shared test files (`vectors/`): 53 byte-level cases for framing, the stream, status replies, the version probe and the checksum, 7 vocabulary cases that turn frames into samples, gaps and events, 3 clock-mapping cases that put FDT stamps on the Lab Streaming Layer clock, plus golden files for sync events and for the C3D writer. Each case is an input and the exact output it must give.
 
-The Python client runs all of those files in its test suite; the TypeScript client runs all but the clock map, which it leaves to the Python relay; the MATLAB toolbox runs the checksum, stream, vocabulary, sync and clock-map files, the parts it uses; the C3D golden file is read by the Python writer's tests. A generated report, [CONFORMANCE.md](https://github.com/movetrics/sdk/blob/main/CONFORMANCE.md), says for each file and each client whether it was read and passed, and never marks a file as passed for a client that does not read it. Today: Python 285 tests, TypeScript 214, MATLAB (run in GNU Octave) 68 checks, all passing. A Python test that needs an optional library (pyserial, bleak, ezc3d, pylsl, websockets) is skipped when that library is not installed, and says which one; the MATLAB end-to-end LSL check runs only with liblsl-Matlab on the path.
+The Python client runs all of those files in its test suite; the TypeScript client runs all but the clock map, which it leaves to the Python relay; the MATLAB toolbox runs the checksum, stream, vocabulary, sync and clock-map files, the parts it uses; the C3D golden file is read by the Python writer's tests. A generated report, [CONFORMANCE.md](https://github.com/movetrics/sdk/blob/main/CONFORMANCE.md), says for each file and each client whether it was read and passed, and never marks a file as passed for a client that does not read it. Today: Python 308 tests, TypeScript 214, MATLAB (run in GNU Octave) 68 checks, all passing. A Python test that needs an optional library (pyserial, bleak, ezc3d, pylsl, websockets) is skipped when that library is not installed, and says which one; the MATLAB end-to-end LSL check runs only with liblsl-Matlab on the path.
 
 So a team that writes its own client, in C#, Swift or Rust, has a finish line: pass the same vectors and it decodes the FDT exactly as the reference clients do.
 
@@ -30,6 +30,7 @@ So a team that writes its own client, in C#, Swift or Rust, has a finish line: p
 | Lab Streaming Layer timing | The simulator into a local LSL inlet, with clock drift | drift 0.13 ppm, residual 0.012 ms (simulated) |
 | LSL from a web page | The TypeScript client in Node on the simulator, through the relay to an LSL inlet, 8 s at 1,000 per second per plate | 8,000 of 8,000 samples of plate 1; stamps within 0.07 ms of the 1 ms spacing after the warm-up (simulated) |
 | LSL from MATLAB | movetrics.LslBridge in GNU Octave 8.4 with liblsl-Matlab, 20 ms reads arriving 3 to 13 ms late | every sample delivered; stamps within 0.2 ms of the 1 ms spacing after the warm-up (simulated) |
+| Takes cut by NOKOV XINGYING | Start and stop messages in the manual's format, sent with `nokov-control` over local UDP to `nokov-record` on the simulator, 1,000 per second per plate | a 2.16 s take held 2,162 samples per plate (simulated) |
 
 For C3D, the SDK's writer moves the moments to the plate surface and sets the origin explicitly, so a standard reader (ezc3d, the library OpenSim uses) puts the centre of pressure within half a millimetre of the CSV (measured).
 
@@ -58,5 +59,6 @@ The Python core uses only the standard library; USB, Bluetooth, C3D and LSL supp
 | Sign of `fy` and `mx` | Follows Studio's configuration; not yet checked with one known off-centre load on both sides |
 | OpenSim force direction | Round trip and axis mapping simulated; not yet checked with a known horizontal load |
 | Sync modes (start on trigger, event frames) | Need firmware with the sync jack; the SDK finds them by asking the FDT, not by version number. Not yet measured on hardware |
+| NOKOV XINGYING | Take sync, Remote Control and the analog plate worksheet follow XINGYING's manual and ran with the simulator; not yet run with XINGYING |
 
 Each page in these docs carries its own "Tested on" line with the same three words: **measured** (on real hardware or real recordings), **simulated** (on the simulator), or **not yet**.

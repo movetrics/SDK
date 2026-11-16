@@ -63,12 +63,12 @@ Plug in an FDT, change one line, and the same program reads real plates. Other e
 
 | Folder | What it holds |
 |---|---|
-| [`python/`](python/) | Python package `movetrics-fdt`: live client (USB, Bluetooth, TCP), Studio readers, CSV/C3D/OpenSim writers, LSL and the LSL relay for web pages, sync alignment, simulator, Cloud client. Core uses only the standard library. |
+| [`python/`](python/) | Python package `movetrics-fdt`: live client (USB, Bluetooth, TCP), Studio readers, CSV/C3D/OpenSim writers, LSL and the LSL relay for web pages, sync alignment, NOKOV XINGYING take sync, simulator, Cloud client. Core uses only the standard library. |
 | [`ts/`](ts/) | TypeScript package `movetrics-fdt-sdk`: browser and Node client, LSL through the relay, no runtime dependencies. |
 | [`matlab/`](matlab/) | MATLAB toolbox `+movetrics`: live stream, LSL, Studio files, Cloud API. |
 | [`excel/`](excel/) | Ready workbook and Power Query code for Movetrics Cloud. |
 | [`examples/`](examples/) | Small complete programs: stream reader, recorder, LSL outlet, Cloud results, browser page. |
-| [the firmware](docs/) | The specification: transports, framing, commands, the stream, status, vocabulary, files, sync, analog outputs. |
+| [the firmware](docs/) | The specification: transports, framing, commands, the stream, status, vocabulary, files, sync, analog outputs, NOKOV XINGYING. |
 | [`vectors/`](vectors/) | Shared test vectors: the bytes in, the values out. |
 | [`contracts/`](contracts/) | Machine-readable contracts: vocabulary, firmware capabilities, analog scale, Cloud API (OpenAPI). |
 | [`site/`](site/) | The source of developers.movetrics.com. |

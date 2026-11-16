@@ -29,6 +29,7 @@ export default defineConfig({
           { label: 'Python in 5 minutes', slug: 'start/python' },
           { label: 'MATLAB in 5 minutes', slug: 'start/matlab' },
           { label: 'Record with EMG and cameras', slug: 'start/emg-and-cameras' },
+          { label: 'Work with NOKOV XINGYING', slug: 'start/nokov' },
           { label: 'OpenSim and Pose2Sim', slug: 'start/opensim' },
           { label: 'Ask Claude or ChatGPT', slug: 'start/ai-assistants' },
           { label: 'Build without an FDT', slug: 'start/simulator' },

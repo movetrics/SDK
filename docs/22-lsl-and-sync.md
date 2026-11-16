@@ -2,6 +2,8 @@
 
 Two routes put FDT data on one time base with other devices. **LSL** (Lab Streaming Layer) needs no cable: LabRecorder records the FDT and any LSL device (EMG, EEG, eye tracking, PLUX OpenSignals, Noraxon's LSL bridge) into one XDF file, aligned to within the clock-mapping error below. **Sync pulses** need a cable to the FDT's SYNC IN or SYNC OUT and give sample-level alignment; they depend on the sync modes in development (the firmware team) and are simulated only so far.
 
+With NOKOV's XINGYING motion capture, `movetrics-fdt nokov-record` cuts an FDT file for every XINGYING take from XINGYING's own start and stop messages, mapped onto the FDT clock with the clock map below (chapter 24).
+
 Three clients publish the same LSL streams: Python (`LslBridge`), MATLAB (`movetrics.LslBridge`) and, for a web page that reads the FDT in the browser, the TypeScript `LslRelay` through the Python relay. Whichever one publishes, LabRecorder sees the same names, channels, units, description and clock method.
 
 ## LSL from Python

@@ -1,6 +1,6 @@
 # 23. Analog outputs
 
-FDTs with the analog interface board put each plate's forces, moments and centre of pressure on sixteen ±10 V outputs, A1 to A16, for systems that record voltages: an EMG amplifier's auxiliary inputs, a DAQ card, a motion capture system's analog board. This chapter gives the scale and what the voltages mean. Source: Nur Engineering, *Movetrics FDT analog outputs: scale per channel*, 27 October 2026, for FDT firmware 1.2.8.22, checked against the firmware source. Machine-readable: `contracts/analog-outputs.v1.json`; in Python, `movetrics_fdt.analog`.
+FDTs with the analog interface board put each plate's forces, moments and centre of pressure on sixteen ±10 V outputs, A1 to A16, for systems that record voltages: an EMG amplifier's auxiliary inputs, a DAQ card, a motion capture system's analog board. This chapter gives the scale and what the voltages mean. Source: Nur Engineering, *Movetrics FDT analog outputs: scale per channel*, 27 October 2026, for FDT firmware 1.2.8.22, checked against the firmware source. Machine-readable: `contracts/analog-outputs.v1.json`; in Python, `movetrics_fdt.analog`. For NOKOV's XINGYING, which reads analog plates through an NI DAQ, chapter 24 gives the wiring and calibration matrix.
 
 ## 23.1 Scale
 
