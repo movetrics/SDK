@@ -8,5 +8,6 @@ export { EVENT_ADDRESS, EVENT_COMMAND, EVENT_NAMES, STREAM_COMMAND, STREAM_FRAME
 export { COP_MIN_FZ_N, MOMENT_REFERENCE_DEPTH_M, SampleConverter, STREAM_SIGN, TICKS_PER_SECOND, combine, plateCop, } from "./vocabulary.js";
 export { parseFirmwareVersion, parseStatus, parseStatusRecord, } from "./status.js";
 export { AsyncQueue } from "./transport.js";
+export { LSL_RELAY_PROTOCOL_VERSION, LSL_RELAY_URL, LslRelay, LslRelayError, } from "./lslrelay.js";
 export { SERIAL_OPTIONS, WebSerialTransport, } from "./webserial.js";
 export { BLE_DEVICE_NAME, BLE_RX_UUID, BLE_SERVICE_UUID, BLE_STATUS_UUID, BLE_TX_UUID, WebBluetoothTransport, } from "./webbluetooth.js";

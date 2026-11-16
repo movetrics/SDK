@@ -7,5 +7,6 @@ export { EVENT_ADDRESS, EVENT_COMMAND, EVENT_NAMES, STREAM_COMMAND, STREAM_FRAME
 export { COP_MIN_FZ_N, MOMENT_REFERENCE_DEPTH_M, SampleConverter, STREAM_SIGN, TICKS_PER_SECOND, combine, plateCop, type CombinedWrench, type Event, type Gap, type Sample, type SampleConverterOptions, type VocabularyItem, } from './vocabulary.js';
 export { parseFirmwareVersion, parseStatus, parseStatusRecord, type FirmwareVersion, type LengthClass, type Status, type StatusRecord, } from './status.js';
 export { AsyncQueue, type Transport } from './transport.js';
+export { LSL_RELAY_PROTOCOL_VERSION, LSL_RELAY_URL, LslRelay, LslRelayError, type LslRelayClosed, type LslRelayOptions, type WebSocketEventLike, type WebSocketLike, } from './lslrelay.js';
 export { SERIAL_OPTIONS, WebSerialTransport, type SerialOpenOptions, type SerialPortLike, type SerialReaderLike, type SerialSignals, type SerialWriterLike, } from './webserial.js';
 export { BLE_DEVICE_NAME, BLE_RX_UUID, BLE_SERVICE_UUID, BLE_STATUS_UUID, BLE_TX_UUID, WebBluetoothTransport, type BleCharacteristics, type BleNotifyCharacteristic, type BleWriteCharacteristic, } from './webbluetooth.js';

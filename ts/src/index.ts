@@ -104,6 +104,16 @@ export {
 } from './status.ts';
 export { AsyncQueue, type Transport } from './transport.ts';
 export {
+  LSL_RELAY_PROTOCOL_VERSION,
+  LSL_RELAY_URL,
+  LslRelay,
+  LslRelayError,
+  type LslRelayClosed,
+  type LslRelayOptions,
+  type WebSocketEventLike,
+  type WebSocketLike,
+} from './lslrelay.ts';
+export {
   SERIAL_OPTIONS,
   WebSerialTransport,
   type SerialOpenOptions,
