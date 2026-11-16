@@ -4,7 +4,7 @@ Written by `tools/conformance.py` on 2026-11-16. A client conforms to a file whe
 
 | Client | Suite | Result |
 |---|---|---|
-| Python | ran here | passed (Ran 308 tests in 15.419s OK (skipped=1)) |
+| Python | ran here | passed (Ran 317 tests in 15.708s OK (skipped=3)) |
 | TypeScript | ran here | passed (214 pass, 0 fail) |
 | MATLAB (Octave) | ran here | passed (68 checks) |
 | Kotlin (Android fdt-core) | - | not run: android checkout not given (--android) |

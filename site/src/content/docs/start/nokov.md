@@ -1,9 +1,9 @@
 ---
 title: Work with NOKOV XINGYING
-description: An FDT file for every XINGYING take, XINGYING started from your program, and the FDT's analog outputs as a XINGYING force plate.
+description: An FDT file for every XINGYING take, XINGYING started from your program, the FDT's analog outputs as a XINGYING force plate, and XINGYING's stream in Python.
 ---
 
-Three ways to use the FDT next to NOKOV's XINGYING motion capture software. Written from XINGYING's manual (4.7, English and Chinese) and run with the SDK's simulator; **none has run with XINGYING yet**. [Full details, status and limits](../../reference/24-nokov/).
+Three ways to use the FDT next to NOKOV's XINGYING motion capture software, and one to read XINGYING's own stream in Python. Written from XINGYING's manual (4.7, English and Chinese) and run with the SDK's simulator; **none has run with XINGYING yet**. [Full details, status and limits](../../reference/24-nokov/).
 
 ## An FDT file for every take
 
@@ -34,3 +34,15 @@ movetrics-fdt nokov-analog-setup --firmware 1.2.8.22
 ```
 
 The values follow from the FDT's analog scale; how XINGYING expects some of them (plate type, moment unit, axes) is not settled by its manual, which is why the check comes first. With digital EMG inside XINGYING (Noraxon over its SDK, for example), XINGYING does not accept analog plates: use the take files or [LSL](../emg-and-cameras/) instead.
+
+## XINGYING's stream in Python (experimental)
+
+Markers, rigid bodies, skeletons and the force plates XINGYING reads, through NOKOV's own SDK library (Linux; in NOKOV's ROS repositories on GitHub, for example `mocap_nokov/deps/nokov_sdk/lib/x64/libnokov_sdk.so`):
+
+```sh
+export MOVETRICS_NOKOV_SDK=/path/to/libnokov_sdk.so
+movetrics-fdt nokov-sdk-check
+movetrics-fdt nokov-stream --server 10.1.1.198
+```
+
+Checked against NOKOV's two published library builds without a XINGYING server; [details](../../reference/24-nokov/).

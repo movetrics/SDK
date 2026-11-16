@@ -20,7 +20,7 @@ Context for AI coding agents (Claude Code, Cursor, Copilot, ChatGPT, Codex and o
 | Files for other tools | `write_csv`, `write_c3d`, `write_mot` | `docs/21-writing-files.md` |
 | Recording next to EMG, EEG or cameras | Lab Streaming Layer: `LslBridge` (Python), `movetrics.LslBridge` (MATLAB), `LslRelay` with `movetrics-fdt lsl-relay` (a web page); the sync modes, `sync.align` | `docs/22-lsl-and-sync.md`, `examples/python/lsl_stream.py`, `matlab/examples/lsl_stream.m` |
 | Voltages recorded from the FDT's analog outputs | `movetrics_fdt.analog.to_vocabulary` | `docs/23-analog-outputs.md` |
-| NOKOV XINGYING motion capture | `movetrics-fdt nokov-record` (a file per XINGYING take, cut in FDT time), `nokov-control` (start and stop XINGYING), `nokov-analog-setup` (the analog outputs as a XINGYING plate); `movetrics_fdt.nokov` | `docs/24-nokov.md` |
+| NOKOV XINGYING motion capture | `movetrics-fdt nokov-record` (a file per XINGYING take, cut in FDT time), `nokov-control` (start and stop XINGYING), `nokov-analog-setup` (the analog outputs as a XINGYING plate); `movetrics_fdt.nokov`; XINGYING's own stream through NOKOV's library, experimental: `movetrics_fdt.nokov_sdk`, `nokov-stream` | `docs/24-nokov.md` |
 | A client in another language | the specification and the vectors | the firmware, `vectors/README.md` |
 
 If the user has no FDT, or you cannot reach one, **build against the simulator**. It speaks the real protocol:

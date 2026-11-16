@@ -10,6 +10,7 @@ XINGYING is the motion capture software of NOKOV (Windows). This chapter gives t
 | To start and stop XINGYING recordings from your own program | Remote Control (24.3) | Messages built to the manual's examples. Not yet sent to XINGYING |
 | The plates inside XINGYING: its 3D view, force graphs and C3D export | Analog outputs into an NI DAQ (24.4) | Values derived from the analog contract (chapter 23), computed consistency only. Not run in XINGYING |
 | Samples aligned with the markers to a millisecond | A sync cable (24.5) | Not yet: needs the FDT's sync modes, simulated only |
+| XINGYING's markers, rigid bodies and force plates (any maker) in Python | NOKOV's SDK library (24.6) | Experimental: checked against NOKOV's two GitHub builds without a server. Not yet run with XINGYING |
 
 Take sync aligns takes, not samples: the trigger travels over the network, and that delay is in the cut. It has not been measured.
 
@@ -104,9 +105,38 @@ Status: derived from the analog contract (`contracts/analog-outputs.v1.json`) an
 
 NOKOV's Sync Unit has 5 V and 3.3 V TTL outputs and TTL inputs (the manual). A pulse between it and the FDT's SYNC IN or SYNC OUT (chapter 22, sync helpers) would align samples to the FDT's clock; a spare NI channel could also record an FDT pulse next to the analog plates. Neither has been tried: the FDT's sync modes are simulated only.
 
-## 24.6 Not here yet
+## 24.6 XINGYING's data in Python (experimental)
 
-- XINGYING's data in Python through NOKOV's SDK (markers, rigid bodies, other makers' force plates).
+XINGYING also streams what it tracks to programs that use NOKOV's SDK: labeled and unlabeled markers, rigid bodies, skeletons and the force plates it reads, from any maker. `movetrics_fdt.nokov_sdk` reads that stream with NOKOV's own library, which NOKOV publishes for Linux (x64, aarch64, armhf) in its ROS repositories on GitHub, for example `mocap_nokov/deps/nokov_sdk/lib/x64/libnokov_sdk.so` (BSD-3-Clause). This SDK does not include the library; point to your copy. Switch on the SDK in XINGYING's data broadcast panel, then:
+
+```sh
+export MOVETRICS_NOKOV_SDK=/path/to/libnokov_sdk.so
+movetrics-fdt nokov-sdk-check                      # the library's version and the layout check
+movetrics-fdt nokov-stream --server 10.1.1.198     # the address shown in XINGYING's data broadcast panel
+```
+
+```python
+from movetrics_fdt.nokov_sdk import NokovClient, NokovForcePlates
+
+if __name__ == "__main__":                          # the library runs in a child process
+    with NokovClient("10.1.1.198") as nokov:
+        print(nokov.server, nokov.descriptions.force_plates)
+        for item in nokov.items():                  # NokovFrame, NokovForcePlates or NokovMessage
+            if isinstance(item, NokovForcePlates):
+                print(item.frame, [plate.force for plate in item.plates])
+```
+
+**How it works.** Every build of the library exports a flat C interface that no header declares; the module calls it with ctypes and the data layouts of NOKOV's header (`NokovSDKTypes.h` 1.3.0.12). Before it connects it checks the layout: it writes a frame with known values, lets the library copy it and reads every field back, and it refuses a library that differs. The library runs in a child process, so a fault in it cannot take your program down. Frames arrive through a bounded queue; what does not fit is counted in `dropped`, not lost silently.
+
+**Nothing is converted.** Positions are in millimetres. Force-plate forces are in XINGYING's Force Units setting (N, kgf or lbf; the stream does not say which). The force plate's point and free moment come as the library gives them: the header defines neither their units nor their frame. Each item carries its arrival time (`time.monotonic()`); the frame's own `timestamp` has no stated unit.
+
+On Windows, NOKOV's library comes from its download page; this module has not been tried with it.
+
+Status: in CI against NOKOV's GitHub builds 2.5.51.57 and 2.5.53.12 (x64), without a XINGYING server: loading, version, the layout check, a connection attempt that fails within the library's 5 s with its reason, and a clean shutdown. The conversions are tested on frames built in memory. Not yet run against XINGYING.
+
+## 24.7 Not here yet
+
+- XINGYING's stream on Lab Streaming Layer, next to the FDT.
 - Importing XINGYING's exports (C3D, `.forces`, `.anc`) into Movetrics Cloud: it needs sample files first.
 - XINGYING reading the FDT digitally: that needs NOKOV; the FDT protocol and the test vectors in this SDK are open for it.
 - This chapter in Chinese.

@@ -61,6 +61,7 @@ The simulator speaks the FDT's real protocol. `--signal stand|cmj|empty`, `--bod
 | Record next to EMG, EEG or cameras | `movetrics_fdt.lsl.LslBridge(rate_hz, plates)`: `bridge.push(item)` for each item of `samples()`; `device="B"` for a second FDT on the network |
 | Publish a web page's FDT stream on LSL | `movetrics-fdt lsl-relay` (`movetrics_fdt.relay`); the page sends with `LslRelay` from the TypeScript client |
 | Record a file for every NOKOV XINGYING take | `movetrics-fdt nokov-record --serial COM3` (`movetrics_fdt.nokov`: `TakeCutter`, `TriggerListener`, `record_takes`); `nokov-control` starts and stops XINGYING, `nokov-analog-setup` prints the analog plate worksheet ([chapter 24](https://github.com/movetrics/sdk/blob/main/docs/24-nokov.md)) |
+| Read XINGYING's markers, rigid bodies and force plates (experimental) | `movetrics_fdt.nokov_sdk.NokovClient(server)` with NOKOV's own `libnokov_sdk.so` (`MOVETRICS_NOKOV_SDK`); `movetrics-fdt nokov-sdk-check`, `nokov-stream` |
 | Align two clocks with sync pulses | `movetrics_fdt.sync`: `edge_times`, `align`, `merge` (two FDTs into one timeline) |
 | Read results and recordings from Movetrics Cloud | `CloudClient(os.environ["MOVETRICS_TOKEN"])`: `results()`, `recordings()`, `samples(recording_id)` |
 | Turn recorded analog voltages into values | `movetrics_fdt.analog.to_vocabulary("A1", volts)` |
@@ -130,7 +131,8 @@ No hardware and no extras needed; a test that needs a missing extra is skipped w
 | `set_rate` and the stream on a real FDT | the firmware team's own tool, not yet this client |
 | Bluetooth, Windows, macOS, Linux serial | fakes only; not yet with a device |
 | NOKOV XINGYING take sync and Remote Control | the manual's messages and local UDP with the simulator (simulated); not yet with XINGYING |
+| NOKOV SDK client (experimental) | NOKOV's GitHub library builds 2.5.51.57 and 2.5.53.12, without a XINGYING server; not yet with XINGYING |
 
 ## Layout
 
-`movetrics_fdt/`: `client.py` (FdtClient), `transport.py`, `serial_transport.py`, `ble_transport.py`, `tcp_transport.py`, `frames.py` and `crc.py` (framing), `commands.py`, `stream.py` and `status.py` (wire layouts), `vocabulary.py` (samples, CoP), `files.py` (Studio readers), `writers.py`, `lsl.py`, `relay.py` (the LSL relay), `sync.py`, `analog.py`, `nokov.py` (NOKOV XINGYING), `cloud.py`, `simulator.py` and `simulator_io.py`, `__main__.py` (the `movetrics-fdt` command). `tests/`: the suites and their fixtures.
+`movetrics_fdt/`: `client.py` (FdtClient), `transport.py`, `serial_transport.py`, `ble_transport.py`, `tcp_transport.py`, `frames.py` and `crc.py` (framing), `commands.py`, `stream.py` and `status.py` (wire layouts), `vocabulary.py` (samples, CoP), `files.py` (Studio readers), `writers.py`, `lsl.py`, `relay.py` (the LSL relay), `sync.py`, `analog.py`, `nokov.py` and `nokov_sdk.py` (NOKOV XINGYING), `cloud.py`, `simulator.py` and `simulator_io.py`, `__main__.py` (the `movetrics-fdt` command). `tests/`: the suites and their fixtures.
