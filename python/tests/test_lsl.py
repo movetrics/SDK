@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
 from movetrics_fdt.vocabulary import Event, Gap, Sample
 
 
-@unittest.skipIf(pylsl is None, "pylsl not installed (pip install 'movetrics-fdt[lsl]')")
+@unittest.skipIf(pylsl is None, "pylsl not installed (pip install pylsl)")
 class LslTests(unittest.TestCase):
     def test_samples_and_markers_reach_an_inlet_with_device_spacing(self):
         from movetrics_fdt.lsl import LslBridge

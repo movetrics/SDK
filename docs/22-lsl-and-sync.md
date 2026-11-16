@@ -21,7 +21,13 @@ async def main():
 asyncio.run(main())
 ```
 
-`pip install 'movetrics-fdt[lsl,serial]'` installs pylsl, whose wheel carries liblsl for Windows, macOS and Linux. The full script is `examples/python/lsl_stream.py`; with `--simulate` it runs against the simulator.
+The package is installed from GitHub (it is not on PyPI). The `lsl` extra brings pylsl, whose wheel carries liblsl for Windows, macOS and Linux:
+
+```sh
+pip install "movetrics-fdt[lsl,serial] @ git+https://github.com/movetrics/sdk#subdirectory=python"
+```
+
+The full script is `examples/python/lsl_stream.py`; with `--simulate` it runs against the simulator.
 
 | Stream | Type | Rate | Channels |
 |---|---|---|---|

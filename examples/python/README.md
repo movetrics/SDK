@@ -12,6 +12,7 @@ From this directory, install the package in editable mode with the extra for you
 
     python3 -m pip install -e "../../python[serial]"   # USB, needs pyserial
     python3 -m pip install -e "../../python[ble]"      # BLE bridge, needs bleak
+    python3 -m pip install -e "../../python[lsl,serial]"   # lsl_stream.py (Lab Streaming Layer), needs pylsl
 
 Python 3.10 or newer is required.
 

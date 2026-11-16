@@ -2,6 +2,10 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased (2026-11-16): LSL install line, two FDTs on one network
+
+- **LSL install line**: [chapter 22](docs/22-lsl-and-sync.md) and `examples/python/lsl_stream.py` said `pip install 'movetrics-fdt[lsl,serial]'`, which fails because the package is not on PyPI. Both now give the GitHub install, as the README and the site already did; the example also gives the editable install from a checkout, and so does the examples README. The LSL test's skip message names `pylsl`. Checked on Linux: the GitHub install, pylsl 1.18.7 from the `lsl` extra, and the LSL test.
+
 ## Unreleased 0.3.2 (2026-11-15): one stream owner, paired Bluetooth, analog zero
 
 Newer FDT firmware keeps a stream with the host that started it, and newer Bluetooth bridges talk only to a paired host. Nothing in this entry was run on a real FDT by the SDK; the firmware facts are read from the firmware's code and its own tests.

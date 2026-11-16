@@ -3,7 +3,9 @@
     python lsl_stream.py --port /dev/tty.usbserial-XXXX --rate 2000      # a real FDT (COM3 on Windows)
     python lsl_stream.py --simulate --rate 2000                          # the simulator, nothing to plug in
 
-Needs: pip install 'movetrics-fdt[lsl,serial]'. Units, names and signs: docs/19; timing: docs/22.
+Install the package first, from this directory: python3 -m pip install -e "../../python[lsl,serial]"
+(without a checkout: pip install "movetrics-fdt[lsl,serial] @ git+https://github.com/movetrics/sdk#subdirectory=python").
+Units, names and signs: docs/19; timing: docs/22.
 """
 
 import argparse
