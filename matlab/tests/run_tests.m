@@ -3,6 +3,7 @@
 % real Studio export (python/tests/fixtures). No FDT, no serial port and no network are needed: the live FDT
 % parts use tests/MockSerialPort, and the Python reference .mot is written by tests/mot_reference.py (python3).
 % Set MOVETRICS_TEST_BASE to a stand-in API (matlab/tests/mock_api.py) to also test movetrics.Cloud.
+% With liblsl-Matlab on the path, movetrics.LslBridge is also run end to end through real LSL outlets.
 here = fileparts(mfilename('fullpath'));
 addpath(fileparts(here));
 addpath(here);
@@ -254,6 +255,112 @@ for k = 1:numel(voc.cases)
         assert(evs(j).offset_us == e.offset_us, [vc.id ': offset_us']);
     end
     passed = passed + 1;
+end
+
+% Clock mapping of chapter 22 (vectors/clock_map.json): every pair, taken all at once and in batches of 7.
+cm = jsondecode(fileread(fullfile(here, '..', '..', 'vectors', 'clock_map.json')));
+for k = 1:numel(cm.cases)
+    vc = cm.cases(k);
+    for batch = [Inf 7]
+        map = movetrics.ClockMap('BlockSeconds', vc.block_seconds, 'WindowBlocks', vc.window_blocks, ...
+                                 'LatencySeconds', vc.latency_seconds);
+        n = numel(vc.device_s);
+        if isinf(batch)
+            host = map.observe(vc.device_s, vc.arrival_s);
+        else
+            host = zeros(n, 1);
+            for s = 1:batch:n
+                e = min(s + batch - 1, n);
+                host(s:e) = map.observe(vc.device_s(s:e), vc.arrival_s(s:e));
+            end
+        end
+        assert(all(abs(host - vc.expect_host_s(:)) <= 1e-9), [vc.id ': host times']);
+        if isempty(vc.expect_drift_ppm)
+            assert(isempty(map.driftPpm()), [vc.id ': no line yet']);
+        else
+            assert(abs(map.driftPpm() - vc.expect_drift_ppm) <= 1e-6, [vc.id ': drift']);
+            assert(abs(map.ResidualSeconds - vc.expect_residual_s) <= 1e-12, [vc.id ': residual']);
+        end
+        passed = passed + 1;
+    end
+end
+
+% LslBridge refuses a device label that does not fit an LSL source id, before it needs liblsl-Matlab.
+threw = false;
+try, movetrics.LslBridge(2000, [1 2], 'Device', 'B/2'); catch err, threw = strcmp(err.identifier, 'movetrics:LslBridge'); end
+assert(threw);
+passed = passed + 1;
+
+% LSL end to end, when liblsl-Matlab is on the path (it is not in CI): two plates and markers through real
+% outlets, read back by inlets on this computer. Reads of 20 ms arrive 3 to 13 ms late; the stamps keep the
+% FDT's 1 ms spacing.
+if exist('lsl_loadlib', 'file') == 2
+    lib = lsl_loadlib();
+    label = sprintf('mtest%d', floor(rand() * 1e9));
+    bridge = movetrics.LslBridge(1000, [1 2], 'Device', label, 'Firmware', '1.2.8.20', 'Lib', lib);
+    assert(isequal(bridge.StreamNames, {['Movetrics FDT ' label ' plate 1'], ['Movetrics FDT ' label ' plate 2'], ...
+                                        ['Movetrics FDT ' label ' markers']}));
+    found = lsl_resolve_byprop(lib, 'source_id', ['movetrics-fdt-' label '-plate2'], 1, 5);
+    marks = lsl_resolve_byprop(lib, 'source_id', ['movetrics-fdt-' label '-markers'], 1, 5);
+    assert(~isempty(found) && ~isempty(marks), 'LSL streams not found');
+    inlet = lsl_inlet(found{1});
+    inlet.open_stream(5);
+    markInlet = lsl_inlet(marks{1});
+    markInlet.open_stream(5);
+    full = inlet.info(5);
+    assert(strcmp(full.desc().child('acquisition').child_value('device'), label));
+    pause(0.5);
+    t0 = lsl_local_clock(lib);
+    for r = 0:249                                      % 5 s in reads of 20 samples per plate
+        t = (r * 20 + (1:20)') / 1000;
+        d = struct('t', kron(t, [1; 1]), 'plate', repmat([1; 2], 20, 1));
+        d.ticks = round(d.t * 10000);
+        d.fx = ones(40, 1); d.fy = 2 * ones(40, 1); d.fz = 700 * ones(40, 1);
+        d.mx = 3 * ones(40, 1); d.my = -4 * ones(40, 1); d.mz = 0.5 * ones(40, 1);
+        d.cop_x = 0.0057 * ones(40, 1); d.cop_y = -0.0043 * ones(40, 1);
+        d.cop_x(2:10:end) = NaN; d.cop_y(2:10:end) = NaN;   % plate 2 rows: below 50 N there is no centre of pressure
+        d.events = struct('t', cell(0, 1), 'name', cell(0, 1));
+        d.gaps = struct('plate', cell(0, 1), 'start_t', cell(0, 1), 'end_t', cell(0, 1), 'missing', cell(0, 1));
+        if r == 100
+            d.events = struct('t', 2.0005, 'name', 'sync_in_rise');
+            d.gaps = struct('plate', 2, 'start_t', 2.01, 'end_t', 2.02, 'missing', 9);
+        end
+        bridge.push(d, t0 + t(end) + 0.003 + mod(r, 11) / 1000);
+    end
+    bridge.mark('jump 3');
+    chunks = {}; stamps = {};
+    deadline = tic;
+    while sum(cellfun(@numel, stamps)) < 5000 && toc(deadline) < 10
+        [c, ts] = inlet.pull_chunk();
+        if isempty(ts), pause(0.05); continue; end
+        chunks{end + 1} = c; stamps{end + 1} = ts(:); %#ok<AGROW>
+    end
+    values = [chunks{:}];
+    ts = vertcat(stamps{:});
+    assert(numel(ts) == 5000, sprintf('plate 2 samples on LSL: %d', numel(ts)));
+    assert(all(abs(values(1:6, 2) - [1; 2; 700; 3; -4; 0.5]) < 1e-5), 'values');
+    assert(isnan(values(7, 1)) && isnan(values(8, 1)) && abs(values(7, 2) - 0.0057) < 1e-6, 'CoP');
+    steps = diff(ts);
+    assert(all(steps > 0), 'stamps must rise');
+    assert(max(abs(steps(end - 2000:end) - 0.001)) < 2e-4, 'after the warm-up: the FDT spacing, not the read jitter');
+    names = cell(1, 3);
+    for j = 1:3
+        sample = markInlet.pull_sample(2);
+        names{j} = sample{1};
+    end
+    assert(isequal(names, {'sync_in_rise', 'gap plate=2 missing=9', 'jump 3'}), 'markers');
+    stats = bridge.stats();
+    assert(stats.repeated_dropped == 0 && abs(stats.drift_ppm) < 1, 'stats');
+    bridge.close();
+    threw = false;
+    try, bridge.mark('too late'); catch err, threw = strcmp(err.identifier, 'movetrics:LslBridge'); end
+    assert(threw);
+    gone = lsl_resolve_byprop(lib, 'source_id', ['movetrics-fdt-' label '-plate1'], 1, 1);
+    assert(isempty(gone), 'close() takes the streams off the network');
+    clear inlet markInlet bridge full found marks gone   % released, not deleted (see LslBridge.close)
+    passed = passed + 1;
+else
+    fprintf('LSL end to end not run: liblsl-Matlab is not on the path\n');
 end
 
 fprintf('%d checks passed\n', passed);
