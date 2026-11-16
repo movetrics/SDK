@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +20,17 @@ jobs:
           python-version: "3.13"
       - name: Python client tests
         run: cd python && python3 -m unittest discover -s tests -t . -v
+
+  nokov-windows:
+    # XINGYING runs on Windows: the Remote Trigger listener, UDP and the take files there.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: NOKOV take sync tests on Windows
+        run: cd python && python -m unittest tests.test_nokov -v
 
   typescript:
     runs-on: ubuntu-24.04

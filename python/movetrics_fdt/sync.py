@@ -75,6 +75,15 @@ class ClockMap:
             offset = offset_at_reference + slope * (device_s - reference)
         return device_s + offset - self.latency_seconds
 
+    def to_device(self, host_s: float) -> float:
+        """The FDT time that to_host maps to host_s (its exact inverse, with the line as it stands now)."""
+        if self._fit is None:
+            if math.isinf(self._floor):
+                raise ValueError("no (device, arrival) pair observed yet")
+            return host_s - self._floor + self.latency_seconds
+        reference, offset_at_reference, slope = self._fit
+        return (host_s + self.latency_seconds - offset_at_reference + slope * reference) / (1 + slope)
+
 
 def _line(points: Sequence[tuple[float, float]]) -> tuple[float, float, float, float]:
     """Least squares y = mean_y + slope * (x - mean_x): (mean_x, mean_y, slope, rms residual)."""
