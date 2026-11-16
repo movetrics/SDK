@@ -26,6 +26,8 @@ from .vocabulary import CHANNELS, Event, Gap, Sample
 
 CHANNEL_UNITS = (("fx", "N"), ("fy", "N"), ("fz", "N"), ("mx", "N*m"), ("my", "N*m"), ("mz", "N*m"),
                  ("cop_x", "m"), ("cop_y", "m"))
+# A device label goes into LSL source ids, so it is kept to characters every LSL tool handles.
+_DEVICE_LABEL = re.compile(r"[A-Za-z0-9_-]+")
 
 
 def _import_pylsl() -> Any:
@@ -50,7 +52,7 @@ class LslBridge:
                  source_id: str = "movetrics-fdt", device: str | None = None, firmware: str = "unknown",
                  latency_s: float = 0.0, chunk: int = 20) -> None:
         if device is not None:
-            if not re.fullmatch(r"[A-Za-z0-9_-]+", device):
+            if not _DEVICE_LABEL.fullmatch(device):
                 raise ValueError("device labels one FDT in the LSL names and source ids: use letters, digits, "
                                  f"'-' or '_', not {device!r}")
             name, source_id = f"{name} {device}", f"{source_id}-{device}"
@@ -87,9 +89,11 @@ class LslBridge:
                                    f"{source_id}-markers")
         self.markers = pylsl.StreamOutlet(markers)
         self.repeated = 0
+        self._closed = False
 
     def push(self, item: Sample | Event | Gap, arrival: float | None = None) -> None:
         """Push one item. arrival is local_clock() when the frame was read; default: now."""
+        self._check_open()
         now = self._pylsl.local_clock() if arrival is None else arrival
         if isinstance(item, Sample):
             self.clock.observe(item.t, now)
@@ -116,7 +120,21 @@ class LslBridge:
 
     def mark(self, text: str) -> None:
         """A free-text marker at the current time (trial names, 'jump 3', ...)."""
+        self._check_open()
         self.markers.push_sample([text], self._pylsl.local_clock())
+
+    def close(self) -> None:
+        """Push what is pending and take the streams off the network. Pushing after this raises RuntimeError."""
+        if self._closed:
+            return
+        self.flush()
+        self.outlets = {}
+        self.markers = None
+        self._closed = True
+
+    def _check_open(self) -> None:
+        if self._closed:
+            raise RuntimeError("this LslBridge is closed")
 
     def _flush(self, plate: int) -> None:
         values, stamps = self._pending[plate]

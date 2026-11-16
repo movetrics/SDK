@@ -33,7 +33,7 @@ from movetrics_fdt.serial_transport import DEFAULT_BAUDRATE, SerialTransport
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIR = PACKAGE_ROOT / "movetrics_fdt"
-THIRD_PARTY_BY_FILE = {"files.py": {"ezc3d"}, "writers.py": {"ezc3d", "numpy"}, "lsl.py": {"pylsl"}, "serial_transport.py": {"serial"}, "ble_transport.py": {"bleak"}}
+THIRD_PARTY_BY_FILE = {"files.py": {"ezc3d"}, "writers.py": {"ezc3d", "numpy"}, "lsl.py": {"pylsl"}, "relay.py": {"websockets"}, "serial_transport.py": {"serial"}, "ble_transport.py": {"bleak"}}
 GOOD_STATUS = "v=1.3;fw=1.3.1.0;mode=UART;sub=0;mtu=23;lastFault=0"
 # Bridge 1.4 adds acc, enc, bond, grant, refuse and pin to its status line; pair, bonds and btn go only to a paired
 # link from 1.4.1.0, so an unpaired host reads a line without them.

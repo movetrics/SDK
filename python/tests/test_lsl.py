@@ -65,6 +65,21 @@ class LslTests(unittest.TestCase):
         self.assertEqual((plain.name(), plain.source_id()), ("Movetrics FDT plate 1", f"{source}-plate1"))
         self.assertEqual(plain.desc().child("acquisition").child_value("device"), "")
 
+    def test_close_takes_the_streams_off_the_network(self):
+        from movetrics_fdt.lsl import LslBridge
+
+        bridge = LslBridge(1000, plates=(1,), source_id=f"movetrics-test-{time.time_ns()}")
+        source_id = bridge.outlets[1].get_info().source_id()
+        self.assertEqual(len(pylsl.resolve_byprop("source_id", source_id, timeout=5)), 1)
+        bridge.close()
+        bridge.close()  # a second close does nothing
+        self.assertEqual(bridge.outlets, {})
+        self.assertEqual(pylsl.resolve_byprop("source_id", source_id, timeout=1), [])
+        with self.assertRaises(RuntimeError):
+            bridge.push(Sample(1.0, 1, 0.0, 0.0, 700.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10000, (0, 0, 700, 0, 0, 0)))
+        with self.assertRaises(RuntimeError):
+            bridge.mark("too late")
+
 
 class LslLabelTests(unittest.TestCase):
     """Runs without pylsl: a bad label is refused before anything is published."""

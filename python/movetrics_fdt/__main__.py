@@ -4,6 +4,7 @@
     movetrics-fdt simulate --pty /tmp/fdt --profile sync  # a serial-like device with the sync modes
     movetrics-fdt simulate --tcp 7800 --replay exam-channels.csv
     movetrics-fdt simulate --tcp 7800 --signal cmj --sync-pulse-s 1 --clock-ppm 30 --drop-every 500
+    movetrics-fdt lsl-relay                               # a web page's FDT stream on to LSL (ws://127.0.0.1:7812)
 """
 
 from __future__ import annotations
@@ -38,12 +39,34 @@ def _parser() -> argparse.ArgumentParser:
     sim.add_argument("--asleep", action="store_true", help="start asleep (pads off), as 5 minutes after the last command")
     sim.add_argument("--sync-pulse-s", type=float, default=0.0, metavar="S",
                      help="drive SYNC IN with a 5 ms pulse every S seconds (needs --profile sync to be seen)")
+    relay = commands.add_parser("lsl-relay", help="pass the FDT stream of a web page on to Lab Streaming Layer")
+    relay.add_argument("--port", type=int, default=7812, help="listen on 127.0.0.1:PORT (default 7812; 0 picks a free port)")
+    relay.add_argument("--allow-origin", action="append", default=[], metavar="ORIGIN",
+                       help="also accept pages from ORIGIN, e.g. https://lab.example.org (pages from localhost always are)")
+    relay.add_argument("--device", help="label for this FDT when more than one streams on the network; wins over the page's")
+    relay.add_argument("--latency-ms", type=float, default=0.0, help="a measured constant delay to subtract from every stamp")
     return parser
+
+
+def _relay(args: argparse.Namespace) -> int:
+    from .relay import serve_relay
+
+    def said(url: str) -> None:
+        print(f"READY {url}", flush=True)
+
+    try:
+        asyncio.run(serve_relay(port=args.port, allow_origins=args.allow_origin, device=args.device,
+                                latency_s=args.latency_ms / 1000, ready=said, log=lambda text: print(text, flush=True)))
+    except KeyboardInterrupt:
+        return 0
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    signal = StudioReplay(args.replay, keep_gaps=not args.fill_gaps) if args.replay else Synthetic(args.signal, args.bodyweight)
+    if args.command == "lsl-relay":
+        return _relay(args)
+    signal =StudioReplay(args.replay, keep_gaps=not args.fill_gaps) if args.replay else Synthetic(args.signal, args.bodyweight)
     hold_at, hold_for = args.hold or (-1.0, 0.0)
     faults = Faults(drop_every=args.drop_every, hold_at_s=hold_at, hold_s=hold_for, clock_ppm=args.clock_ppm, scale=args.scale)
     plates = tuple(plate for plate in signal.plates if plate <= args.plates)
