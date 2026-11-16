@@ -2,6 +2,7 @@
 
     python lsl_stream.py --port /dev/tty.usbserial-XXXX --rate 2000      # a real FDT (COM3 on Windows)
     python lsl_stream.py --simulate --rate 2000                          # the simulator, nothing to plug in
+    python lsl_stream.py --port COM4 --device B                          # a second FDT on the same network
 
 Install the package first, from this directory: python3 -m pip install -e "../../python[lsl,serial]"
 (without a checkout: pip install "movetrics-fdt[lsl,serial] @ git+https://github.com/movetrics/sdk#subdirectory=python").
@@ -30,9 +31,11 @@ async def main(args: argparse.Namespace) -> None:
         async with FdtClient(transport) as fdt:
             version = await fdt.get_firmware_version()
             await fdt.set_rate(args.rate)
-            bridge = LslBridge(args.rate, plates=(1, 2), firmware=version.stm32FW)
+            bridge = LslBridge(args.rate, plates=(1, 2), device=args.device, firmware=version.stm32FW)
             await fdt.start_stream()
-            print(f"Streaming FDT {version.stm32FW} at {args.rate} frames/s per plate to LSL. Ctrl-C stops.")
+            names = [outlet.get_info().name() for outlet in (*bridge.outlets.values(), bridge.markers)]
+            print(f"Streaming FDT {version.stm32FW} at {args.rate} frames/s per plate to LSL as {', '.join(names)}."
+                  " Ctrl-C stops.")
             count = 0
             async for item in fdt.samples():
                 bridge.push(item)
@@ -50,6 +53,8 @@ if __name__ == "__main__":
     where.add_argument("--port")
     where.add_argument("--simulate", action="store_true")
     parser.add_argument("--rate", type=int, default=2000)
+    parser.add_argument("--device", help="a label for this FDT when more than one streams on the network (A, B, "
+                                         "left, ...); it goes into the LSL stream names and source ids")
     try:
         asyncio.run(main(parser.parse_args()))
     except KeyboardInterrupt:

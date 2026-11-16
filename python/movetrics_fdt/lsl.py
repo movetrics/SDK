@@ -4,16 +4,20 @@ Record the FDT next to EMG, EEG, eye tracking and cameras with LabRecorder; load
 Design follows the earlier FDT LSL streamer (least-delayed frame per block, then offset and drift), with the
 shared vocabulary (docs/19) for names, units, signs and CoP:
 
-- Streams "Movetrics FDT plate N" (type Force, nominal rate = FDT rate, float32): fx fy fz [N], mx my mz [N*m],
-  cop_x cop_y [m]; source id movetrics-fdt-<serial or 'fdt'>-plateN, so LabRecorder reconnects after a restart.
-- "Movetrics FDT markers" (type Markers, irregular, string): every Event by name (sync_in_rise, ...), gaps as
-  "gap plate=P missing=N", and notes from mark().
+- Streams "<name> plate N" (type Force, nominal rate = FDT rate, float32): fx fy fz [N], mx my mz [N*m],
+  cop_x cop_y [m]; source id <source_id>-plateN, by default "Movetrics FDT plate 1" and movetrics-fdt-plate1. The
+  ids are fixed, so LabRecorder reconnects after a restart. The SDK does not read the FDT's serial number: with more
+  than one FDT on the network give each bridge a device label (device="B" gives "Movetrics FDT B plate 1" and
+  movetrics-fdt-B-plate1). Without one, two FDTs publish the same names and ids.
+- "<name> markers" (type Markers, irregular, string), source id <source_id>-markers: every Event by name
+  (sync_in_rise, ...), gaps as "gap plate=P missing=N", and notes from mark().
 - Time stamps: the FDT stamp mapped onto local_clock() by sync.ClockMap (offset and drift fitted on the frames
   that waited least), never the USB arrival time. The fit residual is in stats().
 """
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -38,11 +42,18 @@ class LslBridge:
         bridge = LslBridge(rate_hz=2000, plates=(1, 2), firmware=version.stm32FW)
         async for item in fdt.samples():
             bridge.push(item)
+
+    With two FDTs on one network, label each: LslBridge(2000, device="A") and LslBridge(2000, device="B").
     """
 
     def __init__(self, rate_hz: float, plates: tuple[int, ...] = (1, 2), *, name: str = "Movetrics FDT",
-                 source_id: str = "movetrics-fdt", firmware: str = "unknown", latency_s: float = 0.0,
-                 chunk: int = 20) -> None:
+                 source_id: str = "movetrics-fdt", device: str | None = None, firmware: str = "unknown",
+                 latency_s: float = 0.0, chunk: int = 20) -> None:
+        if device is not None:
+            if not re.fullmatch(r"[A-Za-z0-9_-]+", device):
+                raise ValueError("device labels one FDT in the LSL names and source ids: use letters, digits, "
+                                 f"'-' or '_', not {device!r}")
+            name, source_id = f"{name} {device}", f"{source_id}-{device}"
         pylsl = _import_pylsl()
         self._pylsl = pylsl
         self.clock = ClockMap(latency_seconds=latency_s)
@@ -64,6 +75,8 @@ class LslBridge:
             acquisition = desc.append_child("acquisition")
             acquisition.append_child_value("manufacturer", "Movetrics")
             acquisition.append_child_value("firmware", firmware)
+            if device is not None:
+                acquisition.append_child_value("device", device)
             acquisition.append_child_value("vocabulary", "movetrics.vocabulary/1 (docs/19)")
             acquisition.append_child_value("frame", "plate: Studio file signs; CoP from the plate centre")
             clock = desc.append_child("clock")

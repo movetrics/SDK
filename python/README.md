@@ -57,7 +57,7 @@ The simulator speaks the FDT's real protocol. `--signal stand|cmj|empty`, `--bod
 | Find the FDTs in Bluetooth range | `await discover_bridges()`: (address, signal strength) for each, strongest first. Every FDT advertises the name `Movetrics-BLE`, so `BleTransport("Movetrics-BLE")` only connects when exactly one is in range |
 | Read Studio exports | `read_studio_csv(path)`, `read_studio_c3d(path)`, `read_studio_details(path)` |
 | Write files for other tools | `Recording.from_samples(items, rate_hz)` or `Recording.from_studio(...)`, then `write_csv`, `write_c3d`, `write_mot` (in `movetrics_fdt.writers`) |
-| Record next to EMG, EEG or cameras | `movetrics_fdt.lsl.LslBridge(rate_hz, plates)`: `bridge.push(item)` for each item of `samples()` |
+| Record next to EMG, EEG or cameras | `movetrics_fdt.lsl.LslBridge(rate_hz, plates)`: `bridge.push(item)` for each item of `samples()`; `device="B"` for a second FDT on the network |
 | Align two clocks with sync pulses | `movetrics_fdt.sync`: `edge_times`, `align`, `merge` (two FDTs into one timeline) |
 | Read results and recordings from Movetrics Cloud | `CloudClient(os.environ["MOVETRICS_TOKEN"])`: `results()`, `recordings()`, `samples(recording_id)` |
 | Turn recorded analog voltages into values | `movetrics_fdt.analog.to_vocabulary("A1", volts)` |

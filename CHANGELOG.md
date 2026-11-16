@@ -5,6 +5,7 @@ All notable changes to the Movetrics SDK. Each entry says how it was checked: **
 ## Unreleased (2026-11-16): LSL install line, two FDTs on one network
 
 - **LSL install line**: [chapter 22](docs/22-lsl-and-sync.md) and `examples/python/lsl_stream.py` said `pip install 'movetrics-fdt[lsl,serial]'`, which fails because the package is not on PyPI. Both now give the GitHub install, as the README and the site already did; the example also gives the editable install from a checkout, and so does the examples README. The LSL test's skip message names `pylsl`. Checked on Linux: the GitHub install, pylsl 1.18.7 from the `lsl` extra, and the LSL test.
+- **Two FDTs on LSL**: `LslBridge(..., device="B")` publishes `Movetrics FDT B plate 1`, … with source ids `movetrics-fdt-B-plate1`, …, and writes the label into each plate stream's description; `examples/python/lsl_stream.py` takes `--device B` and prints the stream names to tick in LabRecorder. Before, two FDTs on one network published the same names and ids, and the module docstring said the id held the FDT's serial number, which the SDK does not read. Without `device`, names and ids are unchanged. Tested with two bridges through pylsl on one machine (Linux, pylsl 1.18.7); not run with two real FDTs.
 
 ## Unreleased 0.3.2 (2026-11-15): one stream owner, paired Bluetooth, analog zero
 

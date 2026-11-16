@@ -47,6 +47,35 @@ class LslTests(unittest.TestCase):
         self.assertEqual(names, ["sync_in_rise", "gap plate=1 missing=9"])
         self.assertLess(bridge.stats()["residual_ms"], 1.0)
 
+    def test_two_fdts_get_their_own_names_and_source_ids(self):
+        from movetrics_fdt.lsl import LslBridge
+
+        source = f"movetrics-test-{time.time_ns()}"
+        a = LslBridge(1000, plates=(1, 2), source_id=source, device="A")
+        b = LslBridge(1000, plates=(1, 2), source_id=source, device="B")
+        infos = [outlet.get_info() for bridge in (a, b) for outlet in (*bridge.outlets.values(), bridge.markers)]
+        self.assertEqual([info.name() for info in infos],
+                         ["Movetrics FDT A plate 1", "Movetrics FDT A plate 2", "Movetrics FDT A markers",
+                          "Movetrics FDT B plate 1", "Movetrics FDT B plate 2", "Movetrics FDT B markers"])
+        self.assertEqual([info.source_id() for info in infos],
+                         [f"{source}-{d}-{s}" for d in "AB" for s in ("plate1", "plate2", "markers")])
+        self.assertEqual(infos[3].desc().child("acquisition").child_value("device"), "B")
+        # Without a label, names and ids stay as they were.
+        plain = LslBridge(1000, plates=(1,), source_id=source).outlets[1].get_info()
+        self.assertEqual((plain.name(), plain.source_id()), ("Movetrics FDT plate 1", f"{source}-plate1"))
+        self.assertEqual(plain.desc().child("acquisition").child_value("device"), "")
+
+
+class LslLabelTests(unittest.TestCase):
+    """Runs without pylsl: a bad label is refused before anything is published."""
+
+    def test_a_device_label_must_fit_a_source_id(self):
+        from movetrics_fdt.lsl import LslBridge
+
+        for label in ("", "left plate", "B/2", "ü"):
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                LslBridge(1000, device=label)
+
 
 if __name__ == "__main__":
     unittest.main()

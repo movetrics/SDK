@@ -16,6 +16,8 @@ python examples/python/lsl_stream.py --port COM3 --rate 2000      # or --simulat
 
 Then start LabRecorder, tick `Movetrics FDT plate 1`, `plate 2` and `markers`, and record. Load with `pyxdf.load_xdf()` in Python or `load_xdf` in MATLAB.
 
+With two FDTs, run the script once for each with `--device A` and `--device B`; LabRecorder then lists `Movetrics FDT A plate 1`, `Movetrics FDT B plate 1` and so on.
+
 Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitted offset and drift, so USB delivery jitter (up to 16 ms) does not enter the data. Alignment between devices is as good as LSL's own clock sync between computers, typically about a millisecond on one machine or a local network. [Details](../../reference/22-lsl-and-sync/).
 
 ## With a cable: sync pulses
