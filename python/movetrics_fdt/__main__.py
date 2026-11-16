@@ -7,6 +7,7 @@
     movetrics-fdt lsl-relay                               # a web page's FDT stream on to LSL (ws://127.0.0.1:7812)
     movetrics-fdt nokov-record --serial COM3              # FDT takes cut by NOKOV XINGYING's start/stop (docs/24)
     movetrics-fdt nokov-analog-setup                      # the FDT's analog outputs as a XINGYING force plate
+    movetrics-fdt nokov-stream --server 10.1.1.198        # XINGYING's SDK stream (NOKOV's library, experimental)
 """
 
 from __future__ import annotations
@@ -74,6 +75,14 @@ def _parser() -> argparse.ArgumentParser:
     setup.add_argument("--firmware", help="the FDT's STM32 firmware version, to check the moment outputs")
     setup.add_argument("--plates", default="1,2", help="plates on the analog board (default 1,2)")
     setup.add_argument("--json", action="store_true", help="print the worksheet as JSON")
+    check = commands.add_parser("nokov-sdk-check", help="load NOKOV's SDK library and check its data layout (experimental)")
+    check.add_argument("--library", help="path of libnokov_sdk.so (default: the MOVETRICS_NOKOV_SDK variable)")
+    stream = commands.add_parser("nokov-stream", help="print XINGYING's SDK stream through NOKOV's library (experimental)")
+    stream.add_argument("--server", required=True, help="the address XINGYING broadcasts on (its data broadcast panel)")
+    stream.add_argument("--library", help="path of libnokov_sdk.so (default: the MOVETRICS_NOKOV_SDK variable)")
+    stream.add_argument("--seconds", type=float, default=0.0, help="stop after this many seconds (default: Ctrl-C)")
+    stream.add_argument("--wait-force-plates", type=int, metavar="MS",
+                        help="call the library's WaitForForcePlateInit with this value after connecting")
     return parser
 
 
@@ -82,6 +91,8 @@ def _nokov(args: argparse.Namespace) -> int:
 
     from . import nokov
 
+    if args.command in ("nokov-sdk-check", "nokov-stream"):
+        return _nokov_sdk(args)
     if args.command == "nokov-analog-setup":
         try:
             sheet = nokov.analog_worksheet(args.firmware, tuple(int(p) for p in args.plates.split(",")))
@@ -170,6 +181,68 @@ async def _nokov_record(args: argparse.Namespace) -> None:
                 if bridge is not None:
                     bridge.close()
                 await fdt.stop_stream()
+
+
+def _nokov_sdk(args: argparse.Namespace) -> int:
+    import time
+
+    from .nokov_sdk import NokovClient, NokovForcePlates, NokovFrame, NokovMessage, NokovSdkError, check_library
+
+    try:
+        if args.command == "nokov-sdk-check":
+            library = check_library(args.library)
+            print(f"{library.path}: version {library.version}"
+                  + ("" if library.known_version else " (not a build this module was checked against)"))
+            print("layout: every field of a test frame read back" if library.layout_ok else
+                  "layout differs from NokovSDKTypes.h 1.3.0.12:\n  " + "\n  ".join(library.layout_problems))
+            return 0 if library.layout_ok else 1
+        with NokovClient(args.server, library=args.library, wait_force_plates_ms=args.wait_force_plates) as nokov:
+            assert nokov.library is not None
+            print(f"library {nokov.library.version}; server {nokov.server}")
+            if nokov.descriptions is not None:
+                for plate in nokov.descriptions.force_plates:
+                    print(f"force plate {plate.id}: type {plate.plate_type}, {plate.width:g} x {plate.length:g}, "
+                          f"channels {', '.join(plate.channel_names) or '-'}"
+                          + (" (raw voltages)" if plate.channel_data_type == 1 else ""))
+                print("rigid bodies:", ", ".join(body.name for body in nokov.descriptions.rigid_bodies) or "-")
+                print("marker sets:", ", ".join(item.name for item in nokov.descriptions.marker_sets) or "-")
+            if nokov.force_plate_init is not None:
+                print(f"WaitForForcePlateInit returned {nokov.force_plate_init}")
+            begin = last = time.monotonic()
+            frames = plates = 0
+            latest: NokovForcePlates | None = None
+            latest_frame: NokovFrame | None = None
+            try:
+                for item in nokov.items():
+                    if isinstance(item, NokovFrame):
+                        frames, latest_frame = frames + 1, item
+                    elif isinstance(item, NokovForcePlates):
+                        plates, latest = plates + 1, item
+                    elif isinstance(item, NokovMessage):
+                        print(f"library: {item.text.strip()}")
+                    now = time.monotonic()
+                    if now - last >= 1.0:
+                        line = f"{now - begin:6.1f} s  frames {frames}/s  force plates {plates}/s"
+                        if latest_frame is not None:
+                            line += (f"  markers {len(latest_frame.labeled_markers)}  rigid bodies "
+                                     f"{len(latest_frame.rigid_bodies)}")
+                        if latest is not None:
+                            line += "  " + "  ".join(f"plate {p.index}: F=({p.force[0]:.1f}, {p.force[1]:.1f}, "
+                                                     f"{p.force[2]:.1f}) at ({p.point[0]:.1f}, {p.point[1]:.1f})"
+                                                     for p in latest.plates)
+                        print(line, flush=True)
+                        frames = plates = 0
+                        last = now
+                    if args.seconds and now - begin >= args.seconds:
+                        break
+            except KeyboardInterrupt:
+                pass
+        if nokov.dropped and any(nokov.dropped.values()):
+            print(f"dropped because the queue was full: {nokov.dropped}")
+        return 0
+    except NokovSdkError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
 
 
 def _relay(args: argparse.Namespace) -> int:

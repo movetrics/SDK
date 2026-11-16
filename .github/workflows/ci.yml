@@ -32,6 +32,32 @@ jobs:
       - name: NOKOV take sync tests on Windows
         run: cd python && python -m unittest tests.test_nokov -v
 
+  nokov-sdk:
+    # NOKOV's SDK library as NOKOV publishes it in its ROS repositories (mocap_nokov, BSD-3-Clause; mocap4ros2_nokov),
+    # fetched at pinned commits and checksums for the test, never committed here. No XINGYING server is involved.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Fetch NOKOV's library builds 2.5.53.12 and 2.5.51.57
+        run: |
+          fetch() {
+            mkdir -p "$RUNNER_TEMP/$1" && cd "$RUNNER_TEMP/$1" && git init -q
+            git fetch -q --depth 1 "https://github.com/NOKOV-MOCAP/$1" "$2" && git checkout -q FETCH_HEAD
+            echo "$3  $4" | sha256sum -c -
+          }
+          fetch mocap_nokov 80efe517fa01da996683e513ead6c35b834ce2c8 \
+            00bc373c970d13bfccf46c2da4b7924f40bd88b2e58dfea29af4166debfbb9cd deps/nokov_sdk/lib/x64/libnokov_sdk.so
+          fetch mocap4ros2_nokov 81d4902ab0bfec06029fbbcaf24f90e4c45ec47d \
+            4836603df7602d7d4c6b37a8bda94799300f7824288ad9913abecec2662ce242 mocap4r2_nokov_driver/nokov_sdk/lib/x64/libnokov_sdk.so
+      - name: NOKOV SDK client against both builds
+        run: |
+          cd python
+          MOVETRICS_NOKOV_SDK="$RUNNER_TEMP/mocap_nokov/deps/nokov_sdk/lib/x64/libnokov_sdk.so" python -m unittest tests.test_nokov_sdk -v
+          MOVETRICS_NOKOV_SDK="$RUNNER_TEMP/mocap4ros2_nokov/mocap4r2_nokov_driver/nokov_sdk/lib/x64/libnokov_sdk.so" python -m unittest tests.test_nokov_sdk -v
+
   typescript:
     runs-on: ubuntu-24.04
     steps:
