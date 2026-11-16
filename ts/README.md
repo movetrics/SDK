@@ -68,6 +68,23 @@ the stream frames, and `events()` only the event frames. Use one of them per cli
 consumer. `vocabulary.v1.json` names and units are in `../docs/19-vocabulary-and-units.md`. The vocabulary
 `Event` uses `source` (the sync input or plate), and its time is `stamp / 10000 + offsetUs / 1e6`.
 
+Lab Streaming Layer from a page (version 0.3.2). A browser cannot publish LSL, so `LslRelay` sends the samples over
+a WebSocket to the SDK's relay on the same computer (`movetrics-fdt lsl-relay`, Python), which publishes the same
+streams as the Python and MATLAB bridges ([docs/22](https://github.com/movetrics/sdk/blob/main/docs/22-lsl-and-sync.md)):
+
+```ts
+const relay = await LslRelay.open({ rateHz: 2000, plates: [1, 2], firmware: version.stm32FW }); // device: 'B' for a second FDT
+console.log(relay.streams);                   // what to tick in LabRecorder
+for await (const item of client.samples()) relay.push(item);
+relay.close();
+```
+
+`LslRelay` uses the global `WebSocket` (browsers, Node 22) or `options.socket`. It batches items for at most
+`flushMs` (10 ms), sends a missing centre of pressure as `null`, and throws `LslRelayError` once the relay has
+closed the connection; `relay.closed` resolves with the relay's code and reason (1013: another page is streaming;
+1007: data it could not accept). The relay accepts pages served from this computer; other sites need
+`--allow-origin`.
+
 ## Commands
 
 The client sends eight commands and nothing else. A client test checks the frames written in a
@@ -188,6 +205,7 @@ characteristics. No test opens a serial port, scans for BLE devices or contacts 
 - `src/transport.ts`: the `Transport` interface and `AsyncQueue`.
 - `src/webserial.ts`, `src/webbluetooth.ts`: the browser transports, written against structural
   interfaces so the package has no DOM or Node types.
+- `src/lslrelay.ts`: `LslRelay`, the client of the SDK's Lab Streaming Layer relay.
 - `src/errors.ts`, `src/index.ts`.
 - `test/`: `*.test.ts` files, a fake transport and fakes for browser objects (`support.ts`), and a
   loader for `../vectors` (`vectors-data.ts`).

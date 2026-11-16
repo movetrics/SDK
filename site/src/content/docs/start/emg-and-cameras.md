@@ -18,6 +18,10 @@ Then start LabRecorder, tick `Movetrics FDT plate 1`, `plate 2` and `markers`, a
 
 With two FDTs, run the script once for each with `--device A` and `--device B`; LabRecorder then lists `Movetrics FDT A plate 1`, `Movetrics FDT B plate 1` and so on.
 
+From a web page or MATLAB, the streams are the same. A page that reads the FDT in the browser cannot publish LSL itself, so it sends its samples with `LslRelay` (TypeScript) to `movetrics-fdt lsl-relay` on the same computer (`pip install "movetrics-fdt[relay] @ git+https://github.com/movetrics/sdk#subdirectory=python"`). In MATLAB, `movetrics.LslBridge` publishes them with [liblsl-Matlab](https://github.com/labstreaminglayer/liblsl-Matlab): `bridge.push(fdt.read(0.05))` in a loop. [Relay and MATLAB details](../../reference/22-lsl-and-sync/).
+
+Next to Noraxon EMG: Noraxon's own bridge, [Noraxon-LSL](https://github.com/Noraxon/Noraxon-LSL), publishes the EMG channels of its myoRESEARCH software to LSL from the MR computer. Tick them in LabRecorder next to the FDT's streams. The steps are in the [reference](../../reference/22-lsl-and-sync/); this has not been run with Noraxon hardware yet.
+
 Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitted offset and drift, so USB delivery jitter (up to 16 ms) does not enter the data. Alignment between devices is as good as LSL's own clock sync between computers, typically about a millisecond on one machine or a local network. [Details](../../reference/22-lsl-and-sync/).
 
 ## With a cable: sync pulses
@@ -41,4 +45,4 @@ Three things to know before you use them in a study: they update at most 500 tim
 
 FDT A sends the pulse train, FDT B listens on SYNC IN; `movetrics_fdt.sync.merge()` puts B's plates 3 and 4 onto A's clock. Simulated today, same status as above.
 
-**Tested on:** LSL end to end with a real LSL inlet and the simulator; alignment and merging on simulated clocks. Not yet with a real FDT and LabRecorder.
+**Tested on:** LSL end to end with a real LSL inlet and the simulator, from Python, from the TypeScript client through the relay, and from the MATLAB toolbox in GNU Octave; alignment and merging on simulated clocks. Not yet with a real FDT and LabRecorder, from a browser, or in MATLAB itself.

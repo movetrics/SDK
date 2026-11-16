@@ -1,6 +1,6 @@
 # Test vectors
 
-These JSON files are the machine-readable contract of the FDT host link. Each case is an input and the exact output a client must produce from it. A client conforms when it passes every case in every file. The Python and TypeScript clients run all of them; the MATLAB toolbox runs the checksum, stream, vocabulary and sync files, the parts it uses. [`CONFORMANCE.md`](../CONFORMANCE.md) records which client reads which file.
+These JSON files are the machine-readable contract of the FDT host link. Each case is an input and the exact output a client must produce from it. A client conforms when it passes every case in every file. The Python client runs all of them; the TypeScript client runs all but the clock map (it maps no clocks itself: its LslRelay hands that to the Python relay); the MATLAB toolbox runs the checksum, stream, vocabulary, sync and clock-map files, the parts it uses. [`CONFORMANCE.md`](../CONFORMANCE.md) records which client reads which file.
 
 If you write a client in another language, these files are your finish line.
 
@@ -17,8 +17,11 @@ If you write a client in another language, these files are your finish line.
 | `ota_frames.json` | 4 | 2 | 2 | GET_FW_VERSION probe and replies, the bridge STOP frame |
 | **byte-level total** | **53** | **20** | **33** | |
 | `vocabulary.json` | 7 | | | frames in; the samples, gaps and events every client must make of them ([chapter 19](../docs/19-vocabulary-and-units.md)) |
+| `clock_map.json` | 3 | | | (FDT time, arrival time) pairs in; the LSL time every client must map each sample to ([chapter 22](../docs/22-lsl-and-sync.md)) |
 
 `sync_events.json` holds the sync event frames and GET_SYNC_MODE replies of firmware with the sync jack, written by the firmware's own encoder; the clients' tests read the same file from `python/tests/fixtures/sync_events.json`, and all three pass it. One more golden file lives with the tests: `python/tests/fixtures/k5_c3d_cop.json` (the centre of pressure a C3D reader must find in a file this SDK writes).
+
+`clock_map.json`, like `vocabulary.json`, is computed from a written rule and not from any client: [`tools/gen_clock_map_vectors.py`](../tools/gen_clock_map_vectors.py) maps the pairs by the method in [chapter 22](../docs/22-lsl-and-sync.md) ("Clock mapping, exactly"). Its cases cover the warm-up, drift with jitter and stalls, a sliding window with a measured latency, and a tie that only the first-pair rule resolves; host times must match within 1e-9 s.
 
 ## Two kinds of case
 

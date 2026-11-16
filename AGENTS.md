@@ -18,7 +18,7 @@ Context for AI coding agents (Claude Code, Cursor, Copilot, ChatGPT, Codex and o
 | Live data from an FDT on this computer | `FdtClient` + `SerialTransport` (Python), `FdtClient` + `WebSerialTransport` (browser), `movetrics.Fdt` (MATLAB) | `examples/python/read_stream.py`, `examples/web/` |
 | Files from Studio | `read_studio_csv`, `read_studio_c3d` → `Recording.from_studio` | `docs/18-export-formats.md` |
 | Files for other tools | `write_csv`, `write_c3d`, `write_mot` | `docs/21-writing-files.md` |
-| Recording next to EMG, EEG or cameras | `LslBridge` (Lab Streaming Layer), the sync modes, `sync.align` | `docs/22-lsl-and-sync.md`, `examples/python/lsl_stream.py` |
+| Recording next to EMG, EEG or cameras | Lab Streaming Layer: `LslBridge` (Python), `movetrics.LslBridge` (MATLAB), `LslRelay` with `movetrics-fdt lsl-relay` (a web page); the sync modes, `sync.align` | `docs/22-lsl-and-sync.md`, `examples/python/lsl_stream.py`, `matlab/examples/lsl_stream.m` |
 | Voltages recorded from the FDT's analog outputs | `movetrics_fdt.analog.to_vocabulary` | `docs/23-analog-outputs.md` |
 | A client in another language | the specification and the vectors | the firmware, `vectors/README.md` |
 

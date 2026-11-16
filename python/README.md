@@ -18,6 +18,7 @@ pip install "movetrics-fdt[serial] @ git+https://github.com/movetrics/sdk#subdir
 | `ble` | bleak (0.21 to below 1) | the FDT over Bluetooth |
 | `c3d` | ezc3d, numpy | reading and writing C3D |
 | `lsl` | pylsl | Lab Streaming Layer |
+| `relay` | pylsl, websockets | `movetrics-fdt lsl-relay`: Lab Streaming Layer for a web page that reads the FDT |
 
 Combine them as `movetrics-fdt[serial,c3d,lsl]`. Without an extra, the call that needs it raises an `ImportError` that names the extra to install.
 
@@ -58,6 +59,7 @@ The simulator speaks the FDT's real protocol. `--signal stand|cmj|empty`, `--bod
 | Read Studio exports | `read_studio_csv(path)`, `read_studio_c3d(path)`, `read_studio_details(path)` |
 | Write files for other tools | `Recording.from_samples(items, rate_hz)` or `Recording.from_studio(...)`, then `write_csv`, `write_c3d`, `write_mot` (in `movetrics_fdt.writers`) |
 | Record next to EMG, EEG or cameras | `movetrics_fdt.lsl.LslBridge(rate_hz, plates)`: `bridge.push(item)` for each item of `samples()`; `device="B"` for a second FDT on the network |
+| Publish a web page's FDT stream on LSL | `movetrics-fdt lsl-relay` (`movetrics_fdt.relay`); the page sends with `LslRelay` from the TypeScript client |
 | Align two clocks with sync pulses | `movetrics_fdt.sync`: `edge_times`, `align`, `merge` (two FDTs into one timeline) |
 | Read results and recordings from Movetrics Cloud | `CloudClient(os.environ["MOVETRICS_TOKEN"])`: `results()`, `recordings()`, `samples(recording_id)` |
 | Turn recorded analog voltages into values | `movetrics_fdt.analog.to_vocabulary("A1", volts)` |
@@ -129,4 +131,4 @@ No hardware and no extras needed; a test that needs a missing extra is skipped w
 
 ## Layout
 
-`movetrics_fdt/`: `client.py` (FdtClient), `transport.py`, `serial_transport.py`, `ble_transport.py`, `tcp_transport.py`, `frames.py` and `crc.py` (framing), `commands.py`, `stream.py` and `status.py` (wire layouts), `vocabulary.py` (samples, CoP), `files.py` (Studio readers), `writers.py`, `lsl.py`, `sync.py`, `analog.py`, `cloud.py`, `simulator.py` and `simulator_io.py`, `__main__.py` (the `movetrics-fdt` command). `tests/`: the suites and their fixtures.
+`movetrics_fdt/`: `client.py` (FdtClient), `transport.py`, `serial_transport.py`, `ble_transport.py`, `tcp_transport.py`, `frames.py` and `crc.py` (framing), `commands.py`, `stream.py` and `status.py` (wire layouts), `vocabulary.py` (samples, CoP), `files.py` (Studio readers), `writers.py`, `lsl.py`, `relay.py` (the LSL relay), `sync.py`, `analog.py`, `cloud.py`, `simulator.py` and `simulator_io.py`, `__main__.py` (the `movetrics-fdt` command). `tests/`: the suites and their fixtures.
