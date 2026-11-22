@@ -68,7 +68,7 @@ Plug in an FDT, change one line, and the same program reads real plates. Other e
 | [`matlab/`](matlab/) | MATLAB toolbox `+movetrics`: live stream, LSL, Studio files, Cloud API. |
 | [`excel/`](excel/) | Ready workbook and Power Query code for Movetrics Cloud. |
 | [`examples/`](examples/) | Small complete programs: stream reader, recorder, LSL outlet, Cloud results, browser page. |
-| [the firmware](docs/) | The specification: transports, framing, commands, the stream, status, vocabulary, files, sync, analog outputs, NOKOV XINGYING. |
+| [`docs/`](docs/) | The specification: transports, framing, commands, the stream, status, vocabulary, files, sync, analog outputs, NOKOV XINGYING. |
 | [`vectors/`](vectors/) | Shared test vectors: the bytes in, the values out. |
 | [`contracts/`](contracts/) | Machine-readable contracts: vocabulary, firmware capabilities, analog scale, Cloud API (OpenAPI). |
 | [`site/`](site/) | The source of developers.movetrics.com. |

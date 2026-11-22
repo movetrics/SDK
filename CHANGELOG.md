@@ -2,6 +2,14 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased 0.3.3 (2026-11-22): Bluetooth bridge 1.4.1.1 and 1.4.1.2, version 0.3.3
+
+Version 0.3.3 holds this entry and the four entries of 16 November below.
+
+- **Bridge 1.4.1.0 refused paired hosts**: it answered every write of a paired host to RX and to the update characteristics with ATT error 0x05, so a paired host looked unpaired. When the status line reads `fw=1.4.1.0`, a refused write in the Python `BleTransport` now also says to update the bridge to 1.4.1.1 or later, since pairing again does not help there (`refusal_hint`). Tested against a fake bleak.
+- **[Chapter 2.12](docs/02-transports.md)**: use bridge 1.4.1.1 or later; from 1.4.1.1 a Just Works build no longer insists on Secure Connections; from 1.4.1.2 the bridge starts nothing at the connection (security request after 1 s, link requests after access); the reset button's double press did not yet forget paired devices on a real unit; what was measured on one FDT with bridge 1.4.1.1.
+- **Public copy**: a call such as `len(firmware)` in `relay.py` and the link to `docs/` in the README keep their text; `tools/gen_clock_map_vectors.py` is part of the repository, so the vectors README links to it.
+
 ## Unreleased (2026-11-16): XINGYING's stream in Python through NOKOV's library, experimental
 
 - **`movetrics_fdt.nokov_sdk`**: `NokovClient(server)` reads what XINGYING streams to SDK programs (labeled and unlabeled markers, rigid bodies, skeletons, analog values, and the force plates XINGYING reads from any maker, with their descriptions: size, corners, calibration matrix, C3D type, channel names) through NOKOV's own `libnokov_sdk.so`, which the SDK does not include (`MOVETRICS_NOKOV_SDK`). It calls the library's undeclared flat C interface with ctypes and the layouts of NOKOV's `NokovSDKTypes.h` 1.3.0.12, refuses a library whose layout differs (a known frame copied by the library and read back field by field), runs the library in a child process, and counts what a full queue drops. Nothing is converted: positions in mm, forces in XINGYING's Force Units, names decoded as UTF-8 or GBK. CLI: `nokov-sdk-check`, `nokov-stream`. Tested: the layouts against offsets compiled from the header, the conversions on frames built in memory, and, in a new CI job that fetches NOKOV's library from its GitHub repositories at pinned commits, both published builds (2.5.51.57, 2.5.53.12): version, layout check, a connection that fails within the library's 5 s with its reason, clean shutdown. Not yet run against XINGYING.

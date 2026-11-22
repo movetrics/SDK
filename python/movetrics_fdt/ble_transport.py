@@ -63,6 +63,22 @@ PAIRING_HINT: Final = (
     "bridge forgot its devices, remove Movetrics-BLE from this computer's Bluetooth settings first"
 )
 
+# Bridge 1.4.1.0 refused every command and update write of a host paired with Just Works (ATT error 0x05), so a paired
+# host looked unpaired; 1.4.1.1 fixed it (doc 02 section 2.12). Its subscription and status read were not affected, so
+# only a refused write gets this hint, and only together with the pairing hint: the error alone cannot tell the two apart.
+BRIDGE_1410_HINT: Final = (
+    "bridge 1.4.1.0 also refuses the writes of hosts that are paired. If this host is paired, pairing again does not "
+    "help: update the bridge to 1.4.1.1 or later. If it is not, "
+)
+
+
+def refusal_hint(fields: Mapping[str, str], write: bool = False) -> str:
+    """What to tell a user whose write (write=True) or subscription the bridge refused, given its status line."""
+    if write and fields.get("fw", "").strip() == "1.4.1.0":
+        return BRIDGE_1410_HINT + PAIRING_HINT
+    return PAIRING_HINT
+
+
 _INSTALL_HINT: Final = "BleTransport needs bleak. Install it with: pip install 'movetrics-fdt[ble]'"
 
 
@@ -262,7 +278,9 @@ class BleTransport(Transport):
                 except Exception as error:
                     if delay is None or not retry or not _bridge_busy(error):
                         if _is_auth_error(error):
-                            raise TransportError(f"BLE write to {self._target} was refused: {PAIRING_HINT}") from error
+                            raise TransportError(
+                                f"BLE write to {self._target} was refused: {refusal_hint(self._status, write=True)}"
+                            ) from error
                         raise TransportError(f"BLE write to {self._target} failed: {error}") from error
                     await asyncio.sleep(delay)
 

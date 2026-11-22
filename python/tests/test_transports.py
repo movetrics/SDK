@@ -20,6 +20,7 @@ from unittest import mock
 
 from movetrics_fdt.ble_transport import (
     bridge_needs_pairing,
+    refusal_hint,
     RX_UUID,
     STATUS_UUID,
     TX_UUID,
@@ -526,6 +527,32 @@ class BleTransportTests(unittest.IsolatedAsyncioTestCase):
             await transport.write(b"\xfe\xed")
         self.assertIn("pairing window", str(raised.exception))
         await transport.close()
+
+    async def test_a_write_refused_by_bridge_1_4_1_0_says_to_update_the_bridge(self) -> None:
+        # Bridge 1.4.1.0 answered a paired, encrypted host's RX write with ATT 0x05 (fixed in 1.4.1.1, doc 02 2.12).
+        FakeBleakClient.status_text = PAIRING_STATUS.replace("acc=0;enc=0;bond=0", "acc=1;enc=1;bond=1")
+        transport = BleTransport("Movetrics-BLE")
+        await transport.open()
+        client = FakeBleakClient.instances[-1]
+
+        async def refuse(specifier: str, data: bytes, response: bool = False) -> None:
+            raise RuntimeError("Could not write value: Insufficient Authentication (5)")
+
+        client.write_gatt_char = refuse  # type: ignore[method-assign]
+        with self.assertRaises(TransportError) as raised:
+            await transport.write(b"\xfe\xed")
+        self.assertIn("update the bridge to 1.4.1.1", str(raised.exception))
+        self.assertIn("pairing window", str(raised.exception))
+        await transport.close()
+
+    def test_the_refusal_hint_names_the_update_only_for_bridge_1_4_1_0(self) -> None:
+        self.assertIn("1.4.1.1", refusal_hint({"fw": "1.4.1.0"}, write=True))
+        # 1.4.1.0's subscription worked for paired hosts, so a refused subscription means not paired.
+        self.assertNotIn("1.4.1.1", refusal_hint({"fw": "1.4.1.0"}))
+        for fw in ("1.4.1.1", "1.4.1.2", "1.4.0.0", ""):
+            self.assertNotIn("1.4.1.1 or later", refusal_hint({"fw": fw}, write=True))
+            self.assertIn("pairing window", refusal_hint({"fw": fw}, write=True))
+        self.assertIn("pairing window", refusal_hint({}))
 
     async def test_other_gatt_failures_keep_their_own_message(self) -> None:
         FakeBleakClient.notify_error = RuntimeError("characteristic gone")

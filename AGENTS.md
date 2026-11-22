@@ -8,7 +8,7 @@ Context for AI coding agents (Claude Code, Cursor, Copilot, ChatGPT, Codex and o
 - **FDT** (Force Data Terminal): the box one or two plates connect to. It sends one 24-byte frame per plate per sample to a host over USB-C (a serial port) or Bluetooth (through an ESP32-S3 bridge). Default 1,000 samples per second per plate from firmware 1.2.8.8 (500 before); the host can set 50 to 2,000.
 - **Movetrics Studio**: the desktop recorder. It exports CSV and C3D files. The SDK reads both.
 - **Movetrics Cloud**: stores recordings and computes results (jump height and others) with the Movetrics engine. Read-only HTTP API at `https://beta.movetrics.com/api/v1`, personal access token in `MOVETRICS_TOKEN`. Every result names its `method` and `method_version`.
-- **This SDK**: the protocol specification, shared test vectors (`vectors/`), clients in Python (`python/`), TypeScript (`ts/`) and MATLAB (`matlab/`), Excel Power Query (`excel/`), examples (`examples/`), contracts (`contracts/`) and the docs site (`site/`). Apache 2.0.
+- **This SDK**: the protocol specification (`docs/`), shared test vectors (`vectors/`), clients in Python (`python/`), TypeScript (`ts/`) and MATLAB (`matlab/`), Excel Power Query (`excel/`), examples (`examples/`), contracts (`contracts/`) and the docs site (`site/`). Apache 2.0.
 
 ## 2. Pick the path from the user's goal
 

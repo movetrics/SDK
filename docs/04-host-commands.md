@@ -317,4 +317,4 @@ Every code the firmware knows, so that no two features share one. "Released" mea
 | 0x63 | debug: raw pad samples | factory test |
 | 0x64 | DEBUG_BATTERY | factory test, 1.2.8.8 and later |
 | 0x65 | DEBUG_WAKE | factory test, 1.2.8.12 and later |
-| 0x66 | DEBUG_PLATFORM_CAL | factory test, 1.2.8.30 and later (read-only: the calibration records a platform's pads hold) |
+| 0x66 | DEBUG_PLATFORM_CAL | factory test, 1.2.8.30 and later (read-only: the calibration records a platform's pads hold; reply 106 bytes, 119 from 1.2.8.32 with the same first fields) |

@@ -68,7 +68,7 @@ the stream frames, and `events()` only the event frames. Use one of them per cli
 consumer. `vocabulary.v1.json` names and units are in `../docs/19-vocabulary-and-units.md`. The vocabulary
 `Event` uses `source` (the sync input or plate), and its time is `stamp / 10000 + offsetUs / 1e6`.
 
-Lab Streaming Layer from a page (version 0.3.2). A browser cannot publish LSL, so `LslRelay` sends the samples over
+Lab Streaming Layer from a page (version 0.3.3). A browser cannot publish LSL, so `LslRelay` sends the samples over
 a WebSocket to the SDK's relay on the same computer (`movetrics-fdt lsl-relay`, Python), which publishes the same
 streams as the Python and MATLAB bridges ([docs/22](https://github.com/movetrics/sdk/blob/main/docs/22-lsl-and-sync.md)):
 
