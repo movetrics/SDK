@@ -8,6 +8,8 @@
     movetrics-fdt nokov-record --serial COM3              # FDT takes cut by NOKOV XINGYING's start/stop (docs/24)
     movetrics-fdt nokov-analog-setup                      # the FDT's analog outputs as a XINGYING force plate
     movetrics-fdt nokov-stream --server 10.1.1.198        # XINGYING's SDK stream (NOKOV's library, experimental)
+    movetrics-fdt ptp-record --serial COM3 --pps --out trial.csv   # samples on PTP time from a PPS on SYNC IN (docs/25)
+    movetrics-fdt ptp-status                              # what the local ptp4l says (Linux, linuxptp)
 """
 
 from __future__ import annotations
@@ -42,6 +44,9 @@ def _parser() -> argparse.ArgumentParser:
     sim.add_argument("--asleep", action="store_true", help="start asleep (pads off), as 5 minutes after the last command")
     sim.add_argument("--sync-pulse-s", type=float, default=0.0, metavar="S",
                      help="drive SYNC IN with a 5 ms pulse every S seconds (needs --profile sync to be seen)")
+    sim.add_argument("--pps", action="store_true",
+                     help="drive SYNC IN with a 100 ms pulse at each whole second of this computer's clock, like a PTP "
+                          "pulse-per-second output (needs --profile sync; edges are as late as the simulator's 1 ms loop)")
     relay = commands.add_parser("lsl-relay", help="pass the FDT stream of a web page on to Lab Streaming Layer")
     relay.add_argument("--port", type=int, default=7812, help="listen on 127.0.0.1:PORT (default 7812; 0 picks a free port)")
     relay.add_argument("--allow-origin", action="append", default=[], metavar="ORIGIN",
@@ -83,7 +88,105 @@ def _parser() -> argparse.ArgumentParser:
     stream.add_argument("--seconds", type=float, default=0.0, help="stop after this many seconds (default: Ctrl-C)")
     stream.add_argument("--wait-force-plates", type=int, metavar="MS",
                         help="call the library's WaitForForcePlateInit with this value after connecting")
+    ptp = commands.add_parser("ptp-record", help="record the FDT with every sample on PTP time (docs/25)")
+    where = ptp.add_mutually_exclusive_group(required=True)
+    where.add_argument("--serial", metavar="PORT", help="the FDT's serial port (COM3, /dev/tty.usbserial-...)")
+    where.add_argument("--tcp", metavar="HOST:PORT", help="an FDT simulator (movetrics-fdt simulate --tcp PORT --profile sync --pps)")
+    ptp.add_argument("--out", required=True, help="CSV file to write; the time base and its quality go to OUT.json")
+    ptp.add_argument("--rate", type=int, default=2000, help="frames per second per plate (default 2000)")
+    ptp.add_argument("--cutoff", type=int, default=0,
+                     help="the FDT's low-pass in Hz; default 0 = off, because its 50 Hz filter delays the force by about "
+                          "4.5 ms against its stamp (computed): filter afterwards with a zero-lag filter instead")
+    ptp.add_argument("--seconds", type=float, default=0.0, help="stop after this many seconds (default: Ctrl-C)")
+    ptp.add_argument("--pps", action="store_true",
+                     help="a pulse at known PTP times is wired to SYNC IN: sample-accurate (needs firmware with sync modes)")
+    ptp.add_argument("--pulse-period", type=float, default=1.0, metavar="S", help="seconds between pulses (default 1)")
+    ptp.add_argument("--pulse-phase-ms", type=float, default=0.0, help="the pulses' PTP time past each period (default 0)")
+    ptp.add_argument("--debounce-ticks", type=int, default=1,
+                     help="SYNC IN debounce in 0.1 ms (default 1: pulses of 0.2 ms and more count)")
+    ptp.add_argument("--host-clock", choices=("utc", "tai"), default="utc",
+                     help="utc: the wall clock plus --utc-offset (any system); tai: Linux CLOCK_TAI")
+    ptp.add_argument("--utc-offset", type=int, default=37, help="TAI minus UTC in seconds (37 since 2017)")
+    ptp.add_argument("--latency-ms", type=float, default=0.0,
+                     help="host route only: the measured constant delay (a --pps recording reports it as host_minus_pulse_ms)")
+    commands.add_parser("ptp-status", help="what the local ptp4l says through pmc (Linux, linuxptp)")
     return parser
+
+
+def _ptp(args: argparse.Namespace) -> int:
+    import json
+
+    from .errors import FdtError
+    from .ptp import query_pmc
+
+    if args.command == "ptp-status":
+        status = query_pmc()
+        if status is None:
+            print("no answer: pmc (linuxptp) is not installed, ptp4l is not running, or this is not Linux")
+            return 1
+        print(json.dumps(status.as_dict(), indent=2))
+        return 0 if status.gm_present else 1
+    try:
+        asyncio.run(_ptp_record(args))
+    except KeyboardInterrupt:
+        return 0
+    except (OSError, FdtError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+async def _ptp_record(args: argparse.Namespace) -> None:
+    from .client import FdtClient, SyncMode
+    from .ptp import PtpRecorder, make_host_clock, query_pmc, record_ptp
+
+    clock = make_host_clock(args.host_clock, args.utc_offset)
+    if args.serial:
+        from .serial_transport import SerialTransport
+
+        transport = SerialTransport(args.serial)
+    else:
+        from .tcp_transport import TcpTransport
+
+        host, _, port = args.tcp.rpartition(":")
+        transport = TcpTransport(host or "127.0.0.1", int(port))
+    status = query_pmc()
+    async with FdtClient(transport) as fdt:
+        version = await fdt.get_firmware_version()
+        if args.pps:
+            if await fdt.get_sync_mode() is None:
+                raise ValueError(f"this FDT ({version.stm32FW}) has no sync modes, so it cannot see the pulse: they need "
+                                 "firmware 1.2.8.24 or later with the sync jack. Without --pps the host route works.")
+            await fdt.set_sync_mode(SyncMode.EVENT_FRAMES, debounce_ticks=args.debounce_ticks)
+        await fdt.set_rate(args.rate, args.cutoff)
+        recorder = PtpRecorder(clock=clock, period_s=args.pulse_period, phase_ns=round(args.pulse_phase_ms * 1e6),
+                               latency_s=args.latency_ms / 1000)
+        metadata = {"firmware": version.stm32FW, "rate_hz": args.rate, "fdt_lowpass_hz": args.cutoff or None, "pps": args.pps,
+                    "host_clock": args.host_clock, "utc_offset_s": args.utc_offset,
+                    "ptp4l": status.as_dict() if status else None}
+        await fdt.start_stream()
+        print(f"READY FDT {version.stm32FW} streaming at {args.rate} frames/s per plate"
+              + ("; pulses on SYNC IN" if args.pps else "; host route (no pulse)")
+              + (f"; ptp4l grandmaster {status.gm_identity}, offset {status.master_offset_ns} ns" if status else ""),
+              flush=True)
+        try:
+            path, ptp_map = await record_ptp(fdt.samples(), recorder, args.out, seconds=args.seconds,
+                                             metadata=metadata, log=lambda text: print(text, flush=True))
+        finally:
+            await fdt.stop_stream()
+            if args.pps:
+                await fdt.set_sync_mode(SyncMode.OFF)
+    quality = ptp_map.quality()
+    print(f"wrote {path} and {path}.json: time base {quality['method']}")
+    if "pulse" in quality:
+        p = quality["pulse"]
+        print(f"  {p['pulses']} pulses, {p['missing']} missing, {p['rejected']} rejected, FDT drift {p['drift_ppm']} ppm, "
+              f"edge jitter {p['edge_jitter_rms_us']} us rms ({p['edge_jitter_max_us']} us max)")
+    if "host_minus_pulse_ms" in quality:
+        print(f"  host route would be {quality['host_minus_pulse_ms']['mean']} ms off "
+              f"(sd {quality['host_minus_pulse_ms']['sd']} ms): --latency-ms for recordings without the pulse")
+    for warning in quality["warnings"]:
+        print(f"  warning: {warning}")
 
 
 def _nokov(args: argparse.Namespace) -> int:
@@ -265,6 +368,8 @@ def main(argv: list[str] | None = None) -> int:
         return _relay(args)
     if args.command.startswith("nokov-"):
         return _nokov(args)
+    if args.command.startswith("ptp-"):
+        return _ptp(args)
     signal = StudioReplay(args.replay, keep_gaps=not args.fill_gaps) if args.replay else Synthetic(args.signal, args.bodyweight)
     hold_at, hold_for = args.hold or (-1.0, 0.0)
     faults = Faults(drop_every=args.drop_every, hold_at_s=hold_at, hold_s=hold_for, clock_ppm=args.clock_ppm, scale=args.scale)
@@ -278,7 +383,12 @@ def main(argv: list[str] | None = None) -> int:
         return fdt
 
     tick = None
-    if args.sync_pulse_s > 0:
+    if args.pps:
+        def tick(fdt: VirtualFdt, now: float) -> None:
+            import time
+
+            fdt.sync_in(1 if time.time() % 1.0 < 0.1 else 0, now)
+    elif args.sync_pulse_s > 0:
         def tick(fdt: VirtualFdt, now: float) -> None:
             phase = now % args.sync_pulse_s
             fdt.sync_in(1 if phase < 0.005 else 0, now)

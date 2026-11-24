@@ -118,4 +118,6 @@ Each device keeps its own clock on the LSL time base: the FDT's mapped stamps an
 - `ClockMap`: FDT time to host time, used by the LSL bridge and the relay; usable on its own for any host clock.
 - `edge_times(items, "sync_in_rise")`: the times of one kind of event.
 
+For samples on a PTP (IEEE 1588) network's time, with a pulse per second on SYNC IN, see [chapter 25](25-ptp.md).
+
 Wiring and the modes to set on each FDT will be published here once they have been measured on real FDTs. Until then everything in this section is simulated.

@@ -22,7 +22,7 @@ From a web page or MATLAB, the streams are the same. A page that reads the FDT i
 
 Next to Noraxon EMG: Noraxon's own bridge, [Noraxon-LSL](https://github.com/Noraxon/Noraxon-LSL), publishes the EMG channels of its myoRESEARCH software to LSL from the MR computer. Tick them in LabRecorder next to the FDT's streams. The steps are in the [reference](../../reference/22-lsl-and-sync/); this has not been run with Noraxon hardware yet.
 
-Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitted offset and drift, so USB delivery jitter (up to 16 ms) does not enter the data. Alignment between devices is as good as LSL's own clock sync between computers, typically about a millisecond on one machine or a local network. [Details](../../reference/22-lsl-and-sync/).
+Each sample's time is the FDT's own stamp mapped onto the LSL clock with a fitted offset and drift, so USB delivery jitter (up to 16 ms) does not enter the data. Alignment between devices is as good as LSL's own clock sync between computers, typically about a millisecond on one machine or a local network, plus a constant the mapping cannot see: plate frames leave the FDT 10 to 15 ms after their stamp (from the firmware code, not yet measured), which `latency_s` subtracts once measured. [Details](../../reference/22-lsl-and-sync/).
 
 With NOKOV's XINGYING motion capture, `movetrics-fdt nokov-record` writes an FDT file for every XINGYING take, and `--lsl` publishes the FDT on LSL at the same time. [Work with NOKOV XINGYING](../nokov/).
 
@@ -31,6 +31,10 @@ With NOKOV's XINGYING motion capture, `movetrics-fdt nokov-record` writes an FDT
 For sample-level alignment the FDT can send a pulse train on SYNC OUT to your EMG system's trigger input, or start when a pulse arrives on SYNC IN. Every edge is reported with its exact FDT time, and `movetrics_fdt.sync.align()` gives offset, drift and residual from the two lists of edge times.
 
 This uses the FDT's sync modes, which need firmware with the sync jack. The host side and a simulator are ready; the timing has not yet been measured on real FDTs. Ask us before you plan a study on it.
+
+## Next to cameras on a PTP network
+
+The FDT has no network port, so it cannot be a PTP (IEEE 1588) clock itself. With a pulse per second from the PTP network on SYNC IN, `movetrics-fdt ptp-record --pps` writes every sample with its PTP time (TAI nanoseconds) and reports the drift and the edge jitter of each recording. Without the cable, a computer that follows PTP gives about a millisecond once one constant is measured. Simulated only so far: [PTP time](../../reference/25-ptp/).
 
 ## Through the analog outputs
 

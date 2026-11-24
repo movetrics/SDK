@@ -2,6 +2,15 @@
 
 All notable changes to the Movetrics SDK. Each entry says how it was checked: **measured** (a real FDT or a real recording), **simulated** (the SDK's simulator), or not yet run.
 
+## Unreleased (2026-11-24): samples on PTP (IEEE 1588) time
+
+The FDT cannot join a PTP network (no Ethernet port); this puts its samples on a PTP network's time from outside. Nothing in this entry has run with a real FDT or a PTP network.
+
+- **Pulse route**: `movetrics-fdt ptp-record --pps` records with a pulse per second from the PTP network on SYNC IN (EVENT_FRAMES, 0.1 ms debounce, the FDT's low-pass off) and writes `t_ptp_ns` (TAI nanoseconds) for every sample, event and gap, with the pulses used, missing and rejected, the FDT's drift and the edge jitter in `<out>.json`. `movetrics_fdt.ptp.pulse_map` picks each pulse's second from the host clock (within a quarter period, warned otherwise), rejects static, bounces and outliers, smooths over eleven pulses and interpolates between them. Simulated: a clock 35 ppm fast, every sample within 1 µs of the true PTP time; 600 synthetic pulses with 5 µs jitter, two lost and three spurious, within 5 µs.
+- **Host route**: without `--pps`, the clock map of chapter 22 onto a host clock that follows PTP (`--host-clock utc|tai`); `ptp-status` reads linuxptp's `pmc`. A `--pps` recording measures the constant this route needs (`host_minus_pulse_ms`). Simulated: within 1.3 ms with the constant known.
+- **Simulator**: `movetrics-fdt simulate --profile sync --pps` drives SYNC IN at the computer's whole seconds (to its 1 ms loop: a workflow demo, not an accuracy test).
+- **Docs**: [chapter 25](docs/25-ptp.md); chapter 22, the EMG and cameras page, the time and sync page, the READMEs and AGENTS.md link it. The EMG and cameras page now says that LSL times carry the constant of 10 to 15 ms by which plate frames leave the FDT after their stamp (from code), until `latency_s` is measured.
+
 ## Unreleased 0.3.3 (2026-11-22): Bluetooth bridge 1.4.1.1 and 1.4.1.2, version 0.3.3
 
 Version 0.3.3 holds this entry and the four entries of 16 November below.
