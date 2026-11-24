@@ -21,6 +21,8 @@ FDTs with sync ports have a SYNC IN and a SYNC OUT socket, on firmware with the 
 
 `movetrics_fdt.sync.align()` takes the edge times on both clocks and returns offset, drift and how well they matched. Missed edges on either side are reported, not smeared into the result. `merge()` puts two FDTs into one four-plate recording: FDT A sends pulses, FDT B records them.
 
+For cameras on a PTP (IEEE 1588) network, a pulse per second on SYNC IN puts every sample on PTP time: [PTP time](../../reference/25-ptp/).
+
 For Lab Streaming Layer (LabRecorder, EMG, eye trackers), see [EMG and cameras](../../start/emg-and-cameras/). Full detail: [LSL and sync](../../reference/22-lsl-and-sync/).
 
 **Tested on:** the simulator with a clock running 50 ppm off (drift recovered within the test tolerance of 10 ppm). Not yet measured on a real FDT.
